@@ -7,8 +7,8 @@ import Foundation
 /// Freigrenze uebersteigenden Betrags, hoechstens aber die regulaeren 5,5 % der Steuer.
 enum Solidaritaetszuschlag {
 
-    static let regelsatz: Decimal = 0.055
-    static let milderungssatz: Decimal = 0.119
+    static let regelsatz = Decimal(55) / 1_000
+    static let milderungssatz = Decimal(119) / 1_000
 
     static func betrag(
         einkommensteuer: Decimal,

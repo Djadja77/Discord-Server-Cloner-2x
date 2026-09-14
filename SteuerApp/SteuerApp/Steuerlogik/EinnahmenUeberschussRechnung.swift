@@ -45,8 +45,15 @@ struct EinnahmenUeberschussRechnung {
 
     /// - Parameters:
     ///   - belege: alle Belege; es werden nur die des angegebenen Jahres beruecksichtigt.
+    ///   - wirtschaftsgueter: Anlagevermoegen, dessen Abschreibung als Betriebsausgabe
+    ///     hinzukommt. Sie wird berechnet, nicht als Beleg erfasst.
     ///   - kleinunternehmer: `true` rechnet brutto (§ 19 UStG).
-    static func berechnen(belege: [Beleg], jahr: Int, kleinunternehmer: Bool) -> Ergebnis {
+    static func berechnen(
+        belege: [Beleg],
+        wirtschaftsgueter: [Wirtschaftsgut] = [],
+        jahr: Int,
+        kleinunternehmer: Bool
+    ) -> Ergebnis {
         let belegeDesJahres = belege.filter { $0.jahr == jahr }
 
         func posten(fuer art: Belegart) -> [Posten] {
@@ -70,7 +77,47 @@ struct EinnahmenUeberschussRechnung {
         return Ergebnis(
             jahr: jahr,
             einnahmen: posten(fuer: .einnahme),
-            ausgaben: posten(fuer: .ausgabe)
+            ausgaben: mitAbschreibung(
+                posten(fuer: .ausgabe),
+                wirtschaftsgueter: wirtschaftsgueter,
+                jahr: jahr
+            )
         )
+    }
+
+    /// Fuegt die berechnete Abschreibung in den Posten "Abschreibungen (AfA)" ein.
+    ///
+    /// Erfasst jemand die Abschreibung zusaetzlich von Hand als Beleg, werden beide Betraege
+    /// zusammengefasst statt zu konkurrieren - der Posten zeigt dann die Summe und die Anzahl
+    /// der beteiligten Wirtschaftsgueter.
+    private static func mitAbschreibung(
+        _ ausgaben: [Posten],
+        wirtschaftsgueter: [Wirtschaftsgut],
+        jahr: Int
+    ) -> [Posten] {
+        let betroffene = wirtschaftsgueter.filter { $0.abschreibung(fuerJahr: jahr) > 0 }
+        let afa = betroffene.map { $0.abschreibung(fuerJahr: jahr) }.summe
+        guard afa > 0 else { return ausgaben }
+
+        var ergebnis = ausgaben
+        let vorhanden = ergebnis.firstIndex { $0.kategorie == .abschreibung }
+
+        if let index = vorhanden {
+            let alt = ergebnis[index]
+            ergebnis[index] = Posten(
+                kategorie: .abschreibung,
+                betrag: alt.betrag + afa,
+                betragVorKuerzung: alt.betragVorKuerzung + afa,
+                anzahlBelege: alt.anzahlBelege + betroffene.count
+            )
+        } else {
+            ergebnis.append(Posten(
+                kategorie: .abschreibung,
+                betrag: afa,
+                betragVorKuerzung: afa,
+                anzahlBelege: betroffene.count
+            ))
+        }
+        return ergebnis.sorted { $0.betrag > $1.betrag }
     }
 }

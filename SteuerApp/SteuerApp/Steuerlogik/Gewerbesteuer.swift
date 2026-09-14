@@ -15,8 +15,8 @@ import Foundation
 /// Ab einem Hebesatz von rund 380 % bleibt daher eine echte Restbelastung.
 struct Gewerbesteuer {
 
-    static let steuermesszahl: Decimal = 0.035
-    static let anrechnungsfaktor: Decimal = 3.8
+    static let steuermesszahl = Decimal(35) / 1_000
+    static let anrechnungsfaktor = Decimal(38) / 10
 
     struct Ergebnis: Equatable {
         let gewerbeertrag: Decimal

@@ -19,6 +19,7 @@ die dabei zählt – **wie viel von dem Geld auf dem Konto gehört mir eigentlic
 
 **Auswerten**
 - Einnahmen-Überschuss-Rechnung nach § 4 Abs. 3 EStG, nach Kategorien aufgeschlüsselt
+- Anlagenverzeichnis mit linearer Abschreibung (§ 7 EStG), zeitanteilig ab Anschaffungsmonat
 - Umsatzsteuer-Voranmeldung monatlich oder vierteljährlich, mit Zahllast je Zeitraum
 - CSV-Export von Belegliste und Jahresauswertung für Excel oder die Steuerberatung
 
@@ -28,6 +29,8 @@ die dabei zählt – **wie viel von dem Geld auf dem Konto gehört mir eigentlic
 - Kirchensteuer 8 % / 9 %
 - Gewerbesteuer inklusive Anrechnung nach § 35 EStG (für Gewerbetreibende)
 - Vorsorgeaufwendungen als Sonderausgaben – für Selbständige der größte Abzugsposten
+- Verlustvortrag aus Vorjahren inklusive Mindestbesteuerung (§ 10d Abs. 2 EStG)
+- Kinderfreibeträge mit automatischer Günstigerprüfung gegen das Kindergeld (§ 31 EStG)
 - Rücklagenquote und offener Betrag nach Abzug geleisteter Vorauszahlungen
 - jeder Zwischenschritt einzeln sichtbar, damit die Zahl nachvollziehbar bleibt
 
@@ -56,11 +59,17 @@ xcodebuild test -project SteuerApp/SteuerApp.xcodeproj \
 
 ```
 SteuerApp/
-├── Modell/          SwiftData-Objekte: Beleg, Steuerprofil, Kategorien, Steuersätze
+├── Modell/          SwiftData-Objekte: Beleg, Wirtschaftsgut, Profil, Jahresangaben
 ├── Steuerlogik/     reine Rechenlogik, ohne SwiftUI und ohne Datenbank
 ├── Ansichten/       SwiftUI-Oberfläche, fünf Bereiche
-└── Dienste/         Formatierung, Belegarchiv, CSV-Export, Texterkennung
+├── Dienste/         Formatierung, Belegarchiv, CSV-Export, Texterkennung
+└── Werkzeuge/       Generator für das App-Icon (reines Python, ohne Abhängigkeiten)
 ```
+
+Die Stammdaten sind bewusst zweigeteilt. `Steuerprofil` hält, was jahrelang gleich bleibt –
+Rechtsform, Veranlagung, Kirchensteuer. `Jahresangaben` hält alles, was sich jährlich ändert:
+Beiträge, Vorauszahlungen, Kinder, Verlustvortrag. Ohne diese Trennung würde ein Wechsel des
+Steuerjahres die Zahlen des Vorjahres überschreiben.
 
 Die Steuerlogik hängt von keiner Ansicht und keiner Datenbank ab. Sie nimmt Zahlen entgegen und
 gibt Zahlen zurück – deshalb ist sie vollständig durch Tests abgedeckt, und deshalb lässt sich
@@ -89,11 +98,14 @@ wahrscheinlichsten ist.
 
 ### Stand der Prüfung
 
-| Jahr | Grundfreibetrag | Status |
-|------|-----------------|--------|
-| 2024 | 11.784 € | intern konsistent, **nicht** gegen die amtliche Grundtabelle abgeglichen |
-| 2025 | 12.096 € | gegen die amtliche Grundtabelle geprüft |
-| 2026 | 12.348 € | intern konsistent, **nicht** gegen die amtliche Grundtabelle abgeglichen |
+| Jahr | Grundfreibetrag | Kindergeld | Status |
+|------|-----------------|------------|--------|
+| 2024 | 11.784 € | 250 €/Monat | intern konsistent, **nicht** gegen die amtliche Grundtabelle abgeglichen |
+| 2025 | 12.096 € | 255 €/Monat | gegen die amtliche Grundtabelle geprüft |
+| 2026 | 12.348 € | 259 €/Monat | intern konsistent, **nicht** gegen die amtliche Grundtabelle abgeglichen |
+
+Kinderfreibeträge, Kindergeldsätze und Vorsorge-Höchstbeträge stehen in derselben Datei und
+sind ebenfalls zu prüfen – der Konsistenztest deckt nur den Einkommensteuertarif ab.
 
 Alle drei Jahre erfüllen die oben genannten gesetzlichen Eckwerte exakt. Für 2025 stimmen die
 Ergebnisse zusätzlich mit veröffentlichten Werten der Einkommensteuer-Grundtabelle überein.
@@ -105,13 +117,12 @@ Hinweis ab, sobald die Werte geprüft sind.
 
 Die App bildet die häufigen Fälle ab, nicht jede Besonderheit. Nicht berücksichtigt sind:
 
-- Kinderfreibeträge und die Günstigerprüfung gegen das Kindergeld
-- Verlustvor- und -rückträge zwischen den Jahren
+- der Verlustrücktrag ins Vorjahr (nur der Vortrag ist umgesetzt)
 - Progressionsvorbehalt bei Lohnersatzleistungen
 - Abgeltungsteuer auf Kapitalerträge
 - die zumutbare Belastung bei außergewöhnlichen Belastungen (bitte vorab abziehen)
-- Abschreibungen werden erfasst, aber nicht aus Anschaffungsdaten berechnet
-- bei der Kirchensteuer wird die Einkommensteuer ohne Kinderfreibeträge angesetzt
+- degressive Abschreibung und Sammelposten – abgeschrieben wird linear
+- der Entlastungsbetrag für Alleinerziehende
 
 Zwei Punkte, bei denen die App bewusst anders rechnet als das amtliche Formular:
 
@@ -125,8 +136,23 @@ Zwei Punkte, bei denen die App bewusst anders rechnet als das amtliche Formular:
 Korrekt abgebildet sind dagegen einige Details, die häufig untergehen: Bewirtungskosten sind nur
 zu 70 % Betriebsausgabe, während die Vorsteuer voll abziehbar bleibt. Die Gewerbesteuer-
 Anrechnung ist auf das 3,8-fache des Messbetrags **und** auf die tatsächlich gezahlte Steuer
-gedeckelt. Und die Gesamtbelastung setzt die volle Gewerbesteuer an, nicht nur die Restbelastung –
-sonst würde die Anrechnung doppelt gutgeschrieben.
+gedeckelt. Die Gesamtbelastung setzt die volle Gewerbesteuer an, nicht nur die Restbelastung –
+sonst würde die Anrechnung doppelt gutgeschrieben. Solidaritätszuschlag und Kirchensteuer
+bemessen sich nach § 51a EStG immer nach der Steuer mit Kinderfreibeträgen, auch wenn die
+Günstigerprüfung zugunsten des Kindergelds ausgeht. Und die Abschreibung setzt im letzten Jahr
+den Restbuchwert an, damit sich die Jahresbeträge exakt auf die Anschaffungskosten summieren.
+
+## App-Icon
+
+Das Icon wird von `Werkzeuge/appicon_erzeugen.py` erzeugt – reines Python, keine
+Bildbibliothek, kein Designprogramm:
+
+```bash
+python3 Werkzeuge/appicon_erzeugen.py
+```
+
+Farben und Geometrie stehen als Konstanten oben in der Datei. Wer das Motiv ändern will,
+ändert die Zahlen und lässt das Skript neu laufen.
 
 ## Datenschutz
 

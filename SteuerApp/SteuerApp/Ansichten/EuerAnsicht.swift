@@ -10,6 +10,7 @@ struct EuerAnsicht: View {
     @Binding var jahr: Int
     @Query private var belege: [Beleg]
     @Query private var profile: [Steuerprofil]
+    @Query private var wirtschaftsgueter: [Wirtschaftsgut]
 
     @AppStorage("umsatzsteuerRhythmus") private var rhythmusCode: String =
         Umsatzsteuerberechnung.Rhythmus.vierteljaehrlich.rawValue
@@ -27,7 +28,8 @@ struct EuerAnsicht: View {
 
     private var euer: EinnahmenUeberschussRechnung.Ergebnis {
         EinnahmenUeberschussRechnung.berechnen(
-            belege: belege, jahr: jahr, kleinunternehmer: profil.kleinunternehmer
+            belege: belege, wirtschaftsgueter: wirtschaftsgueter,
+            jahr: jahr, kleinunternehmer: profil.kleinunternehmer
         )
     }
 
@@ -47,11 +49,13 @@ struct EuerAnsicht: View {
                         systemImage: "tablecells",
                         description: Text("Erfasse Belege, dann erscheint hier die Auswertung.")
                     )
+                    anlagenAbschnitt
                 } else {
                     einnahmenAbschnitt
                     ausgabenAbschnitt
                     ergebnisAbschnitt
                     umsatzsteuerAbschnitt
+                    anlagenAbschnitt
                     exportAbschnitt
                 }
             }
@@ -173,6 +177,18 @@ struct EuerAnsicht: View {
             } footer: {
                 Text("Positiv = an das Finanzamt zu zahlen, negativ = Erstattung. Grundlage ist das erfasste Belegdatum (Ist-Versteuerung).")
             }
+        }
+    }
+
+    private var anlagenAbschnitt: some View {
+        Section {
+            NavigationLink {
+                AnlagenAnsicht(jahr: jahr)
+            } label: {
+                Label("Anlagevermoegen und Abschreibung", systemImage: "shippingbox")
+            }
+        } footer: {
+            Text("Anschaffungen ueber 800 Euro netto werden nicht sofort abgezogen, sondern ueber ihre Nutzungsdauer verteilt.")
         }
     }
 

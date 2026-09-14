@@ -7,22 +7,29 @@ struct UebersichtAnsicht: View {
     @Binding var jahr: Int
     @Query(sort: \Beleg.datum, order: .reverse) private var belege: [Beleg]
     @Query private var profile: [Steuerprofil]
+    @Query private var alleJahresangaben: [Jahresangaben]
+    @Query private var wirtschaftsgueter: [Wirtschaftsgut]
 
     @State private var belegAnlegen = false
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
+    private var angaben: Jahresangaben {
+        alleJahresangaben.first { $0.jahr == jahr } ?? Jahresangaben(jahr: jahr)
+    }
     private var steuerjahr: Steuerjahr { Steuerjahr.fuer(jahr) }
 
     private var euer: EinnahmenUeberschussRechnung.Ergebnis {
         EinnahmenUeberschussRechnung.berechnen(
-            belege: belege, jahr: jahr, kleinunternehmer: profil.kleinunternehmer
+            belege: belege, wirtschaftsgueter: wirtschaftsgueter,
+            jahr: jahr, kleinunternehmer: profil.kleinunternehmer
         )
     }
 
     private var schaetzung: Steuerschaetzung.Ergebnis {
-        Steuerschaetzung.berechnen(
-            Steuerschaetzung.Eingaben(profil: profil, gewinn: euer.gewinn, steuerjahr: steuerjahr)
-        )
+        Steuerschaetzung.berechnen(Steuerschaetzung.Eingaben(
+            profil: profil, jahresangaben: angaben,
+            gewinn: euer.gewinn, steuerjahr: steuerjahr
+        ))
     }
 
     private var letzteBelege: [Beleg] {

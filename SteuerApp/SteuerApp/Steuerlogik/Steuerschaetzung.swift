@@ -2,18 +2,20 @@ import Foundation
 
 /// Die vollstaendige Steuerschaetzung fuer ein Jahr - vom Gewinn bis zur Nachzahlung.
 ///
-/// Rechenweg (vereinfachtes Schema des § 2 EStG):
+/// Rechenweg (Schema des § 2 EStG):
 /// ```
 ///   Gewinn aus selbstaendiger Arbeit / Gewerbebetrieb
 /// + weitere Einkuenfte
 /// = Gesamtbetrag der Einkuenfte
+/// - Verlustabzug aus Vorjahren (§ 10d EStG)
 /// - Vorsorgeaufwendungen
 /// - uebrige Sonderausgaben (mindestens der Pauschbetrag)
 /// - aussergewoehnliche Belastungen
 /// = zu versteuerndes Einkommen
-/// -> Einkommensteuer nach § 32a EStG
+/// -> Einkommensteuer nach § 32a EStG, mit Guenstigerpruefung fuer Kinder (§ 31 EStG)
 /// - Anrechnung der Gewerbesteuer (§ 35 EStG)
-/// + Solidaritaetszuschlag + Kirchensteuer
+/// + Solidaritaetszuschlag + Kirchensteuer (bemessen nach § 51a EStG)
+/// + Gewerbesteuer
 /// - geleistete Vorauszahlungen
 /// = Nachzahlung oder Erstattung
 /// ```
@@ -33,25 +35,36 @@ struct Steuerschaetzung {
         var weitereSonderausgaben: Decimal = 0
         var aussergewoehnlicheBelastungen: Decimal = 0
         var geleisteteVorauszahlungen: Decimal = 0
+        var verlustvortragAusVorjahren: Decimal = 0
+        var anzahlKinder: Int = 0
+        var vollerKinderfreibetrag: Bool = false
 
         init(steuerjahr: Steuerjahr, gewinn: Decimal) {
             self.steuerjahr = steuerjahr
             self.gewinn = gewinn
         }
 
-        /// Baut die Eingaben aus dem gespeicherten Profil - eine Quelle der Wahrheit.
-        init(profil: Steuerprofil, gewinn: Decimal, steuerjahr: Steuerjahr) {
+        /// Baut die Eingaben aus Profil und Jahresangaben - eine Quelle der Wahrheit.
+        init(
+            profil: Steuerprofil,
+            jahresangaben: Jahresangaben,
+            gewinn: Decimal,
+            steuerjahr: Steuerjahr
+        ) {
             self.steuerjahr = steuerjahr
             self.gewinn = gewinn
-            self.weitereEinkuenfte = profil.weitereEinkuenfte
             self.taetigkeitsart = profil.taetigkeitsart
             self.veranlagungsart = profil.veranlagungsart
             self.kirchensteuersatz = profil.kirchensteuersatz
             self.gewerbesteuerHebesatz = profil.gewerbesteuerHebesatz
-            self.vorsorgeaufwendungen = profil.vorsorgeaufwendungen
-            self.weitereSonderausgaben = profil.weitereSonderausgaben
-            self.aussergewoehnlicheBelastungen = profil.aussergewoehnlicheBelastungen
-            self.geleisteteVorauszahlungen = profil.geleisteteVorauszahlungen
+            self.weitereEinkuenfte = jahresangaben.weitereEinkuenfte
+            self.vorsorgeaufwendungen = jahresangaben.vorsorgeaufwendungen
+            self.weitereSonderausgaben = jahresangaben.weitereSonderausgaben
+            self.aussergewoehnlicheBelastungen = jahresangaben.aussergewoehnlicheBelastungen
+            self.geleisteteVorauszahlungen = jahresangaben.geleisteteVorauszahlungen
+            self.verlustvortragAusVorjahren = jahresangaben.verlustvortragAusVorjahren
+            self.anzahlKinder = jahresangaben.anzahlKinder
+            self.vollerKinderfreibetrag = jahresangaben.vollerKinderfreibetrag
         }
     }
 
@@ -61,11 +74,13 @@ struct Steuerschaetzung {
         let jahr: Int
         let gewinn: Decimal
         let gesamtbetragDerEinkuenfte: Decimal
+        let verlustabzug: Verlustverrechnung.Ergebnis
         let vorsorge: Vorsorgeaufwendungen.Ergebnis
         let uebrigeSonderausgaben: Decimal
         let aussergewoehnlicheBelastungen: Decimal
         let zuVersteuerndesEinkommen: Decimal
 
+        let kinder: Kinderfreibetrag.Ergebnis
         let tariflicheEinkommensteuer: Decimal
         let gewerbesteuer: Gewerbesteuer.Ergebnis
         let angerechneteGewerbesteuer: Decimal
@@ -118,6 +133,13 @@ struct Steuerschaetzung {
 
         let gesamtbetrag = e.gewinn + e.weitereEinkuenfte
 
+        let verlust = Verlustverrechnung.anwenden(
+            gesamtbetragDerEinkuenfte: gesamtbetrag,
+            verlustvortrag: e.verlustvortragAusVorjahren,
+            steuerjahr: e.steuerjahr,
+            splitting: splitting
+        )
+
         let vorsorge = e.vorsorgeaufwendungen.abziehbar(
             steuerjahr: e.steuerjahr,
             splitting: splitting
@@ -126,12 +148,20 @@ struct Steuerschaetzung {
         let uebrigeSonderausgaben = max(e.weitereSonderausgaben.nichtNegativ, pauschbetrag)
 
         let zve = (gesamtbetrag
+            - verlust.abgezogen
             - vorsorge.summe
             - uebrigeSonderausgaben
             - e.aussergewoehnlicheBelastungen.nichtNegativ
         ).nichtNegativ
 
-        let tariflich = tarif.einkommensteuer(zuVersteuerndesEinkommen: zve, splitting: splitting)
+        let kinder = Kinderfreibetrag.pruefen(
+            zuVersteuerndesEinkommen: zve,
+            anzahlKinder: e.anzahlKinder,
+            vollerFreibetrag: e.vollerKinderfreibetrag,
+            steuerjahr: e.steuerjahr,
+            splitting: splitting
+        )
+        let tariflich = kinder.tariflicheEinkommensteuer
 
         // § 35 EStG: angerechnet wird hoechstens der Teil der Einkommensteuer, der auf die
         // gewerblichen Einkuenfte entfaellt. Der Anteil wird hier ueber das Verhaeltnis der
@@ -147,24 +177,42 @@ struct Steuerschaetzung {
         }
 
         let festzusetzen = (tariflich - angerechnet).nichtNegativ
+
+        // § 51a EStG: Zuschlagsteuern bemessen sich stets nach der Steuer mit
+        // Kinderfreibetraegen - auch dann, wenn die Guenstigerpruefung zugunsten des
+        // Kindergelds ausgegangen ist. Die Gewerbesteuer-Anrechnung mindert sie ebenso.
+        let bemessungZuschlagsteuern = (kinder.bemessungZuschlagsteuern - angerechnet).nichtNegativ
+
         let soli = Solidaritaetszuschlag.betrag(
-            einkommensteuer: festzusetzen,
+            einkommensteuer: bemessungZuschlagsteuern,
             steuerjahr: e.steuerjahr,
             splitting: splitting
         )
         let kirche = Kirchensteuer.betrag(
-            einkommensteuer: festzusetzen,
+            einkommensteuer: bemessungZuschlagsteuern,
             satz: e.kirchensteuersatz
         )
+
+        // Grenzsteuersatz an der Stelle, an der tatsaechlich versteuert wird.
+        let massgeblichesEinkommen = kinder.freibetraegeAngesetzt
+            ? (zve - kinder.freibetrag).nichtNegativ
+            : zve
+
+        let gesamtbelastung = festzusetzen + soli + kirche + gewerbe.gewerbesteuer
+        let durchschnitt = gesamtbetrag > 0
+            ? min(gesamtbelastung.alsDouble / gesamtbetrag.alsDouble, 1)
+            : 0
 
         return Ergebnis(
             jahr: e.steuerjahr.jahr,
             gewinn: e.gewinn,
             gesamtbetragDerEinkuenfte: gesamtbetrag,
+            verlustabzug: verlust,
             vorsorge: vorsorge,
             uebrigeSonderausgaben: uebrigeSonderausgaben,
             aussergewoehnlicheBelastungen: e.aussergewoehnlicheBelastungen.nichtNegativ,
             zuVersteuerndesEinkommen: zve,
+            kinder: kinder,
             tariflicheEinkommensteuer: tariflich,
             gewerbesteuer: gewerbe,
             angerechneteGewerbesteuer: angerechnet,
@@ -172,11 +220,11 @@ struct Steuerschaetzung {
             solidaritaetszuschlag: soli,
             kirchensteuer: kirche,
             geleisteteVorauszahlungen: e.geleisteteVorauszahlungen,
-            durchschnittssteuersatz: tarif.durchschnittssteuersatz(
-                zuVersteuerndesEinkommen: zve, splitting: splitting
-            ),
+            // Anteil der gesamten Steuerlast am Gesamtbetrag der Einkuenfte - das ist die
+            // Zahl, die zaehlt, wenn man wissen will, was vom Verdienten uebrig bleibt.
+            durchschnittssteuersatz: durchschnitt,
             grenzsteuersatz: tarif.grenzsteuersatz(
-                zuVersteuerndesEinkommen: zve, splitting: splitting
+                zuVersteuerndesEinkommen: massgeblichesEinkommen, splitting: splitting
             )
         )
     }

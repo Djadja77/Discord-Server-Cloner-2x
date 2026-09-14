@@ -58,6 +58,28 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
     /// Gewerbesteuerlicher Freibetrag fuer natuerliche Personen (§ 11 Abs. 1 Nr. 1 GewStG).
     let gewerbesteuerFreibetrag: Decimal
 
+    /// Kinderfreibetrag je Kind fuer beide Elternteile zusammen (§ 32 Abs. 6 EStG).
+    let kinderfreibetrag: Decimal
+
+    /// Freibetrag fuer Betreuung, Erziehung und Ausbildung je Kind, beide Elternteile.
+    let betreuungsfreibetrag: Decimal
+
+    /// Kindergeld je Kind und Monat - Vergleichsgroesse der Guenstigerpruefung (§ 31 EStG).
+    let kindergeldProMonat: Decimal
+
+    /// Sockelbetrag des Verlustvortrags bei Einzelveranlagung (§ 10d Abs. 2 EStG).
+    /// Bis hierher ist der Verlustabzug unbeschraenkt.
+    let verlustvortragSockelbetrag: Decimal
+
+    /// Anteil des den Sockelbetrag uebersteigenden Gesamtbetrags der Einkuenfte, der
+    /// zusaetzlich mit Verlusten verrechnet werden darf (sog. Mindestbesteuerung).
+    /// Fuer die Veranlagungszeitraeume 2024 bis 2027 auf 70 % angehoben, davor und danach 60 %.
+    let verlustvortragQuote: Decimal
+
+    /// Grenze fuer geringwertige Wirtschaftsgueter (§ 6 Abs. 2 EStG), netto.
+    /// Bis zu diesem Betrag sind Anschaffungen sofort abziehbar statt abzuschreiben.
+    let grenzeGeringwertigeWirtschaftsgueter: Decimal
+
     let jahr: Int
     let tarif: Tarif
     /// `false` = Werte noch nicht gegen die amtliche Tabelle geprueft; die App weist darauf hin.
@@ -73,6 +95,12 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
         hoechstbetragSonstigeVorsorge: 2_800,
         sonderausgabenPauschbetrag: 36,
         gewerbesteuerFreibetrag: 24_500,
+        kinderfreibetrag: 6_612,
+        betreuungsfreibetrag: 2_928,
+        kindergeldProMonat: 250,
+        verlustvortragSockelbetrag: 1_000_000,
+        verlustvortragQuote: Decimal(70) / 100,
+        grenzeGeringwertigeWirtschaftsgueter: 800,
         jahr: 2024,
         tarif: Tarif(
             grundfreibetrag: 11_784,
@@ -94,6 +122,12 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
         hoechstbetragSonstigeVorsorge: 2_800,
         sonderausgabenPauschbetrag: 36,
         gewerbesteuerFreibetrag: 24_500,
+        kinderfreibetrag: 6_672,
+        betreuungsfreibetrag: 2_928,
+        kindergeldProMonat: 255,
+        verlustvortragSockelbetrag: 1_000_000,
+        verlustvortragQuote: Decimal(70) / 100,
+        grenzeGeringwertigeWirtschaftsgueter: 800,
         jahr: 2025,
         tarif: Tarif(
             grundfreibetrag: 12_096,
@@ -115,6 +149,12 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
         hoechstbetragSonstigeVorsorge: 2_800,
         sonderausgabenPauschbetrag: 36,
         gewerbesteuerFreibetrag: 24_500,
+        kinderfreibetrag: 6_828,
+        betreuungsfreibetrag: 2_928,
+        kindergeldProMonat: 259,
+        verlustvortragSockelbetrag: 1_000_000,
+        verlustvortragQuote: Decimal(70) / 100,
+        grenzeGeringwertigeWirtschaftsgueter: 800,
         jahr: 2026,
         tarif: Tarif(
             grundfreibetrag: 12_348,
@@ -131,6 +171,12 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
     )
 
     static let alle: [Steuerjahr] = [jahr2024, jahr2025, jahr2026]
+
+    /// Voller Kinderfreibetrag einschliesslich Betreuungsanteil, je Kind und beide Elternteile.
+    var kinderfreibetragGesamt: Decimal { kinderfreibetrag + betreuungsfreibetrag }
+
+    /// Kindergeldanspruch je Kind und Jahr.
+    var kindergeldProJahr: Decimal { kindergeldProMonat * 12 }
 
     /// Liefert das hinterlegte Jahr - oder das naechstgelegene, wenn das Jahr fehlt.
     /// So bleibt die App auch 2027 bedienbar, statt abzustuerzen.

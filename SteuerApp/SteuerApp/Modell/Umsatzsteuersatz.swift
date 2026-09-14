@@ -14,8 +14,8 @@ enum Umsatzsteuersatz: String, CaseIterable, Codable, Identifiable, Sendable {
     var satz: Decimal {
         switch self {
         case .ohne: 0
-        case .ermaessigt: 0.07
-        case .regel: 0.19
+        case .ermaessigt: Decimal(7) / 100
+        case .regel: Decimal(19) / 100
         }
     }
 

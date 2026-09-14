@@ -34,10 +34,11 @@ enum Veranlagungsart: String, CaseIterable, Codable, Identifiable, Sendable {
     var splitting: Bool { self == .zusammen }
 }
 
-/// Die persoenlichen Rahmendaten - einmal eingerichtet, danach selten geaendert.
+/// Angaben, die sich von Jahr zu Jahr nicht aendern.
 ///
-/// Es existiert genau ein Profil pro Installation; `Datenbank.profil(in:)` legt es bei
-/// Bedarf an.
+/// Alles, was jaehrlich neu ist - Beitraege, Vorauszahlungen, Kinder, Verlustvortrag -
+/// steht in `Jahresangaben`. Diese Trennung ist der Grund, warum ein Wechsel des
+/// Steuerjahres in der App nicht die Zahlen des Vorjahres ueberschreibt.
 @Model
 final class Steuerprofil {
 
@@ -50,28 +51,6 @@ final class Steuerprofil {
 
     /// Gewerbesteuer-Hebesatz der Gemeinde in Prozent (nur bei gewerblicher Taetigkeit).
     var gewerbesteuerHebesatz: Decimal = Decimal(400)
-
-    /// Weitere Einkuenfte, die nicht ueber die Belege erfasst werden
-    /// (Arbeitslohn, Vermietung, Kapitalertraege ueber dem Sparerpauschbetrag).
-    var weitereEinkuenfte: Decimal = Decimal(0)
-
-    // Vorsorgeaufwendungen
-    var beitragAltersvorsorge: Decimal = Decimal(0)
-    var beitragKrankenPflegeBasis: Decimal = Decimal(0)
-    var beitragSonstigeVersicherungen: Decimal = Decimal(0)
-
-    /// Uebrige Sonderausgaben: Spenden, Kirchensteuer des Vorjahres, Unterhaltsleistungen.
-    var weitereSonderausgaben: Decimal = Decimal(0)
-
-    /// Aussergewoehnliche Belastungen nach Abzug der zumutbaren Belastung.
-    var aussergewoehnlicheBelastungen: Decimal = Decimal(0)
-
-    /// Bereits geleistete Einkommensteuer-Vorauszahlungen des laufenden Jahres.
-    var geleisteteVorauszahlungen: Decimal = Decimal(0)
-
-    /// Anteil des Gewinns, den die App als Ruecklage empfiehlt, falls keine Schaetzung
-    /// moeglich ist (Standard 30 %).
-    var ruecklagenGrundquote: Double = 0.30
 
     init() {}
 
@@ -88,13 +67,5 @@ final class Steuerprofil {
     var kirchensteuersatz: Kirchensteuersatz {
         get { Kirchensteuersatz(rawValue: kirchensteuersatzCode) ?? .keine }
         set { kirchensteuersatzCode = newValue.rawValue }
-    }
-
-    var vorsorgeaufwendungen: Vorsorgeaufwendungen {
-        Vorsorgeaufwendungen(
-            altersvorsorge: beitragAltersvorsorge,
-            krankenUndPflegeBasis: beitragKrankenPflegeBasis,
-            sonstigeVersicherungen: beitragSonstigeVersicherungen
-        )
     }
 }

@@ -139,7 +139,7 @@ enum Belegkategorie: String, CaseIterable, Codable, Identifiable, Sendable {
     /// rechnet `EinnahmenUeberschussRechnung`.
     var abzugsfaehigerAnteil: Decimal {
         switch self {
-        case .bewirtung: 0.7
+        case .bewirtung: Decimal(7) / 10
         default: 1
         }
     }

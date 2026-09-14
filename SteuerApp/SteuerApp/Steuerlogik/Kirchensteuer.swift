@@ -11,8 +11,8 @@ enum Kirchensteuersatz: String, CaseIterable, Codable, Identifiable, Sendable {
     var satz: Decimal {
         switch self {
         case .keine: 0
-        case .achtProzent: 0.08
-        case .neunProzent: 0.09
+        case .achtProzent: Decimal(8) / 100
+        case .neunProzent: Decimal(9) / 100
         }
     }
 

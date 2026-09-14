@@ -10,20 +10,27 @@ struct SchaetzungAnsicht: View {
     @Binding var jahr: Int
     @Query private var belege: [Beleg]
     @Query private var profile: [Steuerprofil]
+    @Query private var alleJahresangaben: [Jahresangaben]
+    @Query private var wirtschaftsgueter: [Wirtschaftsgut]
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
+    private var angaben: Jahresangaben {
+        alleJahresangaben.first { $0.jahr == jahr } ?? Jahresangaben(jahr: jahr)
+    }
     private var steuerjahr: Steuerjahr { Steuerjahr.fuer(jahr) }
 
     private var euer: EinnahmenUeberschussRechnung.Ergebnis {
         EinnahmenUeberschussRechnung.berechnen(
-            belege: belege, jahr: jahr, kleinunternehmer: profil.kleinunternehmer
+            belege: belege, wirtschaftsgueter: wirtschaftsgueter,
+            jahr: jahr, kleinunternehmer: profil.kleinunternehmer
         )
     }
 
     private var ergebnis: Steuerschaetzung.Ergebnis {
-        Steuerschaetzung.berechnen(
-            Steuerschaetzung.Eingaben(profil: profil, gewinn: euer.gewinn, steuerjahr: steuerjahr)
-        )
+        Steuerschaetzung.berechnen(Steuerschaetzung.Eingaben(
+            profil: profil, jahresangaben: angaben,
+            gewinn: euer.gewinn, steuerjahr: steuerjahr
+        ))
     }
 
     var body: some View {
@@ -31,7 +38,9 @@ struct SchaetzungAnsicht: View {
             List {
                 ergebnisAbschnitt
                 einkuenfteAbschnitt
+                if ergebnis.verlustabzug.verfuegbarerVortrag > 0 { verlustAbschnitt }
                 abzuegeAbschnitt
+                if ergebnis.kinder.anzahlKinder > 0 { kinderAbschnitt }
                 steuerAbschnitt
                 if profil.taetigkeitsart == .gewerblich { gewerbesteuerAbschnitt }
                 saetzeAbschnitt
@@ -70,14 +79,59 @@ struct SchaetzungAnsicht: View {
                 betrag: ergebnis.gewinn,
                 unterzeile: "\(euer.anzahlBelege) Belege in \(String(jahr))"
             )
-            if profil.weitereEinkuenfte != 0 {
+            if angaben.weitereEinkuenfte != 0 {
                 ZeileMitBetrag(bezeichnung: "Weitere Einkuenfte",
-                               betrag: profil.weitereEinkuenfte)
+                               betrag: angaben.weitereEinkuenfte)
             }
             ZeileMitBetrag(bezeichnung: "Gesamtbetrag der Einkuenfte",
                            betrag: ergebnis.gesamtbetragDerEinkuenfte,
                            hervorgehoben: true)
         }
+    }
+
+    private var verlustAbschnitt: some View {
+        Section {
+            ZeileMitBetrag(bezeichnung: "Vortrag aus Vorjahren",
+                           betrag: ergebnis.verlustabzug.verfuegbarerVortrag)
+            ZeileMitBetrag(bezeichnung: "In \(String(jahr)) verrechnet",
+                           betrag: -ergebnis.verlustabzug.abgezogen)
+            ZeileMitBetrag(bezeichnung: "Rest fuer Folgejahre",
+                           betrag: ergebnis.verlustabzug.verbleibenderVortrag,
+                           hervorgehoben: true)
+        } header: {
+            Text("Verlustabzug")
+        } footer: {
+            Text(ergebnis.verlustabzug.wurdeBegrenzt
+                 ? "Die Mindestbesteuerung nach § 10d Abs. 2 EStG begrenzt den Abzug in diesem Jahr. Der Rest bleibt erhalten und wird vorgetragen."
+                 : "Der Verlustvortrag mindert den Gesamtbetrag der Einkuenfte, bevor Sonderausgaben abgezogen werden.")
+        }
+    }
+
+    private var kinderAbschnitt: some View {
+        Section {
+            ZeileMitBetrag(bezeichnung: "Kinderfreibetraege",
+                           betrag: ergebnis.kinder.freibetrag,
+                           unterzeile: "\(ergebnis.kinder.anzahlKinder) Kinder, einschliesslich Betreuungsanteil")
+            ZeileMitBetrag(bezeichnung: "Steuerersparnis durch Freibetraege",
+                           betrag: ergebnis.kinder.entlastung)
+            ZeileMitBetrag(bezeichnung: "Kindergeldanspruch",
+                           betrag: ergebnis.kinder.kindergeldanspruch)
+
+            Label(guenstigerpruefung, systemImage: ergebnis.kinder.freibetraegeAngesetzt
+                  ? "checkmark.circle" : "eurosign.circle")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } header: {
+            Text("Guenstigerpruefung")
+        } footer: {
+            Text("Solidaritaetszuschlag und Kirchensteuer werden unabhaengig vom Ergebnis dieser Pruefung immer mit Kinderfreibetraegen bemessen (§ 51a EStG).")
+        }
+    }
+
+    private var guenstigerpruefung: String {
+        ergebnis.kinder.freibetraegeAngesetzt
+            ? "Die Freibetraege sind guenstiger. Sie werden angesetzt, das Kindergeld wird der Steuer hinzugerechnet."
+            : "Das Kindergeld ist guenstiger. Es bleibt bei der Steuer ohne Kinderfreibetraege."
     }
 
     private var abzuegeAbschnitt: some View {
@@ -123,13 +177,19 @@ struct SchaetzungAnsicht: View {
         return "unter der Freigrenze von \(Formatierung.euro(freigrenze, mitCent: false))"
     }
 
+    private var tarifHinweis: String {
+        let tarifart = profil.veranlagungsart.splitting ? "Splittingtarif" : "Grundtarif"
+        guard ergebnis.kinder.freibetraegeAngesetzt else { return tarifart }
+        return tarifart + ", mit Kinderfreibetraegen und hinzugerechnetem Kindergeld"
+    }
+
     private var hebesatzHinweis: String {
         "Hebesatz \(NSDecimalNumber(decimal: profil.gewerbesteuerHebesatz).intValue) %"
     }
 
     private var hoechstbetragHinweis: String? {
         let hoechst = steuerjahr.hoechstbetragAltersvorsorge * veranlagungsfaktor
-        guard profil.beitragAltersvorsorge > hoechst else { return nil }
+        guard angaben.beitragAltersvorsorge > hoechst else { return nil }
         return "gekuerzt auf den Hoechstbetrag von \(Formatierung.euro(hoechst, mitCent: false))"
     }
 
@@ -137,8 +197,7 @@ struct SchaetzungAnsicht: View {
         Section("Steuer") {
             ZeileMitBetrag(bezeichnung: "Einkommensteuer",
                            betrag: ergebnis.tariflicheEinkommensteuer,
-                           unterzeile: profil.veranlagungsart.splitting
-                               ? "Splittingtarif" : "Grundtarif")
+                           unterzeile: tarifHinweis)
             if ergebnis.angerechneteGewerbesteuer > 0 {
                 ZeileMitBetrag(bezeichnung: "Anrechnung Gewerbesteuer",
                                betrag: -ergebnis.angerechneteGewerbesteuer,

@@ -1,10 +1,15 @@
 import Foundation
 import SwiftData
 
-/// Aufbau des SwiftData-Containers und Zugriff auf das eine Steuerprofil.
+/// Aufbau des SwiftData-Containers und Zugriff auf Profil und Jahresangaben.
 enum Datenbank {
 
-    static let schema = Schema([Beleg.self, Steuerprofil.self])
+    static let schema = Schema([
+        Beleg.self,
+        Steuerprofil.self,
+        Jahresangaben.self,
+        Wirtschaftsgut.self,
+    ])
 
     /// Container fuer den produktiven Betrieb.
     static func container() -> ModelContainer {
@@ -28,31 +33,48 @@ enum Datenbank {
         return container
     }
 
+    // MARK: - Profil und Jahresangaben
+
     /// Legt das Profil an, falls noch keines existiert.
     ///
     /// Bewusst eine eigene Methode statt eines Zugriffs, der nebenbei anlegt: ein Einfuegen
     /// waehrend des Renderns wuerde SwiftUI mitten im Aufbau der Ansicht zum Neuzeichnen
-    /// zwingen. Die Ansichten lesen das Profil ueber `@Query` und rufen dies einmal beim Start.
+    /// zwingen. Die Ansichten lesen ueber `@Query` und rufen dies einmal beim Start.
     static func profilSicherstellen(in kontext: ModelContext) {
         let vorhandene = (try? kontext.fetchCount(FetchDescriptor<Steuerprofil>())) ?? 0
         guard vorhandene == 0 else { return }
         kontext.insert(Steuerprofil())
     }
 
+    /// Legt die Jahresangaben fuer das Jahr an, falls sie fehlen.
+    static func jahresangabenSicherstellen(fuer jahr: Int, in kontext: ModelContext) {
+        let abfrage = FetchDescriptor<Jahresangaben>(
+            predicate: #Predicate { $0.jahr == jahr }
+        )
+        let vorhandene = (try? kontext.fetchCount(abfrage)) ?? 0
+        guard vorhandene == 0 else { return }
+        kontext.insert(Jahresangaben(jahr: jahr))
+    }
+
     // MARK: - Beispieldaten
 
     static func beispieldatenAnlegen(in kontext: ModelContext) {
+        let jahr = Calendar.kalender.component(.year, from: Date())
+
         let profil = Steuerprofil()
         profil.taetigkeitsart = .freiberuflich
-        profil.beitragKrankenPflegeBasis = 7_200
-        profil.beitragAltersvorsorge = 6_000
-        profil.geleisteteVorauszahlungen = 4_000
         kontext.insert(profil)
 
-        let jahr = Calendar.kalender.component(.year, from: Date())
-        func datum(_ monat: Int, _ tag: Int) -> Date {
-            Calendar.kalender.date(from: DateComponents(year: jahr, month: monat, day: tag))
-                ?? Date()
+        let angaben = Jahresangaben(jahr: jahr)
+        angaben.beitragKrankenPflegeBasis = 7_200
+        angaben.beitragAltersvorsorge = 6_000
+        angaben.geleisteteVorauszahlungen = 4_000
+        kontext.insert(angaben)
+
+        func datum(_ monat: Int, _ tag: Int, jahr verwendetesJahr: Int? = nil) -> Date {
+            Calendar.kalender.date(from: DateComponents(
+                year: verwendetesJahr ?? jahr, month: monat, day: tag, hour: 12
+            )) ?? Date()
         }
 
         let beispiele: [Beleg] = [
@@ -64,8 +86,9 @@ enum Datenbank {
                   bruttoBetrag: 3_570, kategorie: .umsatzerloese),
             Beleg(datum: datum(6, 12), bezeichnung: "Wartungspauschale Q2",
                   bruttoBetrag: 2_380, kategorie: .umsatzerloese),
-            Beleg(datum: datum(1, 8), bezeichnung: "Notebook",
-                  bruttoBetrag: 2_499, kategorie: .geringwertigeWirtschaftsgueter),
+            Beleg(datum: datum(1, 8), bezeichnung: "Vorsteuer Notebook",
+                  bruttoBetrag: 399, kategorie: .sonstigeAusgaben,
+                  notiz: "Umsatzsteuer aus der Anschaffung des Notebooks"),
             Beleg(datum: datum(1, 31), bezeichnung: "Coworking Januar",
                   bruttoBetrag: 297.50, kategorie: .raumkosten),
             Beleg(datum: datum(2, 5), bezeichnung: "Mobilfunk und Internet",
@@ -84,5 +107,13 @@ enum Datenbank {
                   bruttoBetrag: 659.60, kategorie: .softwareAbos),
         ]
         beispiele.forEach { kontext.insert($0) }
+
+        kontext.insert(Wirtschaftsgut(
+            bezeichnung: "Notebook",
+            anschaffungsdatum: datum(1, 8),
+            anschaffungskostenNetto: 2_100,
+            nutzungsdauerJahre: 3,
+            notiz: "Arbeitsgeraet, ueber drei Jahre abzuschreiben"
+        ))
     }
 }

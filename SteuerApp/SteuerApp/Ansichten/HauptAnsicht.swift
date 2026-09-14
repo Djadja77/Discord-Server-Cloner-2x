@@ -24,10 +24,18 @@ struct HauptAnsicht: View {
             EuerAnsicht(jahr: $jahr)
                 .tabItem { Label("Auswertung", systemImage: "tablecells") }
 
-            EinstellungenAnsicht()
+            EinstellungenAnsicht(jahr: $jahr)
                 .tabItem { Label("Profil", systemImage: "person.crop.circle") }
         }
-        .task { Datenbank.profilSicherstellen(in: kontext) }
+        .task { stammdatenSicherstellen() }
+        // Jeder Jahreswechsel braucht einen eigenen Satz Jahresangaben - sonst landen
+        // Beitraege und Vorauszahlungen des einen Jahres im anderen.
+        .onChange(of: jahr) { stammdatenSicherstellen() }
+    }
+
+    private func stammdatenSicherstellen() {
+        Datenbank.profilSicherstellen(in: kontext)
+        Datenbank.jahresangabenSicherstellen(fuer: jahr, in: kontext)
     }
 }
 
