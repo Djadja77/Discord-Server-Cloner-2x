@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Der Start der App: die Kennzahlkarte baut sich vor den Augen auf.
+/// Der Start der App: eine Glaskarte legt sich über den Verlauf und füllt sich.
 ///
 /// Die Reihenfolge ist dieselbe wie später auf der Übersicht - Marke, Name, Betrag,
 /// Monatsbalken. Wer die App zum zehnten Mal öffnet, sieht deshalb nichts Fremdes,
@@ -15,6 +15,7 @@ struct Startbild: View {
 
     @Environment(\.accessibilityReduceMotion) private var bewegungReduziert
 
+    @State private var karteDa = false
     @State private var markeGesetzt = false
     @State private var nameSichtbar = false
     @State private var betrag: Double = 0
@@ -29,21 +30,13 @@ struct Startbild: View {
 
     var body: some View {
         ZStack {
-            Stil.grund.ignoresSafeArea()
+            Verlaufsgrund()
 
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-
-                marke
-                name.padding(.top, 20)
-
-                betragszeile.padding(.top, 34)
-                balken.padding(.top, 26)
-
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 44)
-            .frame(maxWidth: 460)
+            karte
+                .frame(maxWidth: 340)
+                .padding(.horizontal, 32)
+                .scaleEffect(karteDa ? 1 : 0.92)
+                .opacity(karteDa ? 1 : 0)
         }
         .opacity(sichtbar ? 1 : 0)
         .contentShape(Rectangle())
@@ -55,26 +48,45 @@ struct Startbild: View {
 
     // MARK: - Bausteine
 
+    private var karte: some View {
+        VStack(spacing: 0) {
+            marke
+            name.padding(.top, 18)
+            betragszeile.padding(.top, 28)
+            balken.padding(.top, 22)
+        }
+        .padding(.vertical, 30)
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity)
+        .alsGlas(radius: 32)
+    }
+
     private var marke: some View {
-        RoundedRectangle(cornerRadius: 20, style: .continuous)
+        RoundedRectangle(cornerRadius: Stil.innenradius(außen: 32, polster: 6),
+                         style: .continuous)
             .fill(Stil.akzent)
-            .frame(width: 74, height: 74)
+            .frame(width: 70, height: 70)
+            .overlay(
+                RoundedRectangle(cornerRadius: Stil.innenradius(außen: 32, polster: 6),
+                                 style: .continuous)
+                    .strokeBorder(Stil.kante, lineWidth: 1)
+            )
             .overlay(
                 Image(systemName: "eurosign")
-                    .font(.system(size: 33, weight: .bold))
+                    .font(.system(size: 31, weight: .bold))
                     .foregroundStyle(.white)
             )
-            .scaleEffect(markeGesetzt ? 1 : 0.55)
+            .scaleEffect(markeGesetzt ? 1 : 0.6)
             .opacity(markeGesetzt ? 1 : 0)
     }
 
     private var name: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 4) {
             Text("Steuer")
-                .font(.system(size: 27, weight: .bold))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundStyle(Stil.schrift)
             Text("Belege · EÜR · Schätzung")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 12.5, weight: .medium))
                 .foregroundStyle(Stil.schriftGedämpft)
         }
         .opacity(nameSichtbar ? 1 : 0)
@@ -82,15 +94,15 @@ struct Startbild: View {
     }
 
     private var betragszeile: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 5) {
             Text("GEWINN 2026")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: 10.5, weight: .semibold))
                 .tracking(1.0)
                 .foregroundStyle(Stil.schriftLeise)
 
             ZählenderBetrag(
                 wert: betrag,
-                schrift: Stil.hauptzahl(38),
+                schrift: Stil.hauptzahl(34),
                 farbe: Stil.haben,
                 mitVorzeichen: true
             )
@@ -101,11 +113,13 @@ struct Startbild: View {
     }
 
     private var balken: some View {
-        HStack(alignment: .bottom, spacing: 6) {
+        HStack(alignment: .bottom, spacing: 5) {
             ForEach(Array(verlauf.enumerated()), id: \.offset) { stelle, anteil in
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(stelle == verlauf.count - 1 ? Stil.akzent : Stil.flächeHoch)
-                    .frame(height: max(66 * anteil * balkenhöhe, 2))
+                    .fill(stelle == verlauf.count - 1
+                          ? AnyShapeStyle(Stil.akzent)
+                          : AnyShapeStyle(Color.white.opacity(0.16)))
+                    .frame(height: max(58 * anteil * balkenhöhe, 2))
                     .animation(
                         bewegungReduziert
                             ? .none
@@ -115,7 +129,7 @@ struct Startbild: View {
                     )
             }
         }
-        .frame(height: 66, alignment: .bottom)
+        .frame(height: 58, alignment: .bottom)
     }
 
     // MARK: - Ablauf
@@ -123,6 +137,7 @@ struct Startbild: View {
     @MainActor
     private func ablaufSpielen() async {
         guard !bewegungReduziert else {
+            karteDa = true
             markeGesetzt = true
             nameSichtbar = true
             betragSichtbar = true
@@ -133,12 +148,15 @@ struct Startbild: View {
             return
         }
 
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.66)) { markeGesetzt = true }
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.82)) { karteDa = true }
 
-        try? await Task.sleep(for: .milliseconds(280))
+        try? await Task.sleep(for: .milliseconds(140))
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.62)) { markeGesetzt = true }
+
+        try? await Task.sleep(for: .milliseconds(260))
         withAnimation(.easeOut(duration: 0.35)) { nameSichtbar = true }
 
-        try? await Task.sleep(for: .milliseconds(320))
+        try? await Task.sleep(for: .milliseconds(300))
         withAnimation(.easeOut(duration: 0.25)) { betragSichtbar = true }
         withAnimation(.easeOut(duration: 0.85)) { betrag = zielbetrag }
         balkenhöhe = 1
@@ -150,9 +168,9 @@ struct Startbild: View {
     @MainActor
     private func abschließen() {
         guard sichtbar else { return }
-        withAnimation(.easeIn(duration: 0.3)) { sichtbar = false }
+        withAnimation(.easeIn(duration: 0.32)) { sichtbar = false }
         Task {
-            try? await Task.sleep(for: .milliseconds(300))
+            try? await Task.sleep(for: .milliseconds(320))
             fertig()
         }
     }

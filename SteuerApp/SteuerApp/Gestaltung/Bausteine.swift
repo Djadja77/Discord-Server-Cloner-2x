@@ -88,6 +88,7 @@ struct Veränderungsmarke: View {
 
     var body: some View {
         let steigt = anteil >= 0
+        let ton = steigt ? Stil.haben : Stil.schriftGedämpft
         HStack(spacing: 3) {
             Image(systemName: steigt ? "arrow.up.right" : "arrow.down.right")
                 .font(.system(size: 10, weight: .bold))
@@ -95,13 +96,11 @@ struct Veränderungsmarke: View {
                 .font(.system(size: 12, weight: .semibold))
                 .monospacedDigit()
         }
-        .foregroundStyle(steigt ? Stil.haben : Stil.schriftGedämpft)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-            (steigt ? Stil.haben : Stil.schriftGedämpft).opacity(0.14),
-            in: Capsule()
-        )
+        .foregroundStyle(ton)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .background(ton.opacity(0.16), in: Capsule())
+        .overlay(Capsule().strokeBorder(Stil.kanteFein, lineWidth: 0.8))
     }
 }
 
@@ -127,8 +126,10 @@ struct Monatsbalken: View {
                 VStack(spacing: 6) {
                     // Immer mindestens zwei Punkte hoch, damit leere Monate sichtbar
                     // bleiben - ein unsichtbarer Balken sieht aus wie ein Fehler.
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(monat == hervorgehoben ? Stil.akzent : Stil.flächeHoch)
+                    RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+                        .fill(monat == hervorgehoben
+                              ? AnyShapeStyle(Stil.akzent)
+                              : AnyShapeStyle(Color.white.opacity(0.14)))
                         .frame(height: max(höhe * CGFloat(abs(wert.alsDouble) / größter), 2))
 
                     Text(kürzel[monat])
@@ -146,7 +147,7 @@ struct Monatsbalken: View {
 
 // MARK: - Filter
 
-/// Waagerecht scrollende Filterpillen.
+/// Waagerecht scrollende Filterpillen aus Glas.
 struct Filterpillen<Wert: Hashable>: View {
 
     let auswahl: [(wert: Wert, titel: String)]
@@ -158,14 +159,21 @@ struct Filterpillen<Wert: Hashable>: View {
                 ForEach(auswahl, id: \.wert) { eintrag in
                     let aktiv = eintrag.wert == gewählt
                     Button {
-                        withAnimation(.easeOut(duration: 0.18)) { gewählt = eintrag.wert }
+                        withAnimation(.easeOut(duration: 0.2)) { gewählt = eintrag.wert }
                     } label: {
                         Text(eintrag.titel)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(aktiv ? Stil.grund : Stil.schriftGedämpft)
+                            .foregroundStyle(aktiv ? .white : Stil.schriftGedämpft)
                             .padding(.horizontal, 15)
-                            .padding(.vertical, 8)
-                            .background(aktiv ? Stil.schrift : Stil.flächeHoch, in: Capsule())
+                            .padding(.vertical, 9)
+                            .background {
+                                if aktiv {
+                                    Capsule().fill(Stil.akzent)
+                                } else {
+                                    Capsule().fill(Stil.glas)
+                                }
+                            }
+                            .overlay(Capsule().strokeBorder(Stil.kanteFein, lineWidth: 0.8))
                     }
                     .buttonStyle(.plain)
                 }
@@ -188,7 +196,8 @@ struct Kategoriesymbol: View {
     var body: some View {
         let ton = Stil.farbe(fuer: kategorie)
         ZStack {
-            Circle().fill(ton.opacity(0.18))
+            Circle().fill(ton.opacity(0.22))
+            Circle().strokeBorder(Stil.kanteFein, lineWidth: 0.8)
             Image(systemName: kategorie.symbol)
                 .font(.system(size: größe * 0.42, weight: .medium))
                 .foregroundStyle(ton)
@@ -295,7 +304,7 @@ struct Trennzeile: View {
     var einzug: CGFloat = 0
     var body: some View {
         Rectangle()
-            .fill(Stil.trenner)
+            .fill(Color.white.opacity(0.10))
             .frame(height: 0.5)
             .padding(.leading, einzug)
     }
@@ -352,7 +361,7 @@ struct Kachel: View {
             }
 
             Text(wert)
-                .font(.system(size: 21, weight: .bold))
+                .font(.system(size: 21, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(farbe)
                 .lineLimit(1)
@@ -368,8 +377,7 @@ struct Kachel: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(15)
-        .background(Stil.fläche, in: RoundedRectangle(cornerRadius: Stil.radiusKachel,
-                                                      style: .continuous))
+        .alsGlas(radius: Stil.radiusKachel)
     }
 }
 
@@ -384,9 +392,10 @@ struct Statusmarke: View {
             .font(.system(size: 10, weight: .bold))
             .tracking(0.6)
             .foregroundStyle(farbe)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(farbe.opacity(0.16), in: Capsule())
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(farbe.opacity(0.18), in: Capsule())
+            .overlay(Capsule().strokeBorder(Stil.kanteFein, lineWidth: 0.8))
     }
 }
 
@@ -441,7 +450,7 @@ struct LeerHinweis: View {
 
 // MARK: - Knöpfe
 
-/// Der Hauptknopf - breit, gefüllt, unten am Bildschirm.
+/// Der Hauptknopf - breit, in getöntem Glas, unten am Bildschirm.
 struct HauptknopfStil: ButtonStyle {
 
     var farbe: Color = Stil.akzent
@@ -451,15 +460,16 @@ struct HauptknopfStil: ButtonStyle {
             .font(.system(size: 16, weight: .semibold))
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
+            .padding(.vertical, 16)
             .background(farbe, in: Capsule())
-            .opacity(configuration.isPressed ? 0.75 : 1)
+            .overlay(Capsule().strokeBorder(Stil.kante, lineWidth: 1))
+            .opacity(configuration.isPressed ? 0.78 : 1)
             .scaleEffect(configuration.isPressed ? 0.985 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
-/// Zweitrangiger Knopf - gefüllt, aber ohne Farbe.
+/// Zweitrangiger Knopf - klares Glas ohne Farbe.
 struct NebenknopfStil: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
@@ -467,26 +477,28 @@ struct NebenknopfStil: ButtonStyle {
             .font(.system(size: 16, weight: .semibold))
             .foregroundStyle(Stil.schrift)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
-            .background(Stil.flächeHoch, in: Capsule())
-            .opacity(configuration.isPressed ? 0.75 : 1)
+            .padding(.vertical, 16)
+            .background(Stil.glas, in: Capsule())
+            .overlay(Capsule().strokeBorder(Stil.kante, lineWidth: 1))
+            .opacity(configuration.isPressed ? 0.78 : 1)
     }
 }
 
-/// Runder Knopf für die Kopfzeile.
+/// Runder Glasknopf für die Kopfzeile.
 struct RundknopfStil: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 16, weight: .semibold))
             .foregroundStyle(Stil.schrift)
-            .frame(width: 38, height: 38)
-            .background(Stil.flächeHoch, in: Circle())
+            .frame(width: 40, height: 40)
+            .background(Stil.glas, in: Circle())
+            .overlay(Circle().strokeBorder(Stil.kanteFein, lineWidth: 0.9))
             .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 
-/// Die Jahresauswahl als Pille in der Kopfzeile.
+/// Die Jahresauswahl als Glaspille in der Kopfzeile.
 struct Jahrespille: View {
 
     @Binding var jahr: Int
@@ -507,9 +519,95 @@ struct Jahrespille: View {
                     .font(.system(size: 10, weight: .bold))
             }
             .foregroundStyle(Stil.schrift)
-            .padding(.horizontal, 13)
-            .padding(.vertical, 8)
-            .background(Stil.flächeHoch, in: Capsule())
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Stil.glas, in: Capsule())
+            .overlay(Capsule().strokeBorder(Stil.kanteFein, lineWidth: 0.9))
         }
+    }
+}
+
+// MARK: - Die schwebende Bedienleiste
+
+/// Die fünf Bereiche der App als Glaskapsel, die über dem Inhalt schwebt.
+///
+/// Statt eines Balkens am unteren Rand liegt die Leiste frei auf dem Bildschirm, mit
+/// Inhalt darunter, der durch das Glas scheint. Der ausgewählte Bereich bekommt eine
+/// eigene getönte Kapsel, die beim Wechseln hinüberfährt - über `matchedGeometryEffect`,
+/// damit sie tatsächlich gleitet und nicht an zwei Stellen aufblitzt.
+struct SchwebendeLeiste: View {
+
+    @Binding var auswahl: Bereich
+    @Namespace private var kapsel
+
+    enum Bereich: Int, CaseIterable, Identifiable {
+        case übersicht, belege, schätzung, auswertung, profil
+
+        var id: Int { rawValue }
+
+        var titel: String {
+            switch self {
+            case .übersicht: "Übersicht"
+            case .belege: "Belege"
+            case .schätzung: "Schätzung"
+            case .auswertung: "Auswertung"
+            case .profil: "Profil"
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .übersicht: "square.grid.2x2.fill"
+            case .belege: "list.bullet"
+            case .schätzung: "chart.bar.fill"
+            case .auswertung: "doc.text.fill"
+            case .profil: "person.fill"
+            }
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(Bereich.allCases) { bereich in
+                knopf(fuer: bereich)
+            }
+        }
+        .padding(5)
+        .background(Stil.glasDicht, in: Capsule())
+        .overlay(Capsule().strokeBorder(Stil.kante, lineWidth: 1))
+        .shadow(color: .black.opacity(0.28), radius: 20, y: 8)
+        .padding(.horizontal, 12)
+    }
+
+    private func knopf(fuer bereich: Bereich) -> some View {
+        let aktiv = auswahl == bereich
+        return Button {
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.8)) {
+                auswahl = bereich
+            }
+        } label: {
+            VStack(spacing: 3) {
+                Image(systemName: bereich.symbol)
+                    .font(.system(size: 17, weight: .medium))
+                Text(bereich.titel)
+                    .font(.system(size: 9.5, weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(aktiv ? Stil.akzent : Stil.schriftGedämpft)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background {
+                if aktiv {
+                    Capsule()
+                        .fill(Stil.akzent.opacity(0.18))
+                        .matchedGeometryEffect(id: "auswahl", in: kapsel)
+                }
+            }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(bereich.titel)
+        .accessibilityAddTraits(aktiv ? [.isButton, .isSelected] : .isButton)
     }
 }

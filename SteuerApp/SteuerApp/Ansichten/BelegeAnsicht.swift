@@ -195,10 +195,9 @@ struct BelegeAnsicht: View {
                 .accessibilityLabel("Suche löschen")
             }
         }
-        .padding(.horizontal, 13)
-        .padding(.vertical, 11)
-        .background(Stil.fläche, in: RoundedRectangle(cornerRadius: Stil.radiusKachel,
-                                                      style: .continuous))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .alsGlas(radius: Stil.radiusKachel)
         .padding(.horizontal, Stil.rand)
         .padding(.top, 14)
     }
@@ -231,8 +230,7 @@ struct BelegeAnsicht: View {
                 }
             }
             .padding(.horizontal, 15)
-            .background(Stil.fläche, in: RoundedRectangle(cornerRadius: Stil.radiusKarte,
-                                                          style: .continuous))
+            .alsGlas()
             .padding(.horizontal, Stil.rand)
         }
     }

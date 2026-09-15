@@ -171,7 +171,7 @@ struct UebersichtAnsicht: View {
     private func balkenAnteil(_ anteil: Double) -> some View {
         GeometryReader { fläche in
             ZStack(alignment: .leading) {
-                Capsule().fill(Stil.flächeHoch)
+                Capsule().fill(Color.white.opacity(0.14))
                 Capsule()
                     .fill(Stil.warnung)
                     .frame(width: max(fläche.size.width * anteil, 4))
@@ -211,8 +211,7 @@ struct UebersichtAnsicht: View {
                 }
             }
             .padding(.horizontal, 15)
-            .background(Stil.fläche, in: RoundedRectangle(cornerRadius: Stil.radiusKarte,
-                                                          style: .continuous))
+            .alsGlas()
             .padding(.horizontal, Stil.rand)
         }
     }

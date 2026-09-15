@@ -62,8 +62,9 @@ struct BelegErfassenSchaltfläche: View {
                 Image(systemName: "plus")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Stil.schrift)
-                    .frame(width: 38, height: 38)
-                    .background(Stil.flächeHoch, in: Circle())
+                    .frame(width: 40, height: 40)
+                    .background(Stil.glas, in: Circle())
+                    .overlay(Circle().strokeBorder(Stil.kanteFein, lineWidth: 0.9))
             }
             .accessibilityLabel("Beleg erfassen")
         } else {
@@ -79,6 +80,7 @@ struct BelegErfassenSchaltfläche: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 15)
                 .background(Stil.akzent, in: Capsule())
+                .overlay(Capsule().strokeBorder(Stil.kante, lineWidth: 1))
             }
         }
     }

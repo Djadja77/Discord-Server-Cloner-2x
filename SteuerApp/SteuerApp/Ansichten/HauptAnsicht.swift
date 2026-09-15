@@ -3,6 +3,13 @@ import SwiftData
 
 /// Die fünf Bereiche der App. Bewusst flach gehalten: Belege erfassen ist der häufigste
 /// Vorgang und darf nie mehr als einen Fingertipp entfernt sein.
+///
+/// Die Systemleiste am unteren Rand blenden `aufGrund()` und `alsListe()` aus - sie
+/// sitzen innerhalb der Navigation, wo `toolbar(.hidden, for: .tabBar)` zuverlässig
+/// greift. An ihrer Stelle schwebt `SchwebendeLeiste` über dem Inhalt.
+///
+/// Der `TabView` bleibt darunter trotzdem bestehen - er hält jeden Bereich am Leben,
+/// sodass ein Wechsel hin und zurück den Scrollstand und offene Masken nicht verwirft.
 struct HauptAnsicht: View {
 
     @Environment(\.modelContext) private var kontext
@@ -10,27 +17,35 @@ struct HauptAnsicht: View {
     @AppStorage("ausgewaehltesJahr") private var jahr: Int = Calendar.kalender
         .component(.year, from: Date())
 
+    @State private var bereich: SchwebendeLeiste.Bereich = .übersicht
+
     init() {
         Self.leistenGestalten()
     }
 
     var body: some View {
-        TabView {
-            UebersichtAnsicht(jahr: $jahr)
-                .tabItem { Label("Übersicht", systemImage: "square.grid.2x2.fill") }
+        ZStack(alignment: .bottom) {
+            TabView(selection: $bereich) {
+                UebersichtAnsicht(jahr: $jahr)
+                    .tag(SchwebendeLeiste.Bereich.übersicht)
 
-            BelegeAnsicht(jahr: $jahr)
-                .tabItem { Label("Belege", systemImage: "list.bullet") }
+                BelegeAnsicht(jahr: $jahr)
+                    .tag(SchwebendeLeiste.Bereich.belege)
 
-            SchätzungAnsicht(jahr: $jahr)
-                .tabItem { Label("Schätzung", systemImage: "chart.bar.fill") }
+                SchätzungAnsicht(jahr: $jahr)
+                    .tag(SchwebendeLeiste.Bereich.schätzung)
 
-            EuerAnsicht(jahr: $jahr)
-                .tabItem { Label("Auswertung", systemImage: "doc.text.fill") }
+                EuerAnsicht(jahr: $jahr)
+                    .tag(SchwebendeLeiste.Bereich.auswertung)
 
-            EinstellungenAnsicht(jahr: $jahr)
-                .tabItem { Label("Profil", systemImage: "person.fill") }
+                EinstellungenAnsicht(jahr: $jahr)
+                    .tag(SchwebendeLeiste.Bereich.profil)
+            }
+
+            SchwebendeLeiste(auswahl: $bereich)
+                .padding(.bottom, 6)
         }
+        .ignoresSafeArea(.keyboard)
         .tint(Stil.akzent)
         .task { stammdatenSicherstellen() }
         // Jeder Jahreswechsel braucht einen eigenen Satz Jahresangaben - sonst landen
@@ -43,23 +58,14 @@ struct HauptAnsicht: View {
         Datenbank.jahresangabenSicherstellen(fuer: jahr, in: kontext)
     }
 
-    /// Tab- und Navigationsleiste auf den Seitengrund setzen.
+    /// Die Navigationsleiste durchsichtig machen.
     ///
-    /// SwiftUI bietet dafür keinen eigenen Weg - ohne diesen Umweg über UIKit bleiben
-    /// beide Leisten im Systemgrau stehen und setzen helle Streifen über und unter
-    /// jeden Bildschirm.
+    /// SwiftUI bietet dafür keinen eigenen Weg - ohne diesen Umweg über UIKit legt sich
+    /// ein grauer Streifen über den Verlauf und bricht die Glasebene auf.
     private static func leistenGestalten() {
-        let tableiste = UITabBarAppearance()
-        tableiste.configureWithOpaqueBackground()
-        tableiste.backgroundColor = UIColor(Stil.grund)
-        tableiste.shadowColor = UIColor(Stil.trenner)
-        UITabBar.appearance().standardAppearance = tableiste
-        UITabBar.appearance().scrollEdgeAppearance = tableiste
-
         let navileiste = UINavigationBarAppearance()
-        navileiste.configureWithOpaqueBackground()
-        navileiste.backgroundColor = UIColor(Stil.grund)
-        // Kein Schlagschatten: die Karten darunter setzen die Kante selbst.
+        navileiste.configureWithTransparentBackground()
+        navileiste.backgroundColor = .clear
         navileiste.shadowColor = .clear
         navileiste.titleTextAttributes = [.foregroundColor: UIColor(Stil.schrift)]
         navileiste.largeTitleTextAttributes = [
