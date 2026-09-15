@@ -1,13 +1,13 @@
 import XCTest
 @testable import SteuerApp
 
-/// Prueft jedes hinterlegte Steuerjahr gegen die gesetzlichen Eckwerte des Tarifs.
+/// Prüft jedes hinterlegte Steuerjahr gegen die gesetzlichen Eckwerte des Tarifs.
 ///
 /// Der Einkommensteuertarif ist so konstruiert, dass der Grenzsteuersatz am Ende der ersten
-/// Progressionszone exakt 23,97 % und am Ende der zweiten exakt 42 % betraegt. Diese beiden
+/// Progressionszone exakt 23,97 % und am Ende der zweiten exakt 42 % beträgt. Diese beiden
 /// Bedingungen verknuepfen die Tarifkonstanten miteinander: ein Zahlendreher in einer der
-/// Konstanten verletzt sie sofort. Damit faengt dieser Test genau den Fehler ab, der beim
-/// jaehrlichen Nachtragen der Werte am wahrscheinlichsten ist.
+/// Konstanten verletzt sie sofort. Damit fängt dieser Test genau den Fehler ab, der beim
+/// jährlichen Nachtragen der Werte am wahrscheinlichsten ist.
 final class SteuerjahrKonsistenzTests: XCTestCase {
 
     func testJedesJahrTrifftDieGesetzlichenEckwerte() {
@@ -70,6 +70,6 @@ final class SteuerjahrKonsistenzTests: XCTestCase {
     func testUnbekanntesJahrFaelltAufDasNaechstgelegeneZurueck() {
         XCTAssertEqual(Steuerjahr.fuer(2025).jahr, 2025)
         XCTAssertEqual(Steuerjahr.fuer(2030).jahr, 2026, "neuestes hinterlegtes Jahr")
-        XCTAssertEqual(Steuerjahr.fuer(2010).jahr, 2024, "aeltestes hinterlegtes Jahr")
+        XCTAssertEqual(Steuerjahr.fuer(2010).jahr, 2024, "ältestes hinterlegtes Jahr")
     }
 }

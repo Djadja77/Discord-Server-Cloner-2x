@@ -4,7 +4,7 @@ import XCTest
 /// Tests der Dateinamen im Unterlagenarchiv.
 ///
 /// Die Namen sind kein Beiwerk: Die Belegliste verweist auf sie, und die Steuerberatung
-/// findet darueber das Papier zur Zeile. Ein abgeschnittener Umlaut oder ein verschluckter
+/// findet darüber das Papier zur Zeile. Ein abgeschnittener Umlaut oder ein verschluckter
 /// Cent bricht diese Zuordnung.
 final class UnterlagenexportTests: XCTestCase {
 
@@ -54,7 +54,7 @@ final class UnterlagenexportTests: XCTestCase {
         XCTAssertEqual(Unterlagenexport.betragImNamen(Decimal(string: "1234.5")!), "1234-50")
     }
 
-    // MARK: - Vollstaendiger Dateiname
+    // MARK: - Vollständiger Dateiname
 
     func testDateinameSetztSichAusDatumBezeichnungUndBetragZusammen() {
         let beleg = Beleg(
@@ -68,7 +68,7 @@ final class UnterlagenexportTests: XCTestCase {
     }
 
     func testOhneBezeichnungTrittDieKategorieEin() {
-        let beleg = Beleg(datum: datum(2025, 7, 1), bruttoBetrag: 50, kategorie: .buerobedarf)
+        let beleg = Beleg(datum: datum(2025, 7, 1), bruttoBetrag: 50, kategorie: .bürobedarf)
         XCTAssertEqual(Unterlagenexport.dateiname(fuer: beleg),
                        "2025-07-01_Buerobedarf_50-00.jpg")
     }
@@ -84,7 +84,7 @@ final class UnterlagenexportTests: XCTestCase {
 
     func testBeleglisteFuehrtDenDateinamenAuf() {
         let beleg = Beleg(datum: datum(2025, 3, 14), bezeichnung: "Muster",
-                          bruttoBetrag: 119, kategorie: .buerobedarf,
+                          bruttoBetrag: 119, kategorie: .bürobedarf,
                           belegbildDatei: "irgendwas.jpg")
         let csv = CSVExport.belege([beleg], jahr: 2025,
                                    fotonamen: [beleg.persistentModelID: "meinbeleg.jpg"])

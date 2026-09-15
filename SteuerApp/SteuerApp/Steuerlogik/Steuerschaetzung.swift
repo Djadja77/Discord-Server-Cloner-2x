@@ -1,20 +1,20 @@
 import Foundation
 
-/// Die vollstaendige Steuerschaetzung fuer ein Jahr - vom Gewinn bis zur Nachzahlung.
+/// Die vollständige Steuerschaetzung für ein Jahr - vom Gewinn bis zur Nachzahlung.
 ///
 /// Rechenweg (Schema des § 2 EStG):
 /// ```
-///   Gewinn aus selbstaendiger Arbeit / Gewerbebetrieb
-/// + weitere Einkuenfte
-/// = Gesamtbetrag der Einkuenfte
+///   Gewinn aus selbständiger Arbeit / Gewerbebetrieb
+/// + weitere Einkünfte
+/// = Gesamtbetrag der Einkünfte
 /// - Verlustabzug aus Vorjahren (§ 10d EStG)
 /// - Vorsorgeaufwendungen
-/// - uebrige Sonderausgaben (mindestens der Pauschbetrag)
-/// - aussergewoehnliche Belastungen
+/// - übrige Sonderausgaben (mindestens der Pauschbetrag)
+/// - außergewöhnliche Belastungen
 /// = zu versteuerndes Einkommen
-/// -> Einkommensteuer nach § 32a EStG, mit Guenstigerpruefung fuer Kinder (§ 31 EStG)
+/// -> Einkommensteuer nach § 32a EStG, mit Günstigerprüfung für Kinder (§ 31 EStG)
 /// - Anrechnung der Gewerbesteuer (§ 35 EStG)
-/// + Solidaritaetszuschlag + Kirchensteuer (bemessen nach § 51a EStG)
+/// + Solidaritätszuschlag + Kirchensteuer (bemessen nach § 51a EStG)
 /// + Gewerbesteuer
 /// - geleistete Vorauszahlungen
 /// = Nachzahlung oder Erstattung
@@ -26,14 +26,14 @@ struct Steuerschaetzung {
     struct Eingaben {
         var steuerjahr: Steuerjahr
         var gewinn: Decimal
-        var weitereEinkuenfte: Decimal = 0
-        var taetigkeitsart: Taetigkeitsart = .freiberuflich
+        var weitereEinkünfte: Decimal = 0
+        var tätigkeitsart: Tätigkeitsart = .freiberuflich
         var veranlagungsart: Veranlagungsart = .einzel
         var kirchensteuersatz: Kirchensteuersatz = .keine
         var gewerbesteuerHebesatz: Decimal = 400
         var vorsorgeaufwendungen = Vorsorgeaufwendungen()
         var weitereSonderausgaben: Decimal = 0
-        var aussergewoehnlicheBelastungen: Decimal = 0
+        var außergewöhnlicheBelastungen: Decimal = 0
         var geleisteteVorauszahlungen: Decimal = 0
         var verlustvortragAusVorjahren: Decimal = 0
         var anzahlKinder: Int = 0
@@ -53,14 +53,14 @@ struct Steuerschaetzung {
         ) {
             self.steuerjahr = steuerjahr
             self.gewinn = gewinn
-            self.taetigkeitsart = profil.taetigkeitsart
+            self.tätigkeitsart = profil.tätigkeitsart
             self.veranlagungsart = profil.veranlagungsart
             self.kirchensteuersatz = profil.kirchensteuersatz
             self.gewerbesteuerHebesatz = profil.gewerbesteuerHebesatz
-            self.weitereEinkuenfte = jahresangaben.weitereEinkuenfte
+            self.weitereEinkünfte = jahresangaben.weitereEinkünfte
             self.vorsorgeaufwendungen = jahresangaben.vorsorgeaufwendungen
             self.weitereSonderausgaben = jahresangaben.weitereSonderausgaben
-            self.aussergewoehnlicheBelastungen = jahresangaben.aussergewoehnlicheBelastungen
+            self.außergewöhnlicheBelastungen = jahresangaben.außergewöhnlicheBelastungen
             self.geleisteteVorauszahlungen = jahresangaben.geleisteteVorauszahlungen
             self.verlustvortragAusVorjahren = jahresangaben.verlustvortragAusVorjahren
             self.anzahlKinder = jahresangaben.anzahlKinder
@@ -73,11 +73,11 @@ struct Steuerschaetzung {
     struct Ergebnis: Equatable {
         let jahr: Int
         let gewinn: Decimal
-        let gesamtbetragDerEinkuenfte: Decimal
+        let gesamtbetragDerEinkünfte: Decimal
         let verlustabzug: Verlustverrechnung.Ergebnis
         let vorsorge: Vorsorgeaufwendungen.Ergebnis
-        let uebrigeSonderausgaben: Decimal
-        let aussergewoehnlicheBelastungen: Decimal
+        let übrigeSonderausgaben: Decimal
+        let außergewöhnlicheBelastungen: Decimal
         let zuVersteuerndesEinkommen: Decimal
 
         let kinder: Kinderfreibetrag.Ergebnis
@@ -85,7 +85,7 @@ struct Steuerschaetzung {
         let gewerbesteuer: Gewerbesteuer.Ergebnis
         let angerechneteGewerbesteuer: Decimal
         let festzusetzendeEinkommensteuer: Decimal
-        let solidaritaetszuschlag: Decimal
+        let solidaritätszuschlag: Decimal
         let kirchensteuer: Decimal
 
         let geleisteteVorauszahlungen: Decimal
@@ -97,9 +97,9 @@ struct Steuerschaetzung {
         ///
         /// Angesetzt wird die **volle** Gewerbesteuer, nicht nur die Restbelastung: die
         /// Anrechnung nach § 35 EStG hat die Einkommensteuer bereits gemindert. Beide
-        /// Entlastungen zu beruecksichtigen wuerde die Ermaessigung doppelt zaehlen.
+        /// Entlastungen zu beruecksichtigen würde die Ermäßigung doppelt zählen.
         var gesamtbelastung: Decimal {
-            festzusetzendeEinkommensteuer + solidaritaetszuschlag + kirchensteuer
+            festzusetzendeEinkommensteuer + solidaritätszuschlag + kirchensteuer
                 + gewerbesteuer.gewerbesteuer
         }
 
@@ -108,7 +108,7 @@ struct Steuerschaetzung {
 
         var istErstattung: Bool { offenerBetrag < 0 }
 
-        /// Anteil des Gewinns, der fuer Steuern zurueckgelegt werden sollte.
+        /// Anteil des Gewinns, der für Steuern zurückgelegt werden sollte.
         var ruecklagenquote: Double {
             guard gewinn > 0 else { return 0 }
             return min(gesamtbelastung.alsDouble / gewinn.alsDouble, 1)
@@ -121,8 +121,8 @@ struct Steuerschaetzung {
         let splitting = e.veranlagungsart.splitting
         let tarif = Einkommensteuertarif(steuerjahr: e.steuerjahr)
 
-        // Gewerbesteuer faellt nur bei gewerblicher Taetigkeit an.
-        let gewerbe: Gewerbesteuer.Ergebnis = switch e.taetigkeitsart {
+        // Gewerbesteuer fällt nur bei gewerblicher Tätigkeit an.
+        let gewerbe: Gewerbesteuer.Ergebnis = switch e.tätigkeitsart {
         case .freiberuflich: .keine
         case .gewerblich: Gewerbesteuer.berechnen(
             gewinn: e.gewinn,
@@ -131,10 +131,10 @@ struct Steuerschaetzung {
         )
         }
 
-        let gesamtbetrag = e.gewinn + e.weitereEinkuenfte
+        let gesamtbetrag = e.gewinn + e.weitereEinkünfte
 
         let verlust = Verlustverrechnung.anwenden(
-            gesamtbetragDerEinkuenfte: gesamtbetrag,
+            gesamtbetragDerEinkünfte: gesamtbetrag,
             verlustvortrag: e.verlustvortragAusVorjahren,
             steuerjahr: e.steuerjahr,
             splitting: splitting
@@ -145,16 +145,16 @@ struct Steuerschaetzung {
             splitting: splitting
         )
         let pauschbetrag = e.steuerjahr.sonderausgabenPauschbetrag * (splitting ? 2 : 1)
-        let uebrigeSonderausgaben = max(e.weitereSonderausgaben.nichtNegativ, pauschbetrag)
+        let übrigeSonderausgaben = max(e.weitereSonderausgaben.nichtNegativ, pauschbetrag)
 
         let zve = (gesamtbetrag
             - verlust.abgezogen
             - vorsorge.summe
-            - uebrigeSonderausgaben
-            - e.aussergewoehnlicheBelastungen.nichtNegativ
+            - übrigeSonderausgaben
+            - e.außergewöhnlicheBelastungen.nichtNegativ
         ).nichtNegativ
 
-        let kinder = Kinderfreibetrag.pruefen(
+        let kinder = Kinderfreibetrag.prüfen(
             zuVersteuerndesEinkommen: zve,
             anzahlKinder: e.anzahlKinder,
             vollerFreibetrag: e.vollerKinderfreibetrag,
@@ -163,15 +163,15 @@ struct Steuerschaetzung {
         )
         let tariflich = kinder.tariflicheEinkommensteuer
 
-        // § 35 EStG: angerechnet wird hoechstens der Teil der Einkommensteuer, der auf die
-        // gewerblichen Einkuenfte entfaellt. Der Anteil wird hier ueber das Verhaeltnis der
-        // positiven Einkuenfte bestimmt - das entspricht dem Ermaessigungshoechstbetrag,
+        // § 35 EStG: angerechnet wird höchstens der Teil der Einkommensteuer, der auf die
+        // gewerblichen Einkünfte entfällt. Der Anteil wird hier über das Verhältnis der
+        // positiven Einkünfte bestimmt - das entspricht dem Ermäßigungshöchstbetrag,
         // solange keine Verluste aus anderen Einkunftsarten im Spiel sind.
         let angerechnet: Decimal
         if gewerbe.anrechnungsvolumen > 0, gesamtbetrag > 0 {
             let anteilGewerbe = e.gewinn.nichtNegativ / max(gesamtbetrag, 1)
-            let hoechstbetrag = (tariflich * anteilGewerbe).gerundet()
-            angerechnet = min(gewerbe.anrechnungsvolumen, hoechstbetrag)
+            let höchstbetrag = (tariflich * anteilGewerbe).gerundet()
+            angerechnet = min(gewerbe.anrechnungsvolumen, höchstbetrag)
         } else {
             angerechnet = 0
         }
@@ -179,11 +179,11 @@ struct Steuerschaetzung {
         let festzusetzen = (tariflich - angerechnet).nichtNegativ
 
         // § 51a EStG: Zuschlagsteuern bemessen sich stets nach der Steuer mit
-        // Kinderfreibetraegen - auch dann, wenn die Guenstigerpruefung zugunsten des
+        // Kinderfreibeträgen - auch dann, wenn die Günstigerprüfung zugunsten des
         // Kindergelds ausgegangen ist. Die Gewerbesteuer-Anrechnung mindert sie ebenso.
         let bemessungZuschlagsteuern = (kinder.bemessungZuschlagsteuern - angerechnet).nichtNegativ
 
-        let soli = Solidaritaetszuschlag.betrag(
+        let soli = Solidaritätszuschlag.betrag(
             einkommensteuer: bemessungZuschlagsteuern,
             steuerjahr: e.steuerjahr,
             splitting: splitting
@@ -193,8 +193,8 @@ struct Steuerschaetzung {
             satz: e.kirchensteuersatz
         )
 
-        // Grenzsteuersatz an der Stelle, an der tatsaechlich versteuert wird.
-        let massgeblichesEinkommen = kinder.freibetraegeAngesetzt
+        // Grenzsteuersatz an der Stelle, an der tatsächlich versteuert wird.
+        let maßgeblichesEinkommen = kinder.freibeträgeAngesetzt
             ? (zve - kinder.freibetrag).nichtNegativ
             : zve
 
@@ -206,25 +206,25 @@ struct Steuerschaetzung {
         return Ergebnis(
             jahr: e.steuerjahr.jahr,
             gewinn: e.gewinn,
-            gesamtbetragDerEinkuenfte: gesamtbetrag,
+            gesamtbetragDerEinkünfte: gesamtbetrag,
             verlustabzug: verlust,
             vorsorge: vorsorge,
-            uebrigeSonderausgaben: uebrigeSonderausgaben,
-            aussergewoehnlicheBelastungen: e.aussergewoehnlicheBelastungen.nichtNegativ,
+            übrigeSonderausgaben: übrigeSonderausgaben,
+            außergewöhnlicheBelastungen: e.außergewöhnlicheBelastungen.nichtNegativ,
             zuVersteuerndesEinkommen: zve,
             kinder: kinder,
             tariflicheEinkommensteuer: tariflich,
             gewerbesteuer: gewerbe,
             angerechneteGewerbesteuer: angerechnet,
             festzusetzendeEinkommensteuer: festzusetzen,
-            solidaritaetszuschlag: soli,
+            solidaritätszuschlag: soli,
             kirchensteuer: kirche,
             geleisteteVorauszahlungen: e.geleisteteVorauszahlungen,
-            // Anteil der gesamten Steuerlast am Gesamtbetrag der Einkuenfte - das ist die
-            // Zahl, die zaehlt, wenn man wissen will, was vom Verdienten uebrig bleibt.
+            // Anteil der gesamten Steuerlast am Gesamtbetrag der Einkünfte - das ist die
+            // Zahl, die zählt, wenn man wissen will, was vom Verdienten übrig bleibt.
             durchschnittssteuersatz: durchschnitt,
             grenzsteuersatz: tarif.grenzsteuersatz(
-                zuVersteuerndesEinkommen: massgeblichesEinkommen, splitting: splitting
+                zuVersteuerndesEinkommen: maßgeblichesEinkommen, splitting: splitting
             )
         )
     }

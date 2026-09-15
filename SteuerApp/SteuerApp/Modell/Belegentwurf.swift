@@ -3,7 +3,7 @@ import Foundation
 /// Ein Beleg in Bearbeitung - noch nicht in der Datenbank.
 ///
 /// Sowohl die Einzelmaske als auch die Stapelerfassung arbeiten damit. Auf einem Entwurf
-/// statt direkt auf dem Datenbankobjekt zu arbeiten heisst: Abbrechen ist folgenlos, und
+/// statt direkt auf dem Datenbankobjekt zu arbeiten heißt: Abbrechen ist folgenlos, und
 /// ein Scan-Stapel kann als Ganzes verworfen werden.
 struct Belegentwurf: Identifiable, Equatable {
 
@@ -33,7 +33,7 @@ struct Belegentwurf: Identifiable, Equatable {
         belegbildDatei = beleg.belegbildDatei
     }
 
-    /// Uebertraegt den Entwurf auf einen Beleg.
+    /// Überträgt den Entwurf auf einen Beleg.
     func anwenden(auf beleg: Beleg) {
         beleg.datum = datum
         beleg.bezeichnung = bezeichnung
@@ -45,21 +45,21 @@ struct Belegentwurf: Identifiable, Equatable {
         beleg.belegbildDatei = belegbildDatei
     }
 
-    /// Uebernimmt die Vorschlaege der Texterkennung.
+    /// Übernimmt die Vorschläge der Texterkennung.
     ///
-    /// Gefuellt wird nur, was noch leer ist: eine Korrektur von Hand darf die Texterkennung
-    /// niemals ueberschreiben. Das Datum wird zusaetzlich nur uebernommen, wenn es ins
-    /// bearbeitete Steuerjahr faellt - ein falsch erkanntes Jahr sortiert den Beleg sonst
+    /// Gefüllt wird nur, was noch leer ist: eine Korrektur von Hand darf die Texterkennung
+    /// niemals überschreiben. Das Datum wird zusätzlich nur übernommen, wenn es ins
+    /// bearbeitete Steuerjahr fällt - ein falsch erkanntes Jahr sortiert den Beleg sonst
     /// unbemerkt aus der Auswertung heraus.
-    mutating func uebernehmen(
+    mutating func übernehmen(
         _ vorschlag: BelegTexterkennung.Vorschlag,
         steuerjahr: Int? = nil
     ) {
         if bruttoBetrag == 0, let betrag = vorschlag.bruttoBetrag {
             bruttoBetrag = betrag
         }
-        if bezeichnung.isEmpty, let haendler = vorschlag.haendler {
-            bezeichnung = haendler
+        if bezeichnung.isEmpty, let händler = vorschlag.händler {
+            bezeichnung = händler
         }
         if kategorie == .sonstigeAusgaben, let vorgeschlagen = vorschlag.kategorie {
             kategorie = vorgeschlagen
@@ -76,12 +76,12 @@ struct Belegentwurf: Identifiable, Equatable {
     }
 
     /// Ein Entwurf ist erfassbar, sobald ein Betrag darin steht.
-    var istVollstaendig: Bool { bruttoBetrag > 0 }
+    var istVollständig: Bool { bruttoBetrag > 0 }
 
-    /// Startdatum fuer einen neuen Beleg im gerade bearbeiteten Steuerjahr.
+    /// Startdatum für einen neuen Beleg im gerade bearbeiteten Steuerjahr.
     ///
     /// Wer im Februar die Belege des Vorjahres nacherfasst, soll sie nicht versehentlich
-    /// im laufenden Jahr anlegen - deshalb faellt die Vorgabe in fremden Jahren auf den
+    /// im laufenden Jahr anlegen - deshalb fällt die Vorgabe in fremden Jahren auf den
     /// 31. Dezember.
     static func vorgabedatum(fuerJahr jahr: Int) -> Date {
         let heute = Date()

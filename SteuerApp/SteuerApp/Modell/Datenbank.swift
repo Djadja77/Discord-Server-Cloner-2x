@@ -11,22 +11,22 @@ enum Datenbank {
         Wirtschaftsgut.self,
     ])
 
-    /// Container fuer den produktiven Betrieb.
+    /// Container für den produktiven Betrieb.
     static func container() -> ModelContainer {
         let konfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
             return try ModelContainer(for: schema, configurations: konfiguration)
         } catch {
-            // Ein nicht oeffenbarer Store ist nicht sinnvoll zu behandeln: ohne Datenbank
+            // Ein nicht öffenbarer Store ist nicht sinnvoll zu behandeln: ohne Datenbank
             // gibt es keine App. Der Absturz macht die Ursache im Log sichtbar.
             fatalError("SwiftData-Container konnte nicht geladen werden: \(error)")
         }
     }
 
-    /// Container nur im Arbeitsspeicher - fuer SwiftUI-Vorschauen und Tests.
+    /// Container nur im Arbeitsspeicher - für SwiftUI-Vorschauen und Tests.
     ///
     /// `@MainActor`, weil `mainContext` an den Hauptstrang gebunden ist. Aufgerufen wird
-    /// die Methode ausschliesslich aus `#Preview`-Bloecken, und die laufen ohnehin dort.
+    /// die Methode ausschließlich aus `#Preview`-Blöcken, und die laufen ohnehin dort.
     @MainActor
     static func vorschauContainer(mitBeispieldaten: Bool = true) -> ModelContainer {
         let konfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
@@ -41,16 +41,16 @@ enum Datenbank {
 
     /// Legt das Profil an, falls noch keines existiert.
     ///
-    /// Bewusst eine eigene Methode statt eines Zugriffs, der nebenbei anlegt: ein Einfuegen
-    /// waehrend des Renderns wuerde SwiftUI mitten im Aufbau der Ansicht zum Neuzeichnen
-    /// zwingen. Die Ansichten lesen ueber `@Query` und rufen dies einmal beim Start.
+    /// Bewusst eine eigene Methode statt eines Zugriffs, der nebenbei anlegt: ein Einfügen
+    /// während des Renderns würde SwiftUI mitten im Aufbau der Ansicht zum Neuzeichnen
+    /// zwingen. Die Ansichten lesen über `@Query` und rufen dies einmal beim Start.
     static func profilSicherstellen(in kontext: ModelContext) {
         let vorhandene = (try? kontext.fetchCount(FetchDescriptor<Steuerprofil>())) ?? 0
         guard vorhandene == 0 else { return }
         kontext.insert(Steuerprofil())
     }
 
-    /// Legt die Jahresangaben fuer das Jahr an, falls sie fehlen.
+    /// Legt die Jahresangaben für das Jahr an, falls sie fehlen.
     static func jahresangabenSicherstellen(fuer jahr: Int, in kontext: ModelContext) {
         let abfrage = FetchDescriptor<Jahresangaben>(
             predicate: #Predicate { $0.jahr == jahr }
@@ -66,7 +66,7 @@ enum Datenbank {
         let jahr = Calendar.kalender.component(.year, from: Date())
 
         let profil = Steuerprofil()
-        profil.taetigkeitsart = .freiberuflich
+        profil.tätigkeitsart = .freiberuflich
         kontext.insert(profil)
 
         let angaben = Jahresangaben(jahr: jahr)
@@ -83,13 +83,13 @@ enum Datenbank {
 
         let beispiele: [Beleg] = [
             Beleg(datum: datum(1, 15), bezeichnung: "Projekt Website Relaunch",
-                  bruttoBetrag: 8_330, kategorie: .umsatzerloese),
+                  bruttoBetrag: 8_330, kategorie: .umsatzerlöse),
             Beleg(datum: datum(2, 28), bezeichnung: "Beratung Februar",
-                  bruttoBetrag: 5_950, kategorie: .umsatzerloese),
+                  bruttoBetrag: 5_950, kategorie: .umsatzerlöse),
             Beleg(datum: datum(4, 3), bezeichnung: "Workshop Konzeption",
-                  bruttoBetrag: 3_570, kategorie: .umsatzerloese),
+                  bruttoBetrag: 3_570, kategorie: .umsatzerlöse),
             Beleg(datum: datum(6, 12), bezeichnung: "Wartungspauschale Q2",
-                  bruttoBetrag: 2_380, kategorie: .umsatzerloese),
+                  bruttoBetrag: 2_380, kategorie: .umsatzerlöse),
             Beleg(datum: datum(1, 8), bezeichnung: "Vorsteuer Notebook",
                   bruttoBetrag: 399, kategorie: .sonstigeAusgaben,
                   notiz: "Umsatzsteuer aus der Anschaffung des Notebooks"),
@@ -117,7 +117,7 @@ enum Datenbank {
             anschaffungsdatum: datum(1, 8),
             anschaffungskostenNetto: 2_100,
             nutzungsdauerJahre: 3,
-            notiz: "Arbeitsgeraet, ueber drei Jahre abzuschreiben"
+            notiz: "Arbeitsgerät, über drei Jahre abzuschreiben"
         ))
     }
 }

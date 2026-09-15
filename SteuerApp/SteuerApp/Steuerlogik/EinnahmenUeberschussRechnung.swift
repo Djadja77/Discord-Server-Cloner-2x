@@ -1,29 +1,29 @@
 import Foundation
 
-/// Gewinnermittlung durch Einnahmen-Ueberschuss-Rechnung nach § 4 Abs. 3 EStG.
+/// Gewinnermittlung durch Einnahmen-Überschuss-Rechnung nach § 4 Abs. 3 EStG.
 ///
 /// ## Netto- statt Bruttomethode
-/// Die App rechnet mit Nettobetraegen: vereinnahmte Umsatzsteuer und gezahlte Vorsteuer
-/// bleiben aussen vor, weil sie wirtschaftlich nur durchlaufende Posten sind. Das Ergebnis
-/// entspricht dem der Bruttomethode, ist aber unterjaehrig aussagekraeftiger, weil es nicht
-/// vom Rhythmus der Voranmeldungen abhaengt. In der Anlage EUER ist die Bruttomethode
-/// vorgesehen - beim Uebertragen also Umsatzsteuer und Vorsteuer wieder ergaenzen.
+/// Die App rechnet mit Nettobeträgen: vereinnahmte Umsatzsteuer und gezahlte Vorsteuer
+/// bleiben außen vor, weil sie wirtschaftlich nur durchlaufende Posten sind. Das Ergebnis
+/// entspricht dem der Bruttomethode, ist aber unterjährig aussagekräftiger, weil es nicht
+/// vom Rhythmus der Voranmeldungen abhängt. In der Anlage EUER ist die Bruttomethode
+/// vorgesehen - beim Übertragen also Umsatzsteuer und Vorsteuer wieder ergaenzen.
 ///
 /// Kleinunternehmer nach § 19 UStG rechnen ohnehin brutto: sie weisen keine Umsatzsteuer aus
-/// und duerfen keine Vorsteuer abziehen.
-struct EinnahmenUeberschussRechnung {
+/// und dürfen keine Vorsteuer abziehen.
+struct EinnahmenÜberschussRechnung {
 
     struct Posten: Identifiable, Equatable {
         let kategorie: Belegkategorie
         /// Betrag, der in die Gewinnermittlung eingeht (bereits um betrieblichen Anteil und
-        /// gesetzliche Abzugsbeschraenkungen gekuerzt).
+        /// gesetzliche Abzugsbeschränkungen gekürzt).
         let betrag: Decimal
-        /// Ungekuerzter betrieblicher Betrag - zeigt, was die Beschraenkung gekostet hat.
-        let betragVorKuerzung: Decimal
+        /// Ungekürzter betrieblicher Betrag - zeigt, was die Beschränkung gekostet hat.
+        let betragVorKürzung: Decimal
         let anzahlBelege: Int
 
         var id: String { kategorie.rawValue }
-        var wurdeGekuerzt: Bool { betrag != betragVorKuerzung }
+        var wurdeGekürzt: Bool { betrag != betragVorKürzung }
     }
 
     struct Ergebnis: Equatable {
@@ -45,12 +45,12 @@ struct EinnahmenUeberschussRechnung {
 
     /// - Parameters:
     ///   - belege: alle Belege; es werden nur die des angegebenen Jahres beruecksichtigt.
-    ///   - wirtschaftsgueter: Anlagevermoegen, dessen Abschreibung als Betriebsausgabe
+    ///   - wirtschaftsgüter: Anlagevermögen, dessen Abschreibung als Betriebsausgabe
     ///     hinzukommt. Sie wird berechnet, nicht als Beleg erfasst.
     ///   - kleinunternehmer: `true` rechnet brutto (§ 19 UStG).
     static func berechnen(
         belege: [Beleg],
-        wirtschaftsgueter: [Wirtschaftsgut] = [],
+        wirtschaftsgüter: [Wirtschaftsgut] = [],
         jahr: Int,
         kleinunternehmer: Bool
     ) -> Ergebnis {
@@ -67,7 +67,7 @@ struct EinnahmenUeberschussRechnung {
                 return Posten(
                     kategorie: kategorie,
                     betrag: (roh * kategorie.abzugsfaehigerAnteil).gerundet(),
-                    betragVorKuerzung: roh,
+                    betragVorKürzung: roh,
                     anzahlBelege: belege.count
                 )
             }
@@ -79,23 +79,23 @@ struct EinnahmenUeberschussRechnung {
             einnahmen: posten(fuer: .einnahme),
             ausgaben: mitAbschreibung(
                 posten(fuer: .ausgabe),
-                wirtschaftsgueter: wirtschaftsgueter,
+                wirtschaftsgüter: wirtschaftsgüter,
                 jahr: jahr
             )
         )
     }
 
-    /// Fuegt die berechnete Abschreibung in den Posten "Abschreibungen (AfA)" ein.
+    /// Fügt die berechnete Abschreibung in den Posten "Abschreibungen (AfA)" ein.
     ///
-    /// Erfasst jemand die Abschreibung zusaetzlich von Hand als Beleg, werden beide Betraege
+    /// Erfasst jemand die Abschreibung zusätzlich von Hand als Beleg, werden beide Beträge
     /// zusammengefasst statt zu konkurrieren - der Posten zeigt dann die Summe und die Anzahl
-    /// der beteiligten Wirtschaftsgueter.
+    /// der beteiligten Wirtschaftsgüter.
     private static func mitAbschreibung(
         _ ausgaben: [Posten],
-        wirtschaftsgueter: [Wirtschaftsgut],
+        wirtschaftsgüter: [Wirtschaftsgut],
         jahr: Int
     ) -> [Posten] {
-        let betroffene = wirtschaftsgueter.filter { $0.abschreibung(fuerJahr: jahr) > 0 }
+        let betroffene = wirtschaftsgüter.filter { $0.abschreibung(fuerJahr: jahr) > 0 }
         let afa = betroffene.map { $0.abschreibung(fuerJahr: jahr) }.summe
         guard afa > 0 else { return ausgaben }
 
@@ -107,14 +107,14 @@ struct EinnahmenUeberschussRechnung {
             ergebnis[index] = Posten(
                 kategorie: .abschreibung,
                 betrag: alt.betrag + afa,
-                betragVorKuerzung: alt.betragVorKuerzung + afa,
+                betragVorKürzung: alt.betragVorKürzung + afa,
                 anzahlBelege: alt.anzahlBelege + betroffene.count
             )
         } else {
             ergebnis.append(Posten(
                 kategorie: .abschreibung,
                 betrag: afa,
-                betragVorKuerzung: afa,
+                betragVorKürzung: afa,
                 anzahlBelege: betroffene.count
             ))
         }

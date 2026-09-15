@@ -1,10 +1,10 @@
 import Foundation
 
-/// Die in Deutschland relevanten Umsatzsteuersaetze.
+/// Die in Deutschland relevanten Umsatzsteuersätze.
 enum Umsatzsteuersatz: String, CaseIterable, Codable, Identifiable, Sendable {
     /// 0 % - steuerfreie Umsaetze, Kleinunternehmer, Auslandsleistungen mit Reverse Charge.
     case ohne
-    /// 7 % - ermaessigter Satz (§ 12 Abs. 2 UStG), z. B. Buecher, Lebensmittel, Personenbefoerderung.
+    /// 7 % - ermäßigter Satz (§ 12 Abs. 2 UStG), z. B. Bücher, Lebensmittel, Personenbeförderung.
     case ermaessigt
     /// 19 % - Regelsteuersatz (§ 12 Abs. 1 UStG).
     case regel

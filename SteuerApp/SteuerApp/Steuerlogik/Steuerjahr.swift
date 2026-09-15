@@ -1,30 +1,30 @@
 import Foundation
 
-/// Alle jahresabhaengigen Steuerparameter an genau einer Stelle.
+/// Alle jahresabhängigen Steuerparameter an genau einer Stelle.
 ///
 /// ## Pflege der Werte
-/// Die Zahlen aendern sich jedes Jahr. Wenn ein neues Jahr gebraucht wird, genuegt es,
+/// Die Zahlen ändern sich jedes Jahr. Wenn ein neues Jahr gebraucht wird, genügt es,
 /// unten einen weiteren `Steuerjahr`-Eintrag anzulegen - der Rest der App zieht automatisch nach.
-/// `SteuerjahrKonsistenzTests` prueft jeden Eintrag gegen die im Tarif eingebauten
-/// Stuetzstellen (Eckwerte der Grenzsteuersaetze) und meldet Tippfehler.
+/// `SteuerjahrKonsistenzTests` prüft jeden Eintrag gegen die im Tarif eingebauten
+/// Stützstellen (Eckwerte der Grenzsteuersätze) und meldet Tippfehler.
 ///
 /// ## Herkunft der Werte
 /// Die Tarifkonstanten aller drei Jahre sind gegen den Wortlaut des § 32a Abs. 1 EStG
-/// abgeglichen, fuer 2025 zusaetzlich gegen das amtliche Einkommensteuer-Handbuch des
-/// Bundesfinanzministeriums. `SteuerjahrTarifwerteTests` haelt sie fest: wer hier eine
-/// Zahl aendert, muss den Test mitaendern und stolpert dabei ueber die Quellenangabe.
+/// abgeglichen, für 2025 zusätzlich gegen das amtliche Einkommensteuer-Handbuch des
+/// Bundesfinanzministeriums. `SteuerjahrTarifwerteTests` hält sie fest: wer hier eine
+/// Zahl ändert, muss den Test mitändern und stolpert dabei über die Quellenangabe.
 ///
-/// - Important: Die Hoechstbetraege der Altersvorsorge folgen der Beitragsbemessungsgrenze
-///   der knappschaftlichen Rentenversicherung und aendern sich jaehrlich. Fuer 2024 ist der
+/// - Important: Die Höchstbeträge der Altersvorsorge folgen der Beitragsbemessungsgrenze
+///   der knappschaftlichen Rentenversicherung und ändern sich jährlich. Für 2024 ist der
 ///   Wert aus der Bemessungsgrundlage abgeleitet und nicht gegen eine amtliche Quelle
-///   geprueft - siehe README, Abschnitt "Stand der Prüfung".
+///   geprüft - siehe README, Abschnitt "Stand der Prüfung".
 struct Steuerjahr: Identifiable, Hashable, Sendable {
 
     // MARK: - Einkommensteuertarif (§ 32a Abs. 1 EStG)
 
-    /// Die fuenf Tarifzonen des Einkommensteuertarifs.
+    /// Die fünf Tarifzonen des Einkommensteuertarifs.
     struct Tarif: Hashable, Sendable {
-        /// Zone 1 - bis einschliesslich dieses Betrags faellt keine Steuer an.
+        /// Zone 1 - bis einschließlich dieses Betrags fällt keine Steuer an.
         let grundfreibetrag: Decimal
         /// Obergrenze der ersten Progressionszone.
         let endeZone2: Decimal
@@ -51,45 +51,45 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
     /// Bei Zusammenveranlagung gilt der doppelte Betrag.
     let soliFreigrenze: Decimal
 
-    /// Hoechstbetrag der Altersvorsorgeaufwendungen (§ 10 Abs. 3 EStG), Einzelveranlagung.
-    let hoechstbetragAltersvorsorge: Decimal
+    /// Höchstbetrag der Altersvorsorgeaufwendungen (§ 10 Abs. 3 EStG), Einzelveranlagung.
+    let höchstbetragAltersvorsorge: Decimal
 
-    /// Hoechstbetrag der sonstigen Vorsorgeaufwendungen (§ 10 Abs. 4 EStG) fuer
-    /// Selbstaendige, die ihre Krankenversicherung allein tragen.
-    let hoechstbetragSonstigeVorsorge: Decimal
+    /// Höchstbetrag der sonstigen Vorsorgeaufwendungen (§ 10 Abs. 4 EStG) für
+    /// Selbständige, die ihre Krankenversicherung allein tragen.
+    let höchstbetragSonstigeVorsorge: Decimal
 
     /// Sonderausgaben-Pauschbetrag (§ 10c EStG), Einzelveranlagung.
     let sonderausgabenPauschbetrag: Decimal
 
-    /// Gewerbesteuerlicher Freibetrag fuer natuerliche Personen (§ 11 Abs. 1 Nr. 1 GewStG).
+    /// Gewerbesteuerlicher Freibetrag für natürliche Personen (§ 11 Abs. 1 Nr. 1 GewStG).
     let gewerbesteuerFreibetrag: Decimal
 
-    /// Kinderfreibetrag je Kind fuer beide Elternteile zusammen (§ 32 Abs. 6 EStG).
+    /// Kinderfreibetrag je Kind für beide Elternteile zusammen (§ 32 Abs. 6 EStG).
     let kinderfreibetrag: Decimal
 
-    /// Freibetrag fuer Betreuung, Erziehung und Ausbildung je Kind, beide Elternteile.
+    /// Freibetrag für Betreuung, Erziehung und Ausbildung je Kind, beide Elternteile.
     let betreuungsfreibetrag: Decimal
 
-    /// Kindergeld je Kind und Monat - Vergleichsgroesse der Guenstigerpruefung (§ 31 EStG).
+    /// Kindergeld je Kind und Monat - Vergleichsgröße der Günstigerprüfung (§ 31 EStG).
     let kindergeldProMonat: Decimal
 
     /// Sockelbetrag des Verlustvortrags bei Einzelveranlagung (§ 10d Abs. 2 EStG).
-    /// Bis hierher ist der Verlustabzug unbeschraenkt.
+    /// Bis hierher ist der Verlustabzug unbeschränkt.
     let verlustvortragSockelbetrag: Decimal
 
-    /// Anteil des den Sockelbetrag uebersteigenden Gesamtbetrags der Einkuenfte, der
-    /// zusaetzlich mit Verlusten verrechnet werden darf (sog. Mindestbesteuerung).
-    /// Fuer die Veranlagungszeitraeume 2024 bis 2027 auf 70 % angehoben, davor und danach 60 %.
+    /// Anteil des den Sockelbetrag übersteigenden Gesamtbetrags der Einkünfte, der
+    /// zusätzlich mit Verlusten verrechnet werden darf (sog. Mindestbesteuerung).
+    /// Für die Veranlagungszeiträume 2024 bis 2027 auf 70 % angehoben, davor und danach 60 %.
     let verlustvortragQuote: Decimal
 
-    /// Grenze fuer geringwertige Wirtschaftsgueter (§ 6 Abs. 2 EStG), netto.
+    /// Grenze für geringwertige Wirtschaftsgüter (§ 6 Abs. 2 EStG), netto.
     /// Bis zu diesem Betrag sind Anschaffungen sofort abziehbar statt abzuschreiben.
-    let grenzeGeringwertigeWirtschaftsgueter: Decimal
+    let grenzeGeringwertigeWirtschaftsgüter: Decimal
 
     let jahr: Int
     let tarif: Tarif
-    /// `false` = Werte noch nicht gegen die amtliche Tabelle geprueft; die App weist darauf hin.
-    let amtlichGeprueft: Bool
+    /// `false` = Werte noch nicht gegen die amtliche Tabelle geprüft; die App weist darauf hin.
+    let amtlichGeprüft: Bool
 
     var id: Int { jahr }
 
@@ -97,8 +97,8 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
 
     static let jahr2024 = Steuerjahr(
         soliFreigrenze: 18_130,
-        hoechstbetragAltersvorsorge: 27_566,
-        hoechstbetragSonstigeVorsorge: 2_800,
+        höchstbetragAltersvorsorge: 27_566,
+        höchstbetragSonstigeVorsorge: 2_800,
         sonderausgabenPauschbetrag: 36,
         gewerbesteuerFreibetrag: 24_500,
         kinderfreibetrag: 6_612,
@@ -106,7 +106,7 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
         kindergeldProMonat: 250,
         verlustvortragSockelbetrag: 1_000_000,
         verlustvortragQuote: Decimal(70) / 100,
-        grenzeGeringwertigeWirtschaftsgueter: 800,
+        grenzeGeringwertigeWirtschaftsgüter: 800,
         jahr: 2024,
         tarif: Tarif(
             grundfreibetrag: 11_784,
@@ -119,13 +119,13 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
             abzugZone4: 10_636.31,
             abzugZone5: 18_971.06
         ),
-        amtlichGeprueft: true
+        amtlichGeprüft: true
     )
 
     static let jahr2025 = Steuerjahr(
         soliFreigrenze: 19_950,
-        hoechstbetragAltersvorsorge: 29_344,
-        hoechstbetragSonstigeVorsorge: 2_800,
+        höchstbetragAltersvorsorge: 29_344,
+        höchstbetragSonstigeVorsorge: 2_800,
         sonderausgabenPauschbetrag: 36,
         gewerbesteuerFreibetrag: 24_500,
         kinderfreibetrag: 6_672,
@@ -133,7 +133,7 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
         kindergeldProMonat: 255,
         verlustvortragSockelbetrag: 1_000_000,
         verlustvortragQuote: Decimal(70) / 100,
-        grenzeGeringwertigeWirtschaftsgueter: 800,
+        grenzeGeringwertigeWirtschaftsgüter: 800,
         jahr: 2025,
         tarif: Tarif(
             grundfreibetrag: 12_096,
@@ -146,13 +146,13 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
             abzugZone4: 10_911.92,
             abzugZone5: 19_246.67
         ),
-        amtlichGeprueft: true
+        amtlichGeprüft: true
     )
 
     static let jahr2026 = Steuerjahr(
         soliFreigrenze: 20_350,
-        hoechstbetragAltersvorsorge: 30_826,
-        hoechstbetragSonstigeVorsorge: 2_800,
+        höchstbetragAltersvorsorge: 30_826,
+        höchstbetragSonstigeVorsorge: 2_800,
         sonderausgabenPauschbetrag: 36,
         gewerbesteuerFreibetrag: 24_500,
         kinderfreibetrag: 6_828,
@@ -160,7 +160,7 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
         kindergeldProMonat: 259,
         verlustvortragSockelbetrag: 1_000_000,
         verlustvortragQuote: Decimal(70) / 100,
-        grenzeGeringwertigeWirtschaftsgueter: 800,
+        grenzeGeringwertigeWirtschaftsgüter: 800,
         jahr: 2026,
         tarif: Tarif(
             grundfreibetrag: 12_348,
@@ -173,18 +173,18 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
             abzugZone4: 11_135.63,
             abzugZone5: 19_470.38
         ),
-        amtlichGeprueft: true
+        amtlichGeprüft: true
     )
 
     static let alle: [Steuerjahr] = [jahr2024, jahr2025, jahr2026]
 
-    /// Voller Kinderfreibetrag einschliesslich Betreuungsanteil, je Kind und beide Elternteile.
+    /// Voller Kinderfreibetrag einschließlich Betreuungsanteil, je Kind und beide Elternteile.
     var kinderfreibetragGesamt: Decimal { kinderfreibetrag + betreuungsfreibetrag }
 
     /// Kindergeldanspruch je Kind und Jahr.
     var kindergeldProJahr: Decimal { kindergeldProMonat * 12 }
 
-    /// Liefert das hinterlegte Jahr - oder das naechstgelegene, wenn das Jahr fehlt.
+    /// Liefert das hinterlegte Jahr - oder das nächstgelegene, wenn das Jahr fehlt.
     /// So bleibt die App auch 2027 bedienbar, statt abzustuerzen.
     static func fuer(_ jahr: Int) -> Steuerjahr {
         if let treffer = alle.first(where: { $0.jahr == jahr }) { return treffer }

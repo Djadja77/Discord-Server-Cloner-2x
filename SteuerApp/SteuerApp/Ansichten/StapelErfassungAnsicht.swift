@@ -6,18 +6,18 @@ import SwiftData
 /// Der eigentliche Engpass beim Belegsammeln ist nicht das Fotografieren, sondern das
 /// Abtippen danach. Diese Ansicht nimmt einen ganzen Scan-Stapel entgegen, liest jeden
 /// Beleg aus und legt alles zur Kontrolle nebeneinander. In der Regel bleibt nur noch
-/// uebrig, eine Kategorie zu korrigieren und zu sichern.
+/// übrig, eine Kategorie zu korrigieren und zu sichern.
 struct StapelErfassungAnsicht: View {
 
     let bilder: [UIImage]
     let vorgabeJahr: Int
 
     @Environment(\.modelContext) private var kontext
-    @Environment(\.dismiss) private var schliessen
+    @Environment(\.dismiss) private var schließen
 
     @State private var posten: [Posten] = []
-    @State private var erkennungLaeuft = true
-    @State private var grossansicht: UIImage?
+    @State private var erkennungLäuft = true
+    @State private var großansicht: UIImage?
     @State private var fehler: String?
 
     struct Posten: Identifiable {
@@ -26,12 +26,12 @@ struct StapelErfassungAnsicht: View {
         let bild: UIImage
     }
 
-    private var sicherbare: [Posten] { posten.filter(\.entwurf.istVollstaendig) }
+    private var sicherbare: [Posten] { posten.filter(\.entwurf.istVollständig) }
 
     var body: some View {
         NavigationStack {
             Group {
-                if erkennungLaeuft {
+                if erkennungLäuft {
                     fortschritt
                 } else if posten.isEmpty {
                     ContentUnavailableView(
@@ -47,17 +47,17 @@ struct StapelErfassungAnsicht: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { schliessen() }
+                    Button("Abbrechen") { schließen() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Sichern") { alleSichern() }
-                        .disabled(sicherbare.isEmpty || erkennungLaeuft)
+                        .disabled(sicherbare.isEmpty || erkennungLäuft)
                 }
             }
             .task { await auswerten() }
             .fullScreenCover(item: Binding(
-                get: { grossansicht.map(BildKennung.init) },
-                set: { if $0 == nil { grossansicht = nil } }
+                get: { großansicht.map(BildKennung.init) },
+                set: { if $0 == nil { großansicht = nil } }
             )) { kennung in
                 BelegbildAnsicht(bild: kennung.bild)
             }
@@ -73,7 +73,7 @@ struct StapelErfassungAnsicht: View {
     }
 
     private var titel: String {
-        erkennungLaeuft
+        erkennungLäuft
             ? "Belege werden gelesen"
             : "\(posten.count) Belege"
     }
@@ -127,7 +127,7 @@ struct StapelErfassungAnsicht: View {
                     }
                     .pickerStyle(.segmented)
                 } footer: {
-                    if !eintrag.entwurf.istVollstaendig {
+                    if !eintrag.entwurf.istVollständig {
                         Label("Ohne Betrag wird dieser Beleg nicht gesichert.",
                               systemImage: "exclamationmark.triangle")
                             .font(.caption)
@@ -141,7 +141,7 @@ struct StapelErfassungAnsicht: View {
     private func kopfzeile(fuer eintrag: Posten) -> some View {
         HStack(spacing: 12) {
             Button {
-                grossansicht = eintrag.bild
+                großansicht = eintrag.bild
             } label: {
                 Image(uiImage: eintrag.bild)
                     .resizable()
@@ -160,7 +160,7 @@ struct StapelErfassungAnsicht: View {
                      ? "Nicht erkannt" : eintrag.entwurf.bezeichnung)
                     .font(.subheadline.weight(.medium))
                     .lineLimit(1)
-                Text("Zum Vergroessern auf das Foto tippen")
+                Text("Zum Vergrößern auf das Foto tippen")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -172,7 +172,7 @@ struct StapelErfassungAnsicht: View {
     private var hinweisAbschnitt: some View {
         Section {
             Label(
-                "Die Werte stammen aus der Texterkennung und sind Vorschlaege. Bitte kurz gegenlesen \u{2013} besonders Betrag und Kategorie.",
+                "Die Werte stammen aus der Texterkennung und sind Vorschläge. Bitte kurz gegenlesen \u{2013} besonders Betrag und Kategorie.",
                 systemImage: "info.circle"
             )
             .font(.caption)
@@ -187,7 +187,7 @@ struct StapelErfassungAnsicht: View {
 
         // Alle Belege nebeneinander auslesen: bei einem Stapel von zehn Quittungen ist das
         // der Unterschied zwischen einem Wimpernschlag und einer halben Minute Warten.
-        let vorschlaege: [Int: BelegTexterkennung.Vorschlag] = await withTaskGroup(
+        let vorschläge: [Int: BelegTexterkennung.Vorschlag] = await withTaskGroup(
             of: (Int, BelegTexterkennung.Vorschlag).self
         ) { gruppe in
             for (index, bild) in bilder.enumerated() {
@@ -202,20 +202,20 @@ struct StapelErfassungAnsicht: View {
         for (index, bild) in bilder.enumerated() {
             var entwurf = Belegentwurf()
             entwurf.datum = Belegentwurf.vorgabedatum(fuerJahr: vorgabeJahr)
-            if let vorschlag = vorschlaege[index] {
-                entwurf.uebernehmen(vorschlag, steuerjahr: vorgabeJahr)
+            if let vorschlag = vorschläge[index] {
+                entwurf.übernehmen(vorschlag, steuerjahr: vorgabeJahr)
             }
             neue.append(Posten(entwurf: entwurf, bild: bild))
         }
 
         posten = neue
-        erkennungLaeuft = false
+        erkennungLäuft = false
     }
 
     /// Erst alle Fotos schreiben, dann alle Belege anlegen.
     ///
-    /// Bewusst in zwei Schritten: scheitert das Speichern eines Fotos mittendrin, waeren
-    /// sonst die ersten Belege schon in der Datenbank und ein zweiter Versuch wuerde sie
+    /// Bewusst in zwei Schritten: scheitert das Speichern eines Fotos mittendrin, wären
+    /// sonst die ersten Belege schon in der Datenbank und ein zweiter Versuch würde sie
     /// verdoppeln. So bleibt der Stapel entweder ganz oder gar nicht erfasst.
     private func alleSichern() {
         var dateien: [UUID: String] = [:]
@@ -224,7 +224,7 @@ struct StapelErfassungAnsicht: View {
                 dateien[eintrag.id] = try Belegarchiv.speichern(eintrag.bild)
             }
         } catch {
-            dateien.values.forEach(Belegarchiv.loeschen)
+            dateien.values.forEach(Belegarchiv.löschen)
             fehler = error.localizedDescription
             return
         }
@@ -236,10 +236,10 @@ struct StapelErfassungAnsicht: View {
             entwurf.anwenden(auf: beleg)
             kontext.insert(beleg)
         }
-        schliessen()
+        schließen()
     }
 
-    /// Huelle, damit ein `UIImage` als Kennung fuer `fullScreenCover(item:)` taugt.
+    /// Hülle, damit ein `UIImage` als Kennung für `fullScreenCover(item:)` taugt.
     private struct BildKennung: Identifiable {
         let bild: UIImage
         var id: ObjectIdentifier { ObjectIdentifier(bild) }

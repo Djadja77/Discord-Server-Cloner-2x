@@ -1,42 +1,42 @@
 import Foundation
 
-/// Kinderfreibetraege und Guenstigerpruefung nach §§ 31, 32 Abs. 6 EStG.
+/// Kinderfreibeträge und Günstigerprüfung nach §§ 31, 32 Abs. 6 EStG.
 ///
-/// Der Staat entlastet Familien auf zwei Wegen, die einander ausschliessen: entweder ueber
-/// das monatlich ausgezahlte Kindergeld oder ueber die Freibetraege bei der Steuer. Das
-/// Finanzamt rechnet beides durch und setzt automatisch an, was guenstiger ist. Bei kleinen
-/// und mittleren Einkommen gewinnt fast immer das Kindergeld, bei hohen die Freibetraege.
+/// Der Staat entlastet Familien auf zwei Wegen, die einander ausschließen: entweder über
+/// das monatlich ausgezahlte Kindergeld oder über die Freibeträge bei der Steuer. Das
+/// Finanzamt rechnet beides durch und setzt automatisch an, was günstiger ist. Bei kleinen
+/// und mittleren Einkommen gewinnt fast immer das Kindergeld, bei hohen die Freibeträge.
 ///
-/// Unabhaengig vom Ausgang dieser Pruefung werden Solidaritaetszuschlag und Kirchensteuer
-/// **immer** aus der Steuer mit Kinderfreibetraegen berechnet (§ 51a Abs. 2 EStG). Wer Kinder
-/// hat, zahlt also auch dann weniger Zuschlagsteuern, wenn das Kindergeld guenstiger war.
+/// Unabhängig vom Ausgang dieser Prüfung werden Solidaritätszuschlag und Kirchensteuer
+/// **immer** aus der Steuer mit Kinderfreibeträgen berechnet (§ 51a Abs. 2 EStG). Wer Kinder
+/// hat, zahlt also auch dann weniger Zuschlagsteuern, wenn das Kindergeld günstiger war.
 struct Kinderfreibetrag {
 
     struct Ergebnis: Equatable {
         let anzahlKinder: Int
-        /// Summe der Kinderfreibetraege einschliesslich Betreuungsanteil.
+        /// Summe der Kinderfreibeträge einschließlich Betreuungsanteil.
         let freibetrag: Decimal
-        /// Einkommensteuer ohne Beruecksichtigung der Freibetraege.
+        /// Einkommensteuer ohne Beruecksichtigung der Freibeträge.
         let steuerOhneFreibetrag: Decimal
-        /// Einkommensteuer unter Beruecksichtigung der Freibetraege.
+        /// Einkommensteuer unter Beruecksichtigung der Freibeträge.
         let steuerMitFreibetrag: Decimal
-        /// Kindergeldanspruch des Jahres - Vergleichsgroesse der Guenstigerpruefung.
+        /// Kindergeldanspruch des Jahres - Vergleichsgröße der Günstigerprüfung.
         let kindergeldanspruch: Decimal
-        /// `true`, wenn die Freibetraege angesetzt werden und das Kindergeld hinzugerechnet wird.
-        let freibetraegeAngesetzt: Bool
+        /// `true`, wenn die Freibeträge angesetzt werden und das Kindergeld hinzugerechnet wird.
+        let freibeträgeAngesetzt: Bool
 
-        /// Steuerentlastung durch die Freibetraege, vor dem Vergleich mit dem Kindergeld.
+        /// Steuerentlastung durch die Freibeträge, vor dem Vergleich mit dem Kindergeld.
         var entlastung: Decimal { (steuerOhneFreibetrag - steuerMitFreibetrag).nichtNegativ }
 
-        /// Tarifliche Einkommensteuer nach der Guenstigerpruefung.
+        /// Tarifliche Einkommensteuer nach der Günstigerprüfung.
         ///
-        /// Werden die Freibetraege angesetzt, ist das Kindergeld hinzuzurechnen - sonst
-        /// bekaeme man beide Verguenstigungen (§ 31 Satz 4 EStG).
+        /// Werden die Freibeträge angesetzt, ist das Kindergeld hinzuzurechnen - sonst
+        /// bekäme man beide Vergünstigungen (§ 31 Satz 4 EStG).
         var tariflicheEinkommensteuer: Decimal {
-            freibetraegeAngesetzt ? steuerMitFreibetrag + kindergeldanspruch : steuerOhneFreibetrag
+            freibeträgeAngesetzt ? steuerMitFreibetrag + kindergeldanspruch : steuerOhneFreibetrag
         }
 
-        /// Bemessungsgrundlage fuer Solidaritaetszuschlag und Kirchensteuer (§ 51a EStG).
+        /// Bemessungsgrundlage für Solidaritätszuschlag und Kirchensteuer (§ 51a EStG).
         var bemessungZuschlagsteuern: Decimal { steuerMitFreibetrag }
 
         static func ohneKinder(steuer: Decimal) -> Ergebnis {
@@ -46,7 +46,7 @@ struct Kinderfreibetrag {
                 steuerOhneFreibetrag: steuer,
                 steuerMitFreibetrag: steuer,
                 kindergeldanspruch: 0,
-                freibetraegeAngesetzt: false
+                freibeträgeAngesetzt: false
             )
         }
     }
@@ -54,12 +54,12 @@ struct Kinderfreibetrag {
     /// Anteil, mit dem Freibetrag und Kindergeld angesetzt werden.
     ///
     /// Bei Zusammenveranlagung steht Eltern der volle Betrag zu. Bei Einzelveranlagung jeweils
-    /// die Haelfte - es sei denn, der Anteil des anderen Elternteils wurde uebertragen.
+    /// die Hälfte - es sei denn, der Anteil des anderen Elternteils wurde übertragen.
     static func anteil(splitting: Bool, vollerFreibetrag: Bool) -> Decimal {
         splitting || vollerFreibetrag ? 1 : Decimal(1) / 2
     }
 
-    static func pruefen(
+    static func prüfen(
         zuVersteuerndesEinkommen zve: Decimal,
         anzahlKinder: Int,
         vollerFreibetrag: Bool,
@@ -88,8 +88,8 @@ struct Kinderfreibetrag {
             steuerOhneFreibetrag: steuerOhne,
             steuerMitFreibetrag: steuerMit,
             kindergeldanspruch: kindergeld,
-            // Die Freibetraege lohnen sich erst, wenn sie mehr bringen als das Kindergeld.
-            freibetraegeAngesetzt: (steuerOhne - steuerMit) > kindergeld
+            // Die Freibeträge lohnen sich erst, wenn sie mehr bringen als das Kindergeld.
+            freibeträgeAngesetzt: (steuerOhne - steuerMit) > kindergeld
         )
     }
 }

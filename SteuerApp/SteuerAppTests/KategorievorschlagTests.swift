@@ -1,15 +1,15 @@
 import XCTest
 @testable import SteuerApp
 
-/// Tests der Kategorieerkennung aus dem Haendlernamen.
+/// Tests der Kategorieerkennung aus dem Händlernamen.
 ///
-/// Verglichen wird auf Teilzeichenketten. Die Haelfte dieser Tests prueft deshalb nicht,
-/// ob etwas erkannt wird, sondern ob es **nicht** faelschlich erkannt wird - dort liegen
+/// Verglichen wird auf Teilzeichenketten. Die Hälfte dieser Tests prüft deshalb nicht,
+/// ob etwas erkannt wird, sondern ob es **nicht** fälschlich erkannt wird - dort liegen
 /// die Fehler, die im Alltag Betriebsausgaben in die falsche Zeile schieben.
 final class KategorievorschlagTests: XCTestCase {
 
     func testErkenntHaeufigeAnbieter() {
-        let faelle: [(String, Belegkategorie)] = [
+        let fälle: [(String, Belegkategorie)] = [
             ("Deutsche Bahn AG", .reisekosten),
             ("Hotel Adlon", .reisekosten),
             ("Shell Tankstelle Nord", .kfzKosten),
@@ -20,10 +20,10 @@ final class KategorievorschlagTests: XCTestCase {
             ("Thalia Buchhandlung", .fachliteraturFortbildung),
             ("WeWork Germany", .raumkosten),
             ("Steuerberatung Meier", .rechtsUndSteuerberatung),
-            ("Allianz Versicherung", .versicherungenBeitraege),
+            ("Allianz Versicherung", .versicherungenBeiträge),
         ]
-        for (haendler, erwartet) in faelle {
-            XCTAssertEqual(Kategorievorschlag.kategorie(in: haendler), erwartet, haendler)
+        for (händler, erwartet) in fälle {
+            XCTAssertEqual(Kategorievorschlag.kategorie(in: händler), erwartet, händler)
         }
     }
 
@@ -36,11 +36,11 @@ final class KategorievorschlagTests: XCTestCase {
 
     func testKurzeStichworteSpringenNichtInAnderenWoerternAn() {
         XCTAssertNil(Kategorievorschlag.kategorie(in: "Cafe Espresso Bar"),
-                     "\"Espresso\" enthaelt \"esso\"")
+                     "\"Espresso\" enthält \"esso\"")
         XCTAssertNil(Kategorievorschlag.kategorie(in: "Metzgerei Huber"),
-                     "\"Huber\" enthaelt \"uber\"")
+                     "\"Huber\" enthält \"uber\"")
         XCTAssertNil(Kategorievorschlag.kategorie(in: "Notarztpraxis Dr. Klein"),
-                     "\"Notarzt\" enthaelt \"notar\"")
+                     "\"Notarzt\" enthält \"notar\"")
         XCTAssertEqual(Kategorievorschlag.kategorie(in: "JetBrains s.r.o."), .softwareAbos,
                        "\"JetBrains\" darf nicht als Tankstelle gelten")
     }
@@ -59,7 +59,7 @@ final class KategorievorschlagTests: XCTestCase {
 
     func testHaendlernameWiegtSchwererAlsDerUebrigeText() {
         let kategorie = Kategorievorschlag.fuer(
-            haendler: "Ristorante Bella Vista",
+            händler: "Ristorante Bella Vista",
             zeilen: ["Hotel Zentrum", "Rechnung"]
         )
         XCTAssertEqual(kategorie, .bewirtung)
@@ -67,16 +67,16 @@ final class KategorievorschlagTests: XCTestCase {
 
     func testOhneHaendlerZaehltDerBelegkopf() {
         let kategorie = Kategorievorschlag.fuer(
-            haendler: nil,
+            händler: nil,
             zeilen: ["Coworking Space Mitte", "Monatsbeitrag"]
         )
         XCTAssertEqual(kategorie, .raumkosten)
     }
 
     func testSpaeteZeilenWerdenNichtMehrBeruecksichtigt() {
-        // Artikelbezeichnungen weiter unten im Beleg fuehren sonst in die Irre.
+        // Artikelbezeichnungen weiter unten im Beleg führen sonst in die Irre.
         let kategorie = Kategorievorschlag.fuer(
-            haendler: nil,
+            händler: nil,
             zeilen: ["Muster GmbH", "Posten 1", "Posten 2", "Posten 3", "Hotelseife"]
         )
         XCTAssertNil(kategorie)

@@ -1,35 +1,35 @@
 import SwiftUI
 import SwiftData
 
-/// Jahresauswertung: Einnahmen-Ueberschuss-Rechnung, Umsatzsteuer und Export.
+/// Jahresauswertung: Einnahmen-Überschuss-Rechnung, Umsatzsteuer und Export.
 ///
-/// Diese Ansicht ist die Uebergabe an den Steuerberater oder an ELSTER: die Zahlen stehen
+/// Diese Ansicht ist die Übergabe an den Steuerberater oder an ELSTER: die Zahlen stehen
 /// hier in derselben Gliederung wie in der Anlage EUER.
 struct EuerAnsicht: View {
 
     @Binding var jahr: Int
     @Query private var belege: [Beleg]
     @Query private var profile: [Steuerprofil]
-    @Query private var wirtschaftsgueter: [Wirtschaftsgut]
+    @Query private var wirtschaftsgüter: [Wirtschaftsgut]
 
     @AppStorage("umsatzsteuerRhythmus") private var rhythmusCode: String =
-        Umsatzsteuerberechnung.Rhythmus.vierteljaehrlich.rawValue
+        Umsatzsteuerberechnung.Rhythmus.vierteljährlich.rawValue
 
     @State private var exportDateien: [URL] = []
     @State private var exportOffen = false
-    @State private var exportLaeuft = false
+    @State private var exportLäuft = false
     @State private var fehler: String?
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
 
     private var rhythmus: Umsatzsteuerberechnung.Rhythmus {
-        get { Umsatzsteuerberechnung.Rhythmus(rawValue: rhythmusCode) ?? .vierteljaehrlich }
+        get { Umsatzsteuerberechnung.Rhythmus(rawValue: rhythmusCode) ?? .vierteljährlich }
         nonmutating set { rhythmusCode = newValue.rawValue }
     }
 
-    private var euer: EinnahmenUeberschussRechnung.Ergebnis {
-        EinnahmenUeberschussRechnung.berechnen(
-            belege: belege, wirtschaftsgueter: wirtschaftsgueter,
+    private var euer: EinnahmenÜberschussRechnung.Ergebnis {
+        EinnahmenÜberschussRechnung.berechnen(
+            belege: belege, wirtschaftsgüter: wirtschaftsgüter,
             jahr: jahr, kleinunternehmer: profil.kleinunternehmer
         )
     }
@@ -46,7 +46,7 @@ struct EuerAnsicht: View {
             List {
                 if euer.anzahlBelege == 0 {
                     ContentUnavailableView(
-                        "Keine Daten fuer \(String(jahr))",
+                        "Keine Daten für \(String(jahr))",
                         systemImage: "tablecells",
                         description: Text("Erfasse Belege, dann erscheint hier die Auswertung.")
                     )
@@ -62,7 +62,7 @@ struct EuerAnsicht: View {
             }
             .navigationTitle("Auswertung")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { JahresWaehler(jahr: $jahr) }
+                ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
             }
             .sheet(isPresented: $exportOffen) {
                 TeilenAnsicht(dateien: exportDateien)
@@ -95,8 +95,8 @@ struct EuerAnsicht: View {
             Text("Betriebseinnahmen")
         } footer: {
             Text(profil.kleinunternehmer
-                 ? "Als Kleinunternehmer nach § 19 UStG werden Bruttobetraege angesetzt."
-                 : "Nettobetraege ohne Umsatzsteuer.")
+                 ? "Als Kleinunternehmer nach § 19 UStG werden Bruttobeträge angesetzt."
+                 : "Nettobeträge ohne Umsatzsteuer.")
         }
     }
 
@@ -116,12 +116,12 @@ struct EuerAnsicht: View {
         }
     }
 
-    private func unterzeile(_ posten: EinnahmenUeberschussRechnung.Posten) -> String {
+    private func unterzeile(_ posten: EinnahmenÜberschussRechnung.Posten) -> String {
         var teile: [String] = []
-        if let zeile = posten.kategorie.euerZeile { teile.append("EUER Zeile \(zeile)") }
+        if let zeile = posten.kategorie.euerZeile { teile.append("EÜR Zeile \(zeile)") }
         teile.append("\(posten.anzahlBelege) Belege")
-        if posten.wurdeGekuerzt {
-            teile.append("von \(Formatierung.euro(posten.betragVorKuerzung, mitCent: false)) gekuerzt")
+        if posten.wurdeGekürzt {
+            teile.append("von \(Formatierung.euro(posten.betragVorKürzung, mitCent: false)) gekürzt")
         }
         return teile.joined(separator: " \u{2013} ")
     }
@@ -131,7 +131,7 @@ struct EuerAnsicht: View {
             ZeileMitBetrag(
                 bezeichnung: euer.gewinn < 0 ? "Verlust" : "Gewinn",
                 betrag: euer.gewinn,
-                unterzeile: "Einnahmen-Ueberschuss-Rechnung nach § 4 Abs. 3 EStG",
+                unterzeile: "Einnahmen-Überschuss-Rechnung nach § 4 Abs. 3 EStG",
                 hervorgehoben: true,
                 mitVorzeichen: true
             )
@@ -159,7 +159,7 @@ struct EuerAnsicht: View {
                 }
                 .pickerStyle(.segmented)
 
-                ForEach(umsatzsteuer.zeitraeume.filter {
+                ForEach(umsatzsteuer.zeiträume.filter {
                     $0.umsatzsteuer != 0 || $0.vorsteuer != 0
                 }) { zeitraum in
                     ZeileMitBetrag(
@@ -186,10 +186,10 @@ struct EuerAnsicht: View {
             NavigationLink {
                 AnlagenAnsicht(jahr: jahr)
             } label: {
-                Label("Anlagevermoegen und Abschreibung", systemImage: "shippingbox")
+                Label("Anlagevermögen und Abschreibung", systemImage: "shippingbox")
             }
         } footer: {
-            Text("Anschaffungen ueber 800 Euro netto werden nicht sofort abgezogen, sondern ueber ihre Nutzungsdauer verteilt.")
+            Text("Anschaffungen über 800 Euro netto werden nicht sofort abgezogen, sondern über ihre Nutzungsdauer verteilt.")
         }
     }
 
@@ -199,53 +199,53 @@ struct EuerAnsicht: View {
                 archivExportieren()
             } label: {
                 HStack {
-                    Label("Vollstaendige Unterlagen", systemImage: "doc.zipper")
-                    if exportLaeuft {
+                    Label("Vollständige Unterlagen", systemImage: "doc.zipper")
+                    if exportLäuft {
                         Spacer()
                         ProgressView()
                     }
                 }
             }
-            .disabled(exportLaeuft)
+            .disabled(exportLäuft)
 
             Button {
                 nurZahlenExportieren()
             } label: {
                 Label("Nur Auswertung als CSV", systemImage: "tablecells")
             }
-            .disabled(exportLaeuft)
+            .disabled(exportLäuft)
         } header: {
             Text("Export")
         } footer: {
-            Text("Die vollstaendigen Unterlagen enthalten beide Auswertungen und saemtliche Belegfotos als ZIP-Archiv \u{2013} das ist der Stand, den die Steuerberatung braucht. Die Belegliste nennt zu jeder Zeile die zugehoerige Bilddatei.")
+            Text("Die vollständigen Unterlagen enthalten beide Auswertungen und sämtliche Belegfotos als ZIP-Archiv \u{2013} das ist der Stand, den die Steuerberatung braucht. Die Belegliste nennt zu jeder Zeile die zugehörige Bilddatei.")
         }
     }
 
     /// Archiv mit Belegfotos - kann bei vielen Belegen einen Moment dauern.
     ///
     /// Der Bauplan wird auf dem Hauptstrang aus der Datenbank gelesen, das Schreiben der
-    /// Dateien laeuft danach nebenher. SwiftData-Objekte duerfen den Hauptstrang nie
+    /// Dateien laeuft danach nebenher. SwiftData-Objekte dürfen den Hauptstrang nie
     /// verlassen, ein blockierter Hauptstrang friert aber die Fortschrittsanzeige ein -
-    /// diese Trennung loest beides.
+    /// diese Trennung löst beides.
     @MainActor
     private func archivExportieren() {
-        exportLaeuft = true
+        exportLäuft = true
         let bauplan = Unterlagenexport.bauplan(belege: belege, euer: euer, jahr: jahr)
 
         Task {
             do {
                 // Nur das Schreiben der Dateien wandert vom Hauptstrang herunter. Der
                 // umgebende Task bleibt dort, deshalb brauchen die Zuweisungen danach
-                // keinen Sprung zurueck.
+                // keinen Sprung zurück.
                 let archiv = try await Task.detached(priority: .userInitiated) {
                     try Unterlagenexport.archivErstellen(bauplan)
                 }.value
                 exportDateien = [archiv]
-                exportLaeuft = false
+                exportLäuft = false
                 exportOffen = true
             } catch {
                 fehler = error.localizedDescription
-                exportLaeuft = false
+                exportLäuft = false
             }
         }
     }

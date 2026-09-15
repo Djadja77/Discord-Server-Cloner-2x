@@ -1,11 +1,11 @@
 import Foundation
 
-/// Solidaritaetszuschlag nach dem Solidaritaetszuschlaggesetz (SolZG).
+/// Solidaritätszuschlag nach dem Solidaritaetszuschlaggesetz (SolZG).
 ///
-/// Seit 2021 zahlt ihn nur noch, wer die Freigrenze ueberschreitet. Direkt oberhalb der
-/// Freigrenze greift eine Milderungszone: dort betraegt der Zuschlag 11,9 % des die
-/// Freigrenze uebersteigenden Betrags, hoechstens aber die regulaeren 5,5 % der Steuer.
-enum Solidaritaetszuschlag {
+/// Seit 2021 zahlt ihn nur noch, wer die Freigrenze überschreitet. Direkt oberhalb der
+/// Freigrenze greift eine Milderungszone: dort beträgt der Zuschlag 11,9 % des die
+/// Freigrenze übersteigenden Betrags, höchstens aber die regulären 5,5 % der Steuer.
+enum Solidaritätszuschlag {
 
     static let regelsatz = Decimal(55) / 1_000
     static let milderungssatz = Decimal(119) / 1_000

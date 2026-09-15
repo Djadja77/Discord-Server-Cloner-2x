@@ -3,11 +3,11 @@ import XCTest
 
 /// Tests der Belegauswertung.
 ///
-/// Die Bilderkennung selbst braucht ein Geraet und laesst sich im Test nicht nachstellen.
+/// Die Bilderkennung selbst braucht ein Gerät und lässt sich im Test nicht nachstellen.
 /// Die Auswertung der erkannten Zeilen dagegen schon - und genau dort sitzen die Fehler.
 final class BelegTexterkennungTests: XCTestCase {
 
-    /// Ein realistischer Restaurantbeleg mit zwei Steuersaetzen.
+    /// Ein realistischer Restaurantbeleg mit zwei Steuersätzen.
     private let restaurantbeleg = [
         "Ristorante Bella Vista",
         "Hauptstr. 5",
@@ -21,24 +21,24 @@ final class BelegTexterkennungTests: XCTestCase {
         "14.03.2025 19:42",
     ]
 
-    // MARK: - Betraege
+    // MARK: - Beträge
 
     func testErkenntDeutscheBetragsschreibweise() {
-        XCTAssertEqual(BelegTexterkennung.betraege(in: "Summe 1.234,56 EUR"),
+        XCTAssertEqual(BelegTexterkennung.beträge(in: "Summe 1.234,56 EUR"),
                        [Decimal(string: "1234.56")])
-        XCTAssertEqual(BelegTexterkennung.betraege(in: "19,90"), [Decimal(string: "19.90")])
-        XCTAssertEqual(BelegTexterkennung.betraege(in: "12.345.678,90 EUR"),
+        XCTAssertEqual(BelegTexterkennung.beträge(in: "19,90"), [Decimal(string: "19.90")])
+        XCTAssertEqual(BelegTexterkennung.beträge(in: "12.345.678,90 EUR"),
                        [Decimal(string: "12345678.90")])
     }
 
     func testIgnoriertZahlenOhneNachkommastellen() {
-        XCTAssertTrue(BelegTexterkennung.betraege(in: "Rechnungsnummer 2025").isEmpty)
-        XCTAssertTrue(BelegTexterkennung.betraege(in: "Menge 3 Stueck").isEmpty)
+        XCTAssertTrue(BelegTexterkennung.beträge(in: "Rechnungsnummer 2025").isEmpty)
+        XCTAssertTrue(BelegTexterkennung.beträge(in: "Menge 3 Stück").isEmpty)
     }
 
     func testBevorzugtDieZeileMitDemSummenwort() {
         let beleg = [
-            "Buerostuhl        899,00",
+            "Bürostuhl        899,00",
             "Lieferung          49,00",
             "Zwischensumme     948,00",
             "Gesamtbetrag    1.128,12",
@@ -51,7 +51,7 @@ final class BelegTexterkennungTests: XCTestCase {
     }
 
     func testOhneBetragImTextWirdNichtsVorgeschlagen() {
-        XCTAssertNil(BelegTexterkennung.betragFinden(in: ["Vielen Dank fuer Ihren Einkauf"]))
+        XCTAssertNil(BelegTexterkennung.betragFinden(in: ["Vielen Dank für Ihren Einkauf"]))
     }
 
     // MARK: - Datum
@@ -73,32 +73,32 @@ final class BelegTexterkennungTests: XCTestCase {
 
     func testNimmtDasErsteDatumImBeleg() {
         let datum = BelegTexterkennung.datumFinden(in: [
-            "Belegdatum 02.06.2025", "Faellig am 16.06.2025",
+            "Belegdatum 02.06.2025", "Fällig am 16.06.2025",
         ])
         XCTAssertEqual(Calendar.kalender.component(.day, from: datum!), 2)
     }
 
-    // MARK: - Haendler
+    // MARK: - Händler
 
     func testNimmtDenHaendlernamenAusDemBelegkopf() {
-        XCTAssertEqual(BelegTexterkennung.haendlerFinden(in: restaurantbeleg),
+        XCTAssertEqual(BelegTexterkennung.händlerFinden(in: restaurantbeleg),
                        "Ristorante Bella Vista")
     }
 
     func testUeberspringtUeberschriftenUndAnschrift() {
         let beleg = ["RECHNUNG", "Hauptstr. 12", "10115 Berlin", "Muster Handels GmbH"]
-        XCTAssertEqual(BelegTexterkennung.haendlerFinden(in: beleg), "Muster Handels GmbH")
+        XCTAssertEqual(BelegTexterkennung.händlerFinden(in: beleg), "Muster Handels GmbH")
     }
 
     func testStrassennameOhneHausnummerBleibtEinHaendlername() {
-        // "Baeckerei Sonnenweg" ist ein Name, "Sonnenweg 12" eine Anschrift.
-        XCTAssertFalse(BelegTexterkennung.istAdresszeile("Baeckerei Sonnenweg"))
+        // "Bäckerei Sonnenweg" ist ein Name, "Sonnenweg 12" eine Anschrift.
+        XCTAssertFalse(BelegTexterkennung.istAdresszeile("Bäckerei Sonnenweg"))
         XCTAssertTrue(BelegTexterkennung.istAdresszeile("Sonnenweg 12"))
         XCTAssertTrue(BelegTexterkennung.istAdresszeile("10115 Berlin"))
     }
 
     func testOhneBrauchbareZeileKeinHaendler() {
-        XCTAssertNil(BelegTexterkennung.haendlerFinden(in: ["1234", "56,70", "**"]))
+        XCTAssertNil(BelegTexterkennung.händlerFinden(in: ["1234", "56,70", "**"]))
     }
 
     // MARK: - Umsatzsteuersatz
@@ -116,19 +116,19 @@ final class BelegTexterkennungTests: XCTestCase {
 
     func testBeiZweiSaetzenEntscheidetDerAusgewieseneSteuerbetrag() {
         let beleg = ["Rechnungsbetrag 119,00", "darin MwSt 19% 19,00",
-                     "Buecher werden mit 7% besteuert"]
+                     "Bücher werden mit 7% besteuert"]
         XCTAssertEqual(
             BelegTexterkennung.steuersatzFinden(in: beleg, bruttoBetrag: 119), .regel)
     }
 
     func testBeiEchtGemischtemBelegWirdNichtGeraten() {
-        // Speisen zu 7 %, Getraenke zu 19 % - kein einzelner Satz passt auf die Summe.
+        // Speisen zu 7 %, Getränke zu 19 % - kein einzelner Satz passt auf die Summe.
         XCTAssertNil(BelegTexterkennung.steuersatzFinden(in: restaurantbeleg, bruttoBetrag: 30))
     }
 
     func testProzentangabeWirdNichtMitEinemBetragVerwechselt() {
         // "19,00 %" darf nicht als Steuerbetrag von 19,00 Euro durchgehen.
-        let beleg = ["Summe 214,00", "MwSt 19,00%", "ermaessigt 7,00%"]
+        let beleg = ["Summe 214,00", "MwSt 19,00%", "ermäßigt 7,00%"]
         XCTAssertNil(BelegTexterkennung.steuersatzFinden(in: beleg, bruttoBetrag: 214))
     }
 
@@ -143,16 +143,16 @@ final class BelegTexterkennungTests: XCTestCase {
         let vorschlag = BelegTexterkennung.auswerten(zeilen: restaurantbeleg)
 
         XCTAssertEqual(vorschlag.bruttoBetrag, 30)
-        XCTAssertEqual(vorschlag.haendler, "Ristorante Bella Vista")
-        XCTAssertEqual(vorschlag.kategorie, .bewirtung, "aus dem Haendlernamen abgeleitet")
-        XCTAssertNil(vorschlag.umsatzsteuersatz, "gemischte Saetze, also kein Vorschlag")
+        XCTAssertEqual(vorschlag.händler, "Ristorante Bella Vista")
+        XCTAssertEqual(vorschlag.kategorie, .bewirtung, "aus dem Händlernamen abgeleitet")
+        XCTAssertNil(vorschlag.umsatzsteuersatz, "gemischte Sätze, also kein Vorschlag")
         XCTAssertEqual(Calendar.kalender.component(.day, from: vorschlag.datum!), 14)
     }
 
     func testLeererBelegErzeugtLeerenVorschlag() {
         let vorschlag = BelegTexterkennung.auswerten(zeilen: [])
         XCTAssertNil(vorschlag.bruttoBetrag)
-        XCTAssertNil(vorschlag.haendler)
+        XCTAssertNil(vorschlag.händler)
         XCTAssertNil(vorschlag.datum)
         XCTAssertNil(vorschlag.kategorie)
     }

@@ -3,12 +3,12 @@ import SwiftData
 
 /// Das Steuerprofil.
 ///
-/// Oben stehen die Angaben, die jahrelang gleich bleiben, darunter die des gewaehlten
-/// Jahres. Diese Trennung ist wichtig: Beitraege, Vorauszahlungen und Kinder aendern sich
-/// jaehrlich, die Rechtsform praktisch nie.
+/// Oben stehen die Angaben, die jahrelang gleich bleiben, darunter die des gewählten
+/// Jahres. Diese Trennung ist wichtig: Beiträge, Vorauszahlungen und Kinder ändern sich
+/// jährlich, die Rechtsform praktisch nie.
 ///
-/// Die Qualitaet der Schaetzung haengt fast vollstaendig an diesen Angaben. Deshalb erklaert
-/// jede Zeile, wofuer sie gebraucht wird, statt nur ein Feld anzubieten.
+/// Die Qualität der Schätzung hängt fast vollständig an diesen Angaben. Deshalb erklärt
+/// jede Zeile, wofür sie gebraucht wird, statt nur ein Feld anzubieten.
 struct EinstellungenAnsicht: View {
 
     @Binding var jahr: Int
@@ -16,7 +16,7 @@ struct EinstellungenAnsicht: View {
     @Query private var profile: [Steuerprofil]
     @Query private var alleJahresangaben: [Jahresangaben]
 
-    /// Faellt nur in dem Moment auf leere Objekte zurueck, in dem die echten noch nicht
+    /// Fällt nur in dem Moment auf leere Objekte zurück, in dem die echten noch nicht
     /// angelegt sind - `stammdatenSicherstellen` holt das beim Erscheinen sofort nach.
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
     private var angaben: Jahresangaben {
@@ -27,15 +27,15 @@ struct EinstellungenAnsicht: View {
     var body: some View {
         NavigationStack {
             Form {
-                taetigkeitAbschnitt
+                tätigkeitAbschnitt
                 umsatzsteuerAbschnitt
                 veranlagungAbschnitt
 
                 jahresangabenKopf
-                einkuenfteAbschnitt
+                einkünfteAbschnitt
                 vorsorgeAbschnitt
                 kinderAbschnitt
-                weitereAbzuegeAbschnitt
+                weitereAbzügeAbschnitt
                 verlustvortragAbschnitt
                 vorauszahlungAbschnitt
 
@@ -43,7 +43,7 @@ struct EinstellungenAnsicht: View {
             }
             .navigationTitle("Profil")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { JahresWaehler(jahr: $jahr) }
+                ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
             }
             .onAppear(perform: stammdatenSicherstellen)
         }
@@ -54,18 +54,18 @@ struct EinstellungenAnsicht: View {
         Datenbank.jahresangabenSicherstellen(fuer: jahr, in: kontext)
     }
 
-    // MARK: - Jahresuebergreifend
+    // MARK: - Jahresübergreifend
 
-    private var taetigkeitAbschnitt: some View {
+    private var tätigkeitAbschnitt: some View {
         Section {
-            Picker("Taetigkeit", selection: Binding(
-                get: { profil.taetigkeitsart },
-                set: { profil.taetigkeitsart = $0 }
+            Picker("Tätigkeit", selection: Binding(
+                get: { profil.tätigkeitsart },
+                set: { profil.tätigkeitsart = $0 }
             )) {
-                ForEach(Taetigkeitsart.allCases) { Text($0.bezeichnung).tag($0) }
+                ForEach(Tätigkeitsart.allCases) { Text($0.bezeichnung).tag($0) }
             }
 
-            if profil.taetigkeitsart == .gewerblich {
+            if profil.tätigkeitsart == .gewerblich {
                 BetragsFeld(
                     titel: "Hebesatz in Prozent",
                     betrag: Binding(
@@ -76,11 +76,11 @@ struct EinstellungenAnsicht: View {
                 )
             }
         } header: {
-            Text("Taetigkeit")
+            Text("Tätigkeit")
         } footer: {
-            Text(profil.taetigkeitsart == .freiberuflich
+            Text(profil.tätigkeitsart == .freiberuflich
                  ? "Freiberufler zahlen keine Gewerbesteuer."
-                 : "Gewerbesteuer faellt erst ab einem Gewinn von 24.500 Euro an.")
+                 : "Gewerbesteuer fällt erst ab einem Gewinn von 24.500 Euro an.")
         }
     }
 
@@ -93,7 +93,7 @@ struct EinstellungenAnsicht: View {
         } header: {
             Text("Umsatzsteuer")
         } footer: {
-            Text("Als Kleinunternehmer weist du keine Umsatzsteuer aus und darfst keine Vorsteuer abziehen. Die App rechnet dann durchgehend mit Bruttobetraegen.")
+            Text("Als Kleinunternehmer weist du keine Umsatzsteuer aus und darfst keine Vorsteuer abziehen. Die App rechnet dann durchgehend mit Bruttobeträgen.")
         }
     }
 
@@ -119,29 +119,29 @@ struct EinstellungenAnsicht: View {
         }
     }
 
-    // MARK: - Jahresabhaengig
+    // MARK: - Jahresabhängig
 
     private var jahresangabenKopf: some View {
         Section {
             EmptyView()
         } header: {
-            Text("Angaben fuer \(String(jahr))")
+            Text("Angaben für \(String(jahr))")
                 .font(.headline)
                 .textCase(nil)
         } footer: {
-            Text("Diese Werte gelten nur fuer \(String(jahr)). Ein Wechsel des Jahres oben links oeffnet einen eigenen Satz Angaben.")
+            Text("Diese Werte gelten nur für \(String(jahr)). Ein Wechsel des Jahres oben links öffnet einen eigenen Satz Angaben.")
         }
     }
 
-    private var einkuenfteAbschnitt: some View {
+    private var einkünfteAbschnitt: some View {
         Section {
             BetragsFeld(
-                titel: "Weitere Einkuenfte",
-                betrag: jahresbindung(\.weitereEinkuenfte),
+                titel: "Weitere Einkünfte",
+                betrag: jahresbindung(\.weitereEinkünfte),
                 hinweis: "Arbeitslohn, Vermietung, Rente"
             )
         } footer: {
-            Text("Weitere Einkuenfte erhoehen den Steuersatz auf den Gewinn.")
+            Text("Weitere Einkünfte erhöhen den Steuersatz auf den Gewinn.")
         }
     }
 
@@ -150,7 +150,7 @@ struct EinstellungenAnsicht: View {
             BetragsFeld(
                 titel: "Altersvorsorge",
                 betrag: jahresbindung(\.beitragAltersvorsorge),
-                hinweis: "Rentenversicherung, Versorgungswerk, Ruerup"
+                hinweis: "Rentenversicherung, Versorgungswerk, Rürup"
             )
             BetragsFeld(
                 titel: "Kranken- und Pflegeversicherung",
@@ -160,12 +160,12 @@ struct EinstellungenAnsicht: View {
             BetragsFeld(
                 titel: "Sonstige Versicherungen",
                 betrag: jahresbindung(\.beitragSonstigeVersicherungen),
-                hinweis: "Haftpflicht, Unfall, Berufsunfaehigkeit"
+                hinweis: "Haftpflicht, Unfall, Berufsunfähigkeit"
             )
         } header: {
             Text("Vorsorgeaufwendungen")
         } footer: {
-            Text("Fuer Selbstaendige ist das meist der groesste Abzugsposten. Ohne diese Angaben schaetzt die App die Steuer deutlich zu hoch.")
+            Text("Für Selbständige ist das meist der größte Abzugsposten. Ohne diese Angaben schätzt die App die Steuer deutlich zu hoch.")
         }
     }
 
@@ -196,13 +196,13 @@ struct EinstellungenAnsicht: View {
                 ZeileMitBetrag(
                     bezeichnung: "Kindergeld je Kind",
                     betrag: (steuerjahr.kindergeldProJahr * kinderanteil).gerundet(),
-                    unterzeile: "Vergleichsgroesse der Guenstigerpruefung"
+                    unterzeile: "Vergleichsgröße der Günstigerprüfung"
                 )
             }
         } header: {
             Text("Kinder")
         } footer: {
-            Text("Das Finanzamt rechnet Kindergeld und Freibetraege gegeneinander und setzt automatisch das Guenstigere an. Solidaritaetszuschlag und Kirchensteuer werden immer mit Freibetraegen berechnet.")
+            Text("Das Finanzamt rechnet Kindergeld und Freibeträge gegeneinander und setzt automatisch das Günstigere an. Solidaritätszuschlag und Kirchensteuer werden immer mit Freibeträgen berechnet.")
         }
     }
 
@@ -213,20 +213,20 @@ struct EinstellungenAnsicht: View {
         )
     }
 
-    private var weitereAbzuegeAbschnitt: some View {
+    private var weitereAbzügeAbschnitt: some View {
         Section {
             BetragsFeld(
-                titel: "Uebrige Sonderausgaben",
+                titel: "Übrige Sonderausgaben",
                 betrag: jahresbindung(\.weitereSonderausgaben),
                 hinweis: "Spenden, Kirchensteuer des Vorjahres, Unterhalt"
             )
             BetragsFeld(
-                titel: "Aussergewoehnliche Belastungen",
-                betrag: jahresbindung(\.aussergewoehnlicheBelastungen),
+                titel: "Außergewöhnliche Belastungen",
+                betrag: jahresbindung(\.außergewöhnlicheBelastungen),
                 hinweis: "nach Abzug der zumutbaren Belastung"
             )
         } header: {
-            Text("Weitere Abzuege")
+            Text("Weitere Abzüge")
         }
     }
 
@@ -240,7 +240,7 @@ struct EinstellungenAnsicht: View {
         } header: {
             Text("Verlustvortrag")
         } footer: {
-            Text("Verluste frueherer Jahre mindern das zu versteuernde Einkommen (§ 10d EStG). Massgeblich ist der gesondert festgestellte Betrag aus dem letzten Bescheid.")
+            Text("Verluste früherer Jahre mindern das zu versteuernde Einkommen (§ 10d EStG). Maßgeblich ist der gesondert festgestellte Betrag aus dem letzten Bescheid.")
         }
     }
 
@@ -254,7 +254,7 @@ struct EinstellungenAnsicht: View {
         } header: {
             Text("Einkommensteuer-Vorauszahlungen")
         } footer: {
-            Text("Vorauszahlungen sind jeweils am 10. Maerz, 10. Juni, 10. September und 10. Dezember faellig.")
+            Text("Vorauszahlungen sind jeweils am 10. März, 10. Juni, 10. September und 10. Dezember fällig.")
         }
     }
 
@@ -265,18 +265,18 @@ struct EinstellungenAnsicht: View {
                     Text(String(eintrag.jahr))
                     Spacer()
                     Label(
-                        eintrag.amtlichGeprueft ? "geprueft" : "ungeprueft",
-                        systemImage: eintrag.amtlichGeprueft
+                        eintrag.amtlichGeprüft ? "geprüft" : "ungeprüft",
+                        systemImage: eintrag.amtlichGeprüft
                             ? "checkmark.circle" : "exclamationmark.triangle"
                     )
                     .font(.caption)
-                    .foregroundStyle(eintrag.amtlichGeprueft ? Color.green : Color.orange)
+                    .foregroundStyle(eintrag.amtlichGeprüft ? Color.green : Color.orange)
                 }
             }
         } header: {
             Text("Hinterlegte Steuerjahre")
         } footer: {
-            Text("Die App rechnet nach den Vorschriften fuer Einkommensteuer, Solidaritaetszuschlag, Kirchensteuer und Gewerbesteuer. Sie ersetzt keine Steuerberatung.")
+            Text("Die App rechnet nach den Vorschriften für Einkommensteuer, Solidaritätszuschlag, Kirchensteuer und Gewerbesteuer. Sie ersetzt keine Steuerberatung.")
         }
     }
 
@@ -285,7 +285,7 @@ struct EinstellungenAnsicht: View {
     /// Bindung an ein Geldfeld der Jahresangaben.
     ///
     /// Spart pro Feld vier Zeilen `Binding(get:set:)` und macht damit sichtbar, worum es in
-    /// den Abschnitten oben tatsaechlich geht.
+    /// den Abschnitten oben tatsächlich geht.
     private func jahresbindung(
         _ pfad: ReferenceWritableKeyPath<Jahresangaben, Decimal>
     ) -> Binding<Decimal> {

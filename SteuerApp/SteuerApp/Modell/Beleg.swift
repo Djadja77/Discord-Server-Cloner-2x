@@ -3,8 +3,8 @@ import SwiftData
 
 /// Ein einzelner Geschaeftsvorfall - Rechnung, Quittung, Kontoabbuchung.
 ///
-/// Enums werden bewusst als `String` gespeichert und ueber berechnete Eigenschaften
-/// zugaenglich gemacht: so bleibt die Datenbank lesbar und ein spaeter umbenannter Fall
+/// Enums werden bewusst als `String` gespeichert und über berechnete Eigenschaften
+/// zugaenglich gemacht: so bleibt die Datenbank lesbar und ein später umbenannter Fall
 /// macht den Datenbestand nicht unlesbar.
 @Model
 final class Beleg {
@@ -20,7 +20,7 @@ final class Beleg {
     var kategorieCode: String = Belegkategorie.sonstigeAusgaben.rawValue
     var umsatzsteuersatzCode: String = Umsatzsteuersatz.regel.rawValue
 
-    /// Betrieblicher Nutzungsanteil zwischen 0 und 1 - fuer gemischt genutzte Kosten
+    /// Betrieblicher Nutzungsanteil zwischen 0 und 1 - für gemischt genutzte Kosten
     /// wie Telefon oder Fahrzeug.
     var betrieblicherAnteil: Double = 1.0
 
@@ -66,14 +66,14 @@ final class Beleg {
 
     var art: Belegart { kategorie.art }
 
-    // MARK: - Abgeleitete Betraege
+    // MARK: - Abgeleitete Beträge
 
-    /// Anteilsfaktor als `Decimal`, auf den gueltigen Bereich 0 ... 1 begrenzt.
+    /// Anteilsfaktor als `Decimal`, auf den gültigen Bereich 0 ... 1 begrenzt.
     var anteilsfaktor: Decimal { Beleg.anteilsfaktor(aus: betrieblicherAnteil) }
 
-    /// Der Weg ueber volle Prozentpunkte ist Absicht: `Decimal(Double)` kann je nach
+    /// Der Weg über volle Prozentpunkte ist Absicht: `Decimal(Double)` kann je nach
     /// Plattform Rundungsreste erzeugen, und der Schieberegler kennt ohnehin nur
-    /// Fuenf-Prozent-Schritte.
+    /// Fünf-Prozent-Schritte.
     static func anteilsfaktor(aus anteil: Double) -> Decimal {
         let prozentpunkte = (min(max(anteil, 0), 1) * 100).rounded()
         return Decimal(Int(prozentpunkte)) / 100
@@ -100,7 +100,7 @@ final class Beleg {
         (bruttoBetrag * anteilsfaktor).gerundet()
     }
 
-    /// Umsatzsteuer, die auf den betrieblichen Anteil entfaellt.
+    /// Umsatzsteuer, die auf den betrieblichen Anteil entfällt.
     var betrieblicheUmsatzsteuer: Decimal {
         (umsatzsteuerBetrag * anteilsfaktor).gerundet()
     }
@@ -109,7 +109,7 @@ final class Beleg {
         Calendar.kalender.component(.year, from: datum)
     }
 
-    /// Kalenderquartal 1 ... 4 - fuer die Umsatzsteuer-Voranmeldung.
+    /// Kalenderquartal 1 ... 4 - für die Umsatzsteuer-Voranmeldung.
     var quartal: Int {
         (Calendar.kalender.component(.month, from: datum) - 1) / 3 + 1
     }

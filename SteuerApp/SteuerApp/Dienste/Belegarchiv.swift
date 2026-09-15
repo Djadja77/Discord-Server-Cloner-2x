@@ -4,18 +4,18 @@ import UIKit
 /// Ablage der Belegfotos im Dateisystem.
 ///
 /// Die Bilder liegen bewusst **nicht** in der SwiftData-Datenbank: als externe Dateien
-/// bleibt die Datenbank klein und schnell, und ein Beleg laesst sich einzeln exportieren.
+/// bleibt die Datenbank klein und schnell, und ein Beleg lässt sich einzeln exportieren.
 /// Das Verzeichnis liegt in "Application Support" und ist damit vom Backup erfasst, aber
-/// fuer den Nutzer nicht sichtbar.
+/// für den Nutzer nicht sichtbar.
 enum Belegarchiv {
 
     enum Fehler: LocalizedError {
-        case verzeichnisNichtVerfuegbar
+        case verzeichnisNichtVerfügbar
         case bildKonnteNichtKodiertWerden
 
         var errorDescription: String? {
             switch self {
-            case .verzeichnisNichtVerfuegbar: "Das Belegarchiv konnte nicht geoeffnet werden."
+            case .verzeichnisNichtVerfügbar: "Das Belegarchiv konnte nicht geöffnet werden."
             case .bildKonnteNichtKodiertWerden: "Das Belegfoto konnte nicht gespeichert werden."
             }
         }
@@ -35,10 +35,10 @@ enum Belegarchiv {
         return ordner
     }
 
-    /// Speichert ein Belegfoto als JPEG und liefert den Dateinamen zurueck.
+    /// Speichert ein Belegfoto als JPEG und liefert den Dateinamen zurück.
     @discardableResult
     static func speichern(_ bild: UIImage) throws -> String {
-        guard let ordner = verzeichnis else { throw Fehler.verzeichnisNichtVerfuegbar }
+        guard let ordner = verzeichnis else { throw Fehler.verzeichnisNichtVerfügbar }
         guard let daten = bild.jpegData(compressionQuality: 0.8) else {
             throw Fehler.bildKonnteNichtKodiertWerden
         }
@@ -52,7 +52,7 @@ enum Belegarchiv {
         return UIImage(contentsOfFile: ordner.appendingPathComponent(dateiname).path)
     }
 
-    static func loeschen(_ dateiname: String) {
+    static func löschen(_ dateiname: String) {
         guard let ordner = verzeichnis else { return }
         try? FileManager.default.removeItem(at: ordner.appendingPathComponent(dateiname))
     }

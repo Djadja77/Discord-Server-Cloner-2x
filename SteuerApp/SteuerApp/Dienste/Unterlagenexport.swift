@@ -1,21 +1,21 @@
 import Foundation
 import SwiftData
 
-/// Packt alles zusammen, was die Steuerberatung fuer ein Jahr braucht: beide Auswertungen
-/// als CSV und saemtliche Belegfotos.
+/// Packt alles zusammen, was die Steuerberatung für ein Jahr braucht: beide Auswertungen
+/// als CSV und sämtliche Belegfotos.
 ///
-/// Der reine CSV-Export liefert nur Zahlen - die Belege selbst blieben auf dem Geraet.
+/// Der reine CSV-Export liefert nur Zahlen - die Belege selbst blieben auf dem Gerät.
 /// Genau die will das Finanzamt im Zweifel aber sehen, und zehn Jahre lang. Dieses Archiv
 /// ist deshalb der eigentliche Abgabestand.
 ///
 /// Die Fotos bekommen sprechende Dateinamen aus Datum, Bezeichnung und Betrag, und die
-/// Belegliste fuehrt denselben Namen in einer eigenen Spalte. So laesst sich jede Zeile der
+/// Belegliste führt denselben Namen in einer eigenen Spalte. So lässt sich jede Zeile der
 /// Auswertung ohne Suchen dem Papier zuordnen.
 ///
 /// ## Zwei Schritte mit Absicht
 /// `bauplan(...)` liest die Datenbank und laeuft deshalb auf dem Hauptstrang.
 /// `archivErstellen(...)` fasst nur noch Dateien an und darf nebenher laufen. SwiftData-
-/// Objekte sind nicht threadsicher - sie duerfen den Hauptstrang nie verlassen.
+/// Objekte sind nicht threadsicher - sie dürfen den Hauptstrang nie verlassen.
 enum Unterlagenexport {
 
     enum Fehler: LocalizedError {
@@ -35,7 +35,7 @@ enum Unterlagenexport {
         let ziel: String
     }
 
-    /// Alles, was zum Schreiben des Archivs noetig ist - ohne Datenbankbezug.
+    /// Alles, was zum Schreiben des Archivs nötig ist - ohne Datenbankbezug.
     struct Bauplan: Sendable {
         let jahr: Int
         let belegeCsv: String
@@ -49,7 +49,7 @@ enum Unterlagenexport {
     @MainActor
     static func bauplan(
         belege: [Beleg],
-        euer: EinnahmenUeberschussRechnung.Ergebnis,
+        euer: EinnahmenÜberschussRechnung.Ergebnis,
         jahr: Int
     ) -> Bauplan {
         let belegeDesJahres = belege.filter { $0.jahr == jahr }
@@ -93,7 +93,7 @@ enum Unterlagenexport {
         if let archivordner = Belegarchiv.verzeichnis {
             for foto in bauplan.fotos {
                 // Ein fehlendes Einzelfoto darf den ganzen Export nicht verhindern; die
-                // Belegliste weist es weiterhin aus, sodass die Luecke sichtbar bleibt.
+                // Belegliste weist es weiterhin aus, sodass die Lücke sichtbar bleibt.
                 try? FileManager.default.copyItem(
                     at: archivordner.appendingPathComponent(foto.quelle),
                     to: belegordner.appendingPathComponent(foto.ziel)
@@ -121,15 +121,15 @@ enum Unterlagenexport {
         return "\(datum)_\(bezeichnung)_\(betragImNamen(beleg.bruttoBetrag)).jpg"
     }
 
-    /// `184-60` statt `184.60` - ueber die Cent gerechnet, damit die Nachkommastellen
-    /// unabhaengig von der Darstellung einer `Decimal` immer zweistellig sind.
+    /// `184-60` statt `184.60` - über die Cent gerechnet, damit die Nachkommastellen
+    /// unabhängig von der Darstellung einer `Decimal` immer zweistellig sind.
     static func betragImNamen(_ betrag: Decimal) -> String {
         let cent = NSDecimalNumber(decimal: (betrag * 100).gerundet(stellen: 0)).intValue
         return "\(cent / 100)-\(String(format: "%02d", abs(cent % 100)))"
     }
 
     /// Zwei Belege am selben Tag mit gleicher Bezeichnung und gleichem Betrag sind selten,
-    /// aber moeglich - ohne Zaehler ueberschriebe der zweite den ersten.
+    /// aber möglich - ohne Zähler überschriebe der zweite den ersten.
     private static func eindeutigerName(
         fuer beleg: Beleg,
         bereitsVergeben: inout Set<String>
@@ -137,15 +137,15 @@ enum Unterlagenexport {
         var name = dateiname(fuer: beleg)
         if bereitsVergeben.contains(name) {
             let stamm = String(name.dropLast(4))
-            var zaehler = 2
-            while bereitsVergeben.contains("\(stamm)-\(zaehler).jpg") { zaehler += 1 }
-            name = "\(stamm)-\(zaehler).jpg"
+            var zähler = 2
+            while bereitsVergeben.contains("\(stamm)-\(zähler).jpg") { zähler += 1 }
+            name = "\(stamm)-\(zähler).jpg"
         }
         bereitsVergeben.insert(name)
         return name
     }
 
-    /// Umlaute uebersetzen, alles Uebrige auf Buchstaben, Ziffern und Bindestriche reduzieren.
+    /// Umlaute übersetzen, alles Übrige auf Buchstaben, Ziffern und Bindestriche reduzieren.
     static func dateisicher(_ text: String) -> String {
         let ersetzt = text
             .replacingOccurrences(of: "ä", with: "ae")
@@ -161,8 +161,8 @@ enum Unterlagenexport {
             .replacingOccurrences(of: "-+", with: "-", options: .regularExpression)
             .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
 
-        let gekuerzt = String(zusammengefasst.prefix(40))
-        return gekuerzt.isEmpty ? "Beleg" : gekuerzt
+        let gekürzt = String(zusammengefasst.prefix(40))
+        return gekürzt.isEmpty ? "Beleg" : gekürzt
     }
 
     // MARK: - Hilfsmittel
@@ -175,7 +175,7 @@ enum Unterlagenexport {
     private static func liesmich(
         jahr: Int,
         belege: [Beleg],
-        euer: EinnahmenUeberschussRechnung.Ergebnis,
+        euer: EinnahmenÜberschussRechnung.Ergebnis,
         anzahlFotos: Int
     ) -> String {
         """
@@ -202,7 +202,7 @@ enum Unterlagenexport {
     ///
     /// Ohne fremde Bibliothek: `NSFileCoordinator` schreibt beim Lesen eines Ordners mit der
     /// Option `forUploading` ein ZIP-Archiv - derselbe Weg, den auch die Dateien-App beim
-    /// Komprimieren nimmt. Die Datei ist danach nur kurz gueltig, deshalb wird sie sofort
+    /// Komprimieren nimmt. Die Datei ist danach nur kurz gültig, deshalb wird sie sofort
     /// an einen eigenen Platz kopiert.
     private static func archivieren(_ ordner: URL, name: String) throws -> URL {
         let ziel = FileManager.default.temporaryDirectory.appendingPathComponent(name)

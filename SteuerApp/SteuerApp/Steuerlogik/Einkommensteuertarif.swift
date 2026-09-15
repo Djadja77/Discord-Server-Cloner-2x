@@ -2,7 +2,7 @@ import Foundation
 
 /// Der Einkommensteuertarif nach § 32a EStG.
 ///
-/// Der Tarif besteht aus fuenf Zonen:
+/// Der Tarif besteht aus fünf Zonen:
 /// 1. Grundfreibetrag - keine Steuer
 /// 2. erste Progressionszone - Grenzsteuersatz steigt linear von 14 % auf 23,97 %
 /// 3. zweite Progressionszone - Grenzsteuersatz steigt linear von 23,97 % auf 42 %
@@ -19,7 +19,7 @@ struct Einkommensteuertarif {
         self.steuerjahr = steuerjahr
     }
 
-    /// Tarifliche Einkommensteuer fuer ein zu versteuerndes Einkommen.
+    /// Tarifliche Einkommensteuer für ein zu versteuerndes Einkommen.
     /// - Parameter splitting: `true` wendet das Ehegattensplitting nach § 32a Abs. 5 EStG an.
     func einkommensteuer(zuVersteuerndesEinkommen zve: Decimal, splitting: Bool) -> Decimal {
         guard zve > 0 else { return 0 }
@@ -30,7 +30,7 @@ struct Einkommensteuertarif {
         return grundtarif(zve)
     }
 
-    /// Grundtarif fuer einen einzelnen Steuerpflichtigen.
+    /// Grundtarif für einen einzelnen Steuerpflichtigen.
     func grundtarif(_ zve: Decimal) -> Decimal {
         let t = steuerjahr.tarif
         let x = zve.aufVolleEuroAbgerundet.alsDouble
@@ -49,23 +49,23 @@ struct Einkommensteuertarif {
             steuer = 0.45 * x - t.abzugZone5
         }
 
-        // Ueber Int statt direkt aus Double: Decimal(Double) kann Rundungsreste
+        // Über Int statt direkt aus Double: Decimal(Double) kann Rundungsreste
         // erzeugen, und das Ergebnis ist nach § 32a EStG ohnehin ein voller Euro-Betrag.
         let volleEuro = min(max(steuer.rounded(.down), 0), 1e15)
         return Decimal(Int(volleEuro))
     }
 
-    /// Durchschnittssteuersatz - was tatsaechlich vom Einkommen abgeht.
+    /// Durchschnittssteuersatz - was tatsächlich vom Einkommen abgeht.
     func durchschnittssteuersatz(zuVersteuerndesEinkommen zve: Decimal, splitting: Bool) -> Double {
         guard zve > 0 else { return 0 }
         let steuer = einkommensteuer(zuVersteuerndesEinkommen: zve, splitting: splitting)
         return steuer.alsDouble / zve.alsDouble
     }
 
-    /// Grenzsteuersatz - was der naechste verdiente Euro kostet.
+    /// Grenzsteuersatz - was der nächste verdiente Euro kostet.
     ///
-    /// Bewusst als Differenzenquotient ueber 100 Euro berechnet: das ist genau die Frage,
-    /// die sich Selbstaendige beim Verschieben von Einnahmen ins naechste Jahr stellen.
+    /// Bewusst als Differenzenquotient über 100 Euro berechnet: das ist genau die Frage,
+    /// die sich Selbständige beim Verschieben von Einnahmen ins nächste Jahr stellen.
     func grenzsteuersatz(zuVersteuerndesEinkommen zve: Decimal, splitting: Bool) -> Double {
         let schrittweite: Decimal = 100
         let unten = einkommensteuer(zuVersteuerndesEinkommen: zve, splitting: splitting)

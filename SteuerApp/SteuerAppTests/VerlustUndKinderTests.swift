@@ -1,7 +1,7 @@
 import XCTest
 @testable import SteuerApp
 
-/// Tests des Verlustabzugs (§ 10d EStG) und der Guenstigerpruefung fuer Kinder (§ 31 EStG).
+/// Tests des Verlustabzugs (§ 10d EStG) und der Günstigerprüfung für Kinder (§ 31 EStG).
 final class VerlustUndKinderTests: XCTestCase {
 
     private let jahr2025 = Steuerjahr.jahr2025
@@ -10,7 +10,7 @@ final class VerlustUndKinderTests: XCTestCase {
 
     func testVerlustvortragWirdVollVerrechnetWennErKleinGenugIst() {
         let ergebnis = Verlustverrechnung.anwenden(
-            gesamtbetragDerEinkuenfte: 60_000, verlustvortrag: 20_000,
+            gesamtbetragDerEinkünfte: 60_000, verlustvortrag: 20_000,
             steuerjahr: jahr2025, splitting: false)
 
         XCTAssertEqual(ergebnis.abgezogen, 20_000)
@@ -20,29 +20,29 @@ final class VerlustUndKinderTests: XCTestCase {
 
     func testVerlustabzugIstDurchDieEinkuenfteBegrenzt() {
         let ergebnis = Verlustverrechnung.anwenden(
-            gesamtbetragDerEinkuenfte: 60_000, verlustvortrag: 100_000,
+            gesamtbetragDerEinkünfte: 60_000, verlustvortrag: 100_000,
             steuerjahr: jahr2025, splitting: false)
 
-        XCTAssertEqual(ergebnis.abgezogen, 60_000, "mehr als die Einkuenfte geht nicht")
+        XCTAssertEqual(ergebnis.abgezogen, 60_000, "mehr als die Einkünfte geht nicht")
         XCTAssertEqual(ergebnis.verbleibenderVortrag, 40_000)
         XCTAssertTrue(ergebnis.wurdeBegrenzt)
     }
 
     func testMindestbesteuerungGreiftOberhalbDesSockelbetrags() {
-        // Bis 1 Mio Euro unbeschraenkt, darueber nur 70 % des uebersteigenden Betrags:
+        // Bis 1 Mio Euro unbeschränkt, darüber nur 70 % des übersteigenden Betrags:
         // 1.000.000 + 0,7 * 500.000 = 1.350.000
         let ergebnis = Verlustverrechnung.anwenden(
-            gesamtbetragDerEinkuenfte: 1_500_000, verlustvortrag: 2_000_000,
+            gesamtbetragDerEinkünfte: 1_500_000, verlustvortrag: 2_000_000,
             steuerjahr: jahr2025, splitting: false)
 
-        XCTAssertEqual(ergebnis.hoechstbetrag, 1_350_000)
+        XCTAssertEqual(ergebnis.höchstbetrag, 1_350_000)
         XCTAssertEqual(ergebnis.abgezogen, 1_350_000)
         XCTAssertEqual(ergebnis.verbleibenderVortrag, 650_000)
     }
 
     func testSockelbetragVerdoppeltSichBeiZusammenveranlagung() {
         let ergebnis = Verlustverrechnung.anwenden(
-            gesamtbetragDerEinkuenfte: 1_500_000, verlustvortrag: 2_000_000,
+            gesamtbetragDerEinkünfte: 1_500_000, verlustvortrag: 2_000_000,
             steuerjahr: jahr2025, splitting: true)
 
         XCTAssertEqual(ergebnis.abgezogen, 1_500_000, "der Sockel von 2 Mio deckt alles ab")
@@ -51,7 +51,7 @@ final class VerlustUndKinderTests: XCTestCase {
 
     func testOhneVortragPassiertNichts() {
         let ergebnis = Verlustverrechnung.anwenden(
-            gesamtbetragDerEinkuenfte: 60_000, verlustvortrag: 0,
+            gesamtbetragDerEinkünfte: 60_000, verlustvortrag: 0,
             steuerjahr: jahr2025, splitting: false)
         XCTAssertEqual(ergebnis, .keine)
     }
@@ -59,7 +59,7 @@ final class VerlustUndKinderTests: XCTestCase {
     func testVerlustjahrVerbrauchtDenVortragNicht() {
         // Wer selbst Verlust macht, kann nichts verrechnen - der Vortrag bleibt erhalten.
         let ergebnis = Verlustverrechnung.anwenden(
-            gesamtbetragDerEinkuenfte: -5_000, verlustvortrag: 30_000,
+            gesamtbetragDerEinkünfte: -5_000, verlustvortrag: 30_000,
             steuerjahr: jahr2025, splitting: false)
         XCTAssertEqual(ergebnis.abgezogen, 0)
         XCTAssertEqual(ergebnis.verbleibenderVortrag, 30_000)
@@ -74,48 +74,48 @@ final class VerlustUndKinderTests: XCTestCase {
         XCTAssertEqual(ergebnis.zuVersteuerndesEinkommen, 39_964, "60.000 - 20.000 - 36")
     }
 
-    // MARK: - Kinderfreibetrag und Guenstigerpruefung
+    // MARK: - Kinderfreibetrag und Günstigerprüfung
 
     func testBeiKleinemEinkommenGewinntDasKindergeld() {
-        let ergebnis = Kinderfreibetrag.pruefen(
+        let ergebnis = Kinderfreibetrag.prüfen(
             zuVersteuerndesEinkommen: 30_000, anzahlKinder: 1,
             vollerFreibetrag: false, steuerjahr: jahr2025, splitting: false)
 
         XCTAssertEqual(ergebnis.freibetrag, 4_800, "halber Freibetrag bei Einzelveranlagung")
         XCTAssertEqual(ergebnis.kindergeldanspruch, 1_530)
         XCTAssertEqual(ergebnis.entlastung, 1_323)
-        XCTAssertFalse(ergebnis.freibetraegeAngesetzt)
-        XCTAssertEqual(ergebnis.tariflicheEinkommensteuer, 4_303, "Steuer ohne Freibetraege")
+        XCTAssertFalse(ergebnis.freibeträgeAngesetzt)
+        XCTAssertEqual(ergebnis.tariflicheEinkommensteuer, 4_303, "Steuer ohne Freibeträge")
     }
 
     func testBeiHohemEinkommenGewinnenDieFreibetraege() {
-        let ergebnis = Kinderfreibetrag.pruefen(
+        let ergebnis = Kinderfreibetrag.prüfen(
             zuVersteuerndesEinkommen: 60_000, anzahlKinder: 1,
             vollerFreibetrag: false, steuerjahr: jahr2025, splitting: false)
 
-        XCTAssertTrue(ergebnis.freibetraegeAngesetzt)
+        XCTAssertTrue(ergebnis.freibeträgeAngesetzt)
         XCTAssertEqual(ergebnis.entlastung, 1_832)
         // Steuer mit Freibetrag plus hinzugerechnetes Kindergeld: 12.583 + 1.530
         XCTAssertEqual(ergebnis.tariflicheEinkommensteuer, 14_113)
         XCTAssertLessThan(ergebnis.tariflicheEinkommensteuer, ergebnis.steuerOhneFreibetrag,
-                          "die guenstigere Variante muss auch tatsaechlich guenstiger sein")
+                          "die günstigere Variante muss auch tatsächlich günstiger sein")
     }
 
     func testZusammenveranlagungGewaehrtDenVollenFreibetrag() {
-        let ergebnis = Kinderfreibetrag.pruefen(
+        let ergebnis = Kinderfreibetrag.prüfen(
             zuVersteuerndesEinkommen: 200_000, anzahlKinder: 2,
             vollerFreibetrag: false, steuerjahr: jahr2025, splitting: true)
 
         XCTAssertEqual(ergebnis.freibetrag, 19_200, "2 Kinder mal 9.600 Euro")
         XCTAssertEqual(ergebnis.kindergeldanspruch, 6_120)
-        XCTAssertTrue(ergebnis.freibetraegeAngesetzt)
+        XCTAssertTrue(ergebnis.freibeträgeAngesetzt)
     }
 
     func testUebertragenerFreibetragWirktWieZusammenveranlagung() {
-        let halb = Kinderfreibetrag.pruefen(
+        let halb = Kinderfreibetrag.prüfen(
             zuVersteuerndesEinkommen: 120_000, anzahlKinder: 1,
             vollerFreibetrag: false, steuerjahr: jahr2025, splitting: false)
-        let voll = Kinderfreibetrag.pruefen(
+        let voll = Kinderfreibetrag.prüfen(
             zuVersteuerndesEinkommen: 120_000, anzahlKinder: 1,
             vollerFreibetrag: true, steuerjahr: jahr2025, splitting: false)
 
@@ -124,7 +124,7 @@ final class VerlustUndKinderTests: XCTestCase {
     }
 
     func testOhneKinderAendertSichNichts() {
-        let ergebnis = Kinderfreibetrag.pruefen(
+        let ergebnis = Kinderfreibetrag.prüfen(
             zuVersteuerndesEinkommen: 60_000, anzahlKinder: 0,
             vollerFreibetrag: false, steuerjahr: jahr2025, splitting: false)
 
@@ -136,7 +136,7 @@ final class VerlustUndKinderTests: XCTestCase {
     func testGuenstigerpruefungWaehltImmerDieBilligereVariante() {
         // Beide Wege durchrechnen und mit dem Ergebnis der App vergleichen.
         for zve in stride(from: 20_000, through: 300_000, by: 10_000) {
-            let ergebnis = Kinderfreibetrag.pruefen(
+            let ergebnis = Kinderfreibetrag.prüfen(
                 zuVersteuerndesEinkommen: Decimal(zve), anzahlKinder: 2,
                 vollerFreibetrag: false, steuerjahr: jahr2025, splitting: true)
 
@@ -157,11 +157,11 @@ final class VerlustUndKinderTests: XCTestCase {
         e.anzahlKinder = 2
         let ergebnis = Steuerschaetzung.berechnen(e)
 
-        // zvE 80.000: das Kindergeld ist guenstiger, die Einkommensteuer bleibt deshalb
+        // zvE 80.000: das Kindergeld ist günstiger, die Einkommensteuer bleibt deshalb
         // bei 14.640 Euro. Die Kirchensteuer bemisst sich trotzdem nach den 8.834 Euro,
-        // die sich mit Kinderfreibetraegen ergeben (§ 51a Abs. 2 EStG).
+        // die sich mit Kinderfreibeträgen ergeben (§ 51a Abs. 2 EStG).
         XCTAssertEqual(ergebnis.zuVersteuerndesEinkommen, 80_000)
-        XCTAssertFalse(ergebnis.kinder.freibetraegeAngesetzt)
+        XCTAssertFalse(ergebnis.kinder.freibeträgeAngesetzt)
         XCTAssertEqual(ergebnis.tariflicheEinkommensteuer, 14_640)
         XCTAssertEqual(ergebnis.kinder.bemessungZuschlagsteuern, 8_834)
         XCTAssertEqual(ergebnis.kirchensteuer, Decimal(string: "795.06"))

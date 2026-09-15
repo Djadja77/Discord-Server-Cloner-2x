@@ -1,6 +1,6 @@
 import Foundation
 
-/// Einheitliche Formatierung fuer Geld, Prozent und Datum - deutsche Schreibweise.
+/// Einheitliche Formatierung für Geld, Prozent und Datum - deutsche Schreibweise.
 enum Formatierung {
 
     static let waehrung: NumberFormatter = {
@@ -38,7 +38,7 @@ enum Formatierung {
         return formatter.string(from: betrag as NSDecimalNumber) ?? "-"
     }
 
-    /// Mit fuehrendem Plus oder Minus - fuer Salden, bei denen die Richtung zaehlt.
+    /// Mit führendem Plus oder Minus - für Salden, bei denen die Richtung zählt.
     static func euroMitVorzeichen(_ betrag: Decimal, mitCent: Bool = true) -> String {
         let text = euro(abs(betrag), mitCent: mitCent)
         if betrag > 0 { return "+" + text }
@@ -52,7 +52,7 @@ enum Formatierung {
     }
 
     /// Zeitzone bewusst fest auf Europe/Berlin: die Jahres- und Quartalszuordnung der
-    /// Belege laeuft ueber `Calendar.kalender`, und beide muessen dasselbe Datum zeigen.
+    /// Belege laeuft über `Calendar.kalender`, und beide müssen dasselbe Datum zeigen.
     static let datumsformat: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "de_DE")
@@ -63,7 +63,7 @@ enum Formatierung {
 
     static func datum(_ wert: Date) -> String { datumsformat.string(from: wert) }
 
-    /// Sortierbares Datum fuer Dateinamen: `2025-03-14`.
+    /// Sortierbares Datum für Dateinamen: `2025-03-14`.
     static let dateinamendatum: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")

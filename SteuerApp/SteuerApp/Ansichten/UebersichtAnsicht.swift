@@ -1,14 +1,14 @@
 import SwiftUI
 import SwiftData
 
-/// Die Startseite: Wie laeuft das Jahr, und wie viel Geld gehoert dem Finanzamt?
+/// Die Startseite: Wie laeuft das Jahr, und wie viel Geld gehört dem Finanzamt?
 struct UebersichtAnsicht: View {
 
     @Binding var jahr: Int
     @Query(sort: \Beleg.datum, order: .reverse) private var belege: [Beleg]
     @Query private var profile: [Steuerprofil]
     @Query private var alleJahresangaben: [Jahresangaben]
-    @Query private var wirtschaftsgueter: [Wirtschaftsgut]
+    @Query private var wirtschaftsgüter: [Wirtschaftsgut]
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
     private var angaben: Jahresangaben {
@@ -16,14 +16,14 @@ struct UebersichtAnsicht: View {
     }
     private var steuerjahr: Steuerjahr { Steuerjahr.fuer(jahr) }
 
-    private var euer: EinnahmenUeberschussRechnung.Ergebnis {
-        EinnahmenUeberschussRechnung.berechnen(
-            belege: belege, wirtschaftsgueter: wirtschaftsgueter,
+    private var euer: EinnahmenÜberschussRechnung.Ergebnis {
+        EinnahmenÜberschussRechnung.berechnen(
+            belege: belege, wirtschaftsgüter: wirtschaftsgüter,
             jahr: jahr, kleinunternehmer: profil.kleinunternehmer
         )
     }
 
-    private var schaetzung: Steuerschaetzung.Ergebnis {
+    private var schätzung: Steuerschaetzung.Ergebnis {
         Steuerschaetzung.berechnen(Steuerschaetzung.Eingaben(
             profil: profil, jahresangaben: angaben,
             gewinn: euer.gewinn, steuerjahr: steuerjahr
@@ -42,16 +42,16 @@ struct UebersichtAnsicht: View {
                     ruecklage
                     if !letzteBelege.isEmpty { letzteBewegungen }
                     if euer.anzahlBelege == 0 { leererZustand }
-                    hinweisWennJahrUngeprueft
+                    hinweisWennJahrUngeprüft
                 }
                 .padding(16)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Uebersicht \(String(jahr))")
+            .navigationTitle("Übersicht \(String(jahr))")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { JahresWaehler(jahr: $jahr) }
+                ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
                 ToolbarItem(placement: .topBarTrailing) {
-                    BelegErfassenSchaltflaeche(jahr: jahr)
+                    BelegErfassenSchaltfläche(jahr: jahr)
                 }
             }
         }
@@ -84,9 +84,9 @@ struct UebersichtAnsicht: View {
                     symbol: "chart.line.uptrend.xyaxis"
                 )
                 KennzahlKachel(
-                    titel: "Geschaetzte Steuer",
-                    wert: Formatierung.euro(schaetzung.gesamtbelastung, mitCent: false),
-                    hinweis: "Durchschnittssatz \(Formatierung.prozent(schaetzung.durchschnittssteuersatz))",
+                    titel: "Geschätzte Steuer",
+                    wert: Formatierung.euro(schätzung.gesamtbelastung, mitCent: false),
+                    hinweis: "Durchschnittssatz \(Formatierung.prozent(schätzung.durchschnittssteuersatz))",
                     farbe: .orange,
                     symbol: "building.columns"
                 )
@@ -94,22 +94,22 @@ struct UebersichtAnsicht: View {
         }
     }
 
-    /// Bewusst kein NavigationLink: die Schaetzung hat einen eigenen Tab. Ein zweiter Weg
-    /// dorthin wuerde nur eine zweite Navigationsleiste erzeugen.
-    /// Bewusst kein NavigationLink: die Schaetzung hat einen eigenen Tab. Ein zweiter Weg
-    /// dorthin wuerde nur eine zweite Navigationsleiste erzeugen.
+    /// Bewusst kein NavigationLink: die Schätzung hat einen eigenen Tab. Ein zweiter Weg
+    /// dorthin würde nur eine zweite Navigationsleiste erzeugen.
+    /// Bewusst kein NavigationLink: die Schätzung hat einen eigenen Tab. Ein zweiter Weg
+    /// dorthin würde nur eine zweite Navigationsleiste erzeugen.
     private var ruecklage: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(
-                schaetzung.istErstattung ? "Voraussichtliche Erstattung" : "Noch zurueckzulegen",
-                systemImage: schaetzung.istErstattung ? "arrow.down.circle.fill" : "banknote.fill"
+                schätzung.istErstattung ? "Voraussichtliche Erstattung" : "Noch zurückzulegen",
+                systemImage: schätzung.istErstattung ? "arrow.down.circle.fill" : "banknote.fill"
             )
             .font(.subheadline.weight(.medium))
             .foregroundStyle(.secondary)
 
-            Text(Formatierung.euro(abs(schaetzung.offenerBetrag)))
+            Text(Formatierung.euro(abs(schätzung.offenerBetrag)))
                 .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(schaetzung.istErstattung ? Color.green : Color.orange)
+                .foregroundStyle(schätzung.istErstattung ? Color.green : Color.orange)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
 
@@ -119,9 +119,9 @@ struct UebersichtAnsicht: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             if euer.gewinn > 0 {
-                ProgressView(value: min(schaetzung.ruecklagenquote, 1))
+                ProgressView(value: min(schätzung.ruecklagenquote, 1))
                     .tint(.orange)
-                Text("\(Formatierung.prozent(schaetzung.ruecklagenquote, nachkommastellen: 0)) des Gewinns gehoeren dem Finanzamt")
+                Text("\(Formatierung.prozent(schätzung.ruecklagenquote, nachkommastellen: 0)) des Gewinns gehören dem Finanzamt")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -133,13 +133,13 @@ struct UebersichtAnsicht: View {
     }
 
     private var begruendung: String {
-        let vorauszahlung = schaetzung.geleisteteVorauszahlungen
+        let vorauszahlung = schätzung.geleisteteVorauszahlungen
         if vorauszahlung > 0 {
-            return "Steuerlast \(Formatierung.euro(schaetzung.gesamtbelastung, mitCent: false)) "
-                + "abzueglich bereits geleisteter Vorauszahlungen von "
+            return "Steuerlast \(Formatierung.euro(schätzung.gesamtbelastung, mitCent: false)) "
+                + "abzüglich bereits geleisteter Vorauszahlungen von "
                 + "\(Formatierung.euro(vorauszahlung, mitCent: false))."
         }
-        return "Geschaetzt auf Basis der erfassten Belege. Vorauszahlungen im Profil eintragen, "
+        return "Geschätzt auf Basis der erfassten Belege. Vorauszahlungen im Profil eintragen, "
             + "damit die Zahl stimmt."
     }
 
@@ -175,13 +175,13 @@ struct UebersichtAnsicht: View {
             Image(systemName: "doc.text.viewfinder")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
-            Text("Noch keine Belege fuer \(String(jahr))")
+            Text("Noch keine Belege für \(String(jahr))")
                 .font(.headline)
-            Text("Belege abfotografieren \u{2013} Haendler, Betrag, Datum und Steuersatz werden vorgeschlagen. Auch ein ganzer Stapel auf einmal.")
+            Text("Belege abfotografieren \u{2013} Händler, Betrag, Datum und Steuersatz werden vorgeschlagen. Auch ein ganzer Stapel auf einmal.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            BelegErfassenSchaltflaeche(jahr: jahr, kompakt: false)
+            BelegErfassenSchaltfläche(jahr: jahr, kompakt: false)
                 .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
@@ -191,10 +191,10 @@ struct UebersichtAnsicht: View {
     }
 
     @ViewBuilder
-    private var hinweisWennJahrUngeprueft: some View {
-        if !steuerjahr.amtlichGeprueft {
+    private var hinweisWennJahrUngeprüft: some View {
+        if !steuerjahr.amtlichGeprüft {
             Label(
-                "Die Tarifwerte fuer \(String(steuerjahr.jahr)) sind noch nicht gegen die amtliche Tabelle geprueft.",
+                "Die Tarifwerte für \(String(steuerjahr.jahr)) sind noch nicht gegen die amtliche Tabelle geprüft.",
                 systemImage: "exclamationmark.triangle"
             )
             .font(.caption)
@@ -207,7 +207,7 @@ struct UebersichtAnsicht: View {
     }
 }
 
-/// Eine Belegzeile, wie sie in Uebersicht und Belegliste erscheint.
+/// Eine Belegzeile, wie sie in Übersicht und Belegliste erscheint.
 struct BelegZeile: View {
 
     let beleg: Beleg

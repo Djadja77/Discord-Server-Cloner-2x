@@ -4,7 +4,7 @@ import PhotosUI
 
 /// Beleg erfassen oder bearbeiten.
 ///
-/// Gearbeitet wird auf einem `Belegentwurf` statt direkt auf dem Datenbankobjekt: so laesst
+/// Gearbeitet wird auf einem `Belegentwurf` statt direkt auf dem Datenbankobjekt: so lässt
 /// sich ein neuer Beleg verwerfen, ohne dass halbfertige Daten in der Datenbank landen.
 struct BelegBearbeitenAnsicht: View {
 
@@ -13,13 +13,13 @@ struct BelegBearbeitenAnsicht: View {
     let vorgabeJahr: Int
 
     @Environment(\.modelContext) private var kontext
-    @Environment(\.dismiss) private var schliessen
+    @Environment(\.dismiss) private var schließen
 
     @State private var entwurf = Belegentwurf()
     @State private var geladen = false
     @State private var scannerOffen = false
-    @State private var grossansichtOffen = false
-    @State private var erkennungLaeuft = false
+    @State private var großansichtOffen = false
+    @State private var erkennungLäuft = false
     @State private var neuesBild: UIImage?
     @State private var fotoauswahl: PhotosPickerItem?
     @State private var meldung: String?
@@ -38,13 +38,13 @@ struct BelegBearbeitenAnsicht: View {
         .sheet(isPresented: $scannerOffen) {
             BelegScanner { bilder in
                 scannerOffen = false
-                // In der Einzelmaske zaehlt nur die erste Seite. Wer einen Stapel scannen
+                // In der Einzelmaske zählt nur die erste Seite. Wer einen Stapel scannen
                 // will, nimmt die Stapelerfassung - darauf weist die Belegliste hin.
                 if let erstes = bilder.first { bildUebernehmen(erstes) }
             }
             .ignoresSafeArea()
         }
-        .fullScreenCover(isPresented: $grossansichtOffen) {
+        .fullScreenCover(isPresented: $großansichtOffen) {
             if let bild = angezeigtesBild {
                 BelegbildAnsicht(bild: bild)
             }
@@ -76,7 +76,7 @@ struct BelegBearbeitenAnsicht: View {
             steuerAbschnitt
             aufteilungAbschnitt
             notizAbschnitt
-            if !istNeu { loeschenAbschnitt }
+            if !istNeu { löschenAbschnitt }
         }
         .navigationTitle(istNeu ? "Neuer Beleg" : "Beleg")
         .navigationBarTitleDisplayMode(.inline)
@@ -88,7 +88,7 @@ struct BelegBearbeitenAnsicht: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Sichern") { sichern() }
-                    .disabled(!entwurf.istVollstaendig)
+                    .disabled(!entwurf.istVollständig)
             }
         }
     }
@@ -97,7 +97,7 @@ struct BelegBearbeitenAnsicht: View {
         Section {
             if let bild = angezeigtesBild {
                 Button {
-                    grossansichtOffen = true
+                    großansichtOffen = true
                 } label: {
                     Image(uiImage: bild)
                         .resizable()
@@ -134,7 +134,7 @@ struct BelegBearbeitenAnsicht: View {
                 Label("Aus Fotomediathek", systemImage: "photo.on.rectangle")
             }
 
-            if erkennungLaeuft {
+            if erkennungLäuft {
                 HStack(spacing: 8) {
                     ProgressView()
                     Text("Beleg wird ausgelesen ...")
@@ -143,7 +143,7 @@ struct BelegBearbeitenAnsicht: View {
                 }
             }
         } footer: {
-            Text("Belege sind zehn Jahre aufzubewahren. Das Foto bleibt auf dem Geraet und wird mit dem Geraete-Backup gesichert.")
+            Text("Belege sind zehn Jahre aufzubewahren. Das Foto bleibt auf dem Gerät und wird mit dem Geräte-Backup gesichert.")
         }
     }
 
@@ -224,7 +224,7 @@ struct BelegBearbeitenAnsicht: View {
                     bezeichnung: "Wirkt sich aus mit",
                     betrag: (entwurf.umsatzsteuersatz.netto(ausBrutto: entwurf.bruttoBetrag)
                              * Beleg.anteilsfaktor(aus: entwurf.betrieblicherAnteil)).gerundet(),
-                    unterzeile: "netto, vor gesetzlichen Kuerzungen"
+                    unterzeile: "netto, vor gesetzlichen Kürzungen"
                 )
             }
         } header: {
@@ -241,14 +241,14 @@ struct BelegBearbeitenAnsicht: View {
         }
     }
 
-    private var loeschenAbschnitt: some View {
+    private var löschenAbschnitt: some View {
         Section {
-            Button("Beleg loeschen", role: .destructive) {
+            Button("Beleg löschen", role: .destructive) {
                 if let beleg {
-                    if let datei = beleg.belegbildDatei { Belegarchiv.loeschen(datei) }
+                    if let datei = beleg.belegbildDatei { Belegarchiv.löschen(datei) }
                     kontext.delete(beleg)
                 }
-                schliessen()
+                schließen()
             }
         }
     }
@@ -274,19 +274,19 @@ struct BelegBearbeitenAnsicht: View {
 
     private func bildUebernehmen(_ bild: UIImage) {
         neuesBild = bild
-        erkennungLaeuft = true
+        erkennungLäuft = true
 
         Task {
             let vorschlag = await BelegTexterkennung.auswerten(bild: bild)
-            entwurf.uebernehmen(vorschlag, steuerjahr: vorgabeJahr)
-            erkennungLaeuft = false
+            entwurf.übernehmen(vorschlag, steuerjahr: vorgabeJahr)
+            erkennungLäuft = false
         }
     }
 
     private func bildEntfernen() {
         neuesBild = nil
         if let datei = entwurf.belegbildDatei {
-            Belegarchiv.loeschen(datei)
+            Belegarchiv.löschen(datei)
             entwurf.belegbildDatei = nil
         }
     }
@@ -296,7 +296,7 @@ struct BelegBearbeitenAnsicht: View {
             do {
                 // Das alte Foto erst entfernen, wenn das neue sicher geschrieben ist.
                 let neuerName = try Belegarchiv.speichern(neuesBild)
-                if let alt = entwurf.belegbildDatei { Belegarchiv.loeschen(alt) }
+                if let alt = entwurf.belegbildDatei { Belegarchiv.löschen(alt) }
                 entwurf.belegbildDatei = neuerName
             } catch {
                 meldung = error.localizedDescription
@@ -308,12 +308,12 @@ struct BelegBearbeitenAnsicht: View {
         entwurf.anwenden(auf: ziel)
         if beleg == nil { kontext.insert(ziel) }
         neuesBild = nil
-        schliessen()
+        schließen()
     }
 
     private func verwerfen() {
         neuesBild = nil
-        schliessen()
+        schließen()
     }
 }
 

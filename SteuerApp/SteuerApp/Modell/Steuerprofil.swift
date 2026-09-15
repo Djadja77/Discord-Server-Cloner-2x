@@ -1,8 +1,8 @@
 import Foundation
 import SwiftData
 
-/// Rechtsform der Taetigkeit - entscheidet ueber die Gewerbesteuer.
-enum Taetigkeitsart: String, CaseIterable, Codable, Identifiable, Sendable {
+/// Rechtsform der Tätigkeit - entscheidet über die Gewerbesteuer.
+enum Tätigkeitsart: String, CaseIterable, Codable, Identifiable, Sendable {
     /// § 18 EStG - keine Gewerbesteuer.
     case freiberuflich
     /// § 15 EStG - Gewerbesteuer ab einem Gewinn von 24.500 Euro.
@@ -34,29 +34,29 @@ enum Veranlagungsart: String, CaseIterable, Codable, Identifiable, Sendable {
     var splitting: Bool { self == .zusammen }
 }
 
-/// Angaben, die sich von Jahr zu Jahr nicht aendern.
+/// Angaben, die sich von Jahr zu Jahr nicht ändern.
 ///
-/// Alles, was jaehrlich neu ist - Beitraege, Vorauszahlungen, Kinder, Verlustvortrag -
+/// Alles, was jährlich neu ist - Beiträge, Vorauszahlungen, Kinder, Verlustvortrag -
 /// steht in `Jahresangaben`. Diese Trennung ist der Grund, warum ein Wechsel des
-/// Steuerjahres in der App nicht die Zahlen des Vorjahres ueberschreibt.
+/// Steuerjahres in der App nicht die Zahlen des Vorjahres überschreibt.
 @Model
 final class Steuerprofil {
 
-    var taetigkeitsartCode: String = Taetigkeitsart.freiberuflich.rawValue
+    var tätigkeitsartCode: String = Tätigkeitsart.freiberuflich.rawValue
     var veranlagungsartCode: String = Veranlagungsart.einzel.rawValue
     var kirchensteuersatzCode: String = Kirchensteuersatz.keine.rawValue
 
-    /// § 19 UStG: keine Umsatzsteuer auf Rechnungen, dafuer auch kein Vorsteuerabzug.
+    /// § 19 UStG: keine Umsatzsteuer auf Rechnungen, dafür auch kein Vorsteuerabzug.
     var kleinunternehmer: Bool = false
 
-    /// Gewerbesteuer-Hebesatz der Gemeinde in Prozent (nur bei gewerblicher Taetigkeit).
+    /// Gewerbesteuer-Hebesatz der Gemeinde in Prozent (nur bei gewerblicher Tätigkeit).
     var gewerbesteuerHebesatz: Decimal = Decimal(400)
 
     init() {}
 
-    var taetigkeitsart: Taetigkeitsart {
-        get { Taetigkeitsart(rawValue: taetigkeitsartCode) ?? .freiberuflich }
-        set { taetigkeitsartCode = newValue.rawValue }
+    var tätigkeitsart: Tätigkeitsart {
+        get { Tätigkeitsart(rawValue: tätigkeitsartCode) ?? .freiberuflich }
+        set { tätigkeitsartCode = newValue.rawValue }
     }
 
     var veranlagungsart: Veranlagungsart {

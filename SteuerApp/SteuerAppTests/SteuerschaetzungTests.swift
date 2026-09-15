@@ -21,14 +21,14 @@ final class SteuerschaetzungTests: XCTestCase {
         // 60.000 - 6.000 Altersvorsorge - 7.200 Kranken/Pflege - 36 Pauschbetrag
         XCTAssertEqual(ergebnis.zuVersteuerndesEinkommen, 46_764)
         XCTAssertEqual(ergebnis.tariflicheEinkommensteuer, 9_561)
-        XCTAssertEqual(ergebnis.solidaritaetszuschlag, 0, "unter der Freigrenze")
-        XCTAssertEqual(ergebnis.kirchensteuer, 0, "kein Kirchensteuerabzug gewaehlt")
+        XCTAssertEqual(ergebnis.solidaritätszuschlag, 0, "unter der Freigrenze")
+        XCTAssertEqual(ergebnis.kirchensteuer, 0, "kein Kirchensteuerabzug gewählt")
         XCTAssertEqual(ergebnis.gesamtbelastung, 9_561)
     }
 
     func testSonstigeVersicherungenWirkenNichtNebenHoherKrankenversicherung() {
-        // Der Hoechstbetrag von 2.800 Euro ist durch die Kranken- und Pflegeversicherung
-        // bereits ausgeschoepft - die 600 Euro Haftpflicht bleiben ohne Wirkung.
+        // Der Höchstbetrag von 2.800 Euro ist durch die Kranken- und Pflegeversicherung
+        // bereits ausgeschöpft - die 600 Euro Haftpflicht bleiben ohne Wirkung.
         let ergebnis = Steuerschaetzung.berechnen(freiberuflerEingaben())
         XCTAssertEqual(ergebnis.vorsorge.abziehbareSonstige, 0)
         XCTAssertEqual(ergebnis.vorsorge.abziehbareKrankenUndPflege, 7_200)
@@ -39,7 +39,7 @@ final class SteuerschaetzungTests: XCTestCase {
         e.vorsorgeaufwendungen = Vorsorgeaufwendungen(altersvorsorge: 40_000)
         let ergebnis = Steuerschaetzung.berechnen(e)
         XCTAssertEqual(ergebnis.vorsorge.abziehbareAltersvorsorge,
-                       Steuerjahr.jahr2025.hoechstbetragAltersvorsorge)
+                       Steuerjahr.jahr2025.höchstbetragAltersvorsorge)
     }
 
     func testSplittingVerdoppeltDenHoechstbetragDerAltersvorsorge() {
@@ -48,13 +48,13 @@ final class SteuerschaetzungTests: XCTestCase {
         e.vorsorgeaufwendungen = Vorsorgeaufwendungen(altersvorsorge: 50_000)
         let ergebnis = Steuerschaetzung.berechnen(e)
         XCTAssertEqual(ergebnis.vorsorge.abziehbareAltersvorsorge, 50_000,
-                       "50.000 liegen unter dem doppelten Hoechstbetrag")
+                       "50.000 liegen unter dem doppelten Höchstbetrag")
     }
 
     func testOhneAngabenGreiftMindestensDerSonderausgabenPauschbetrag() {
         let e = Steuerschaetzung.Eingaben(steuerjahr: .jahr2025, gewinn: 40_000)
         let ergebnis = Steuerschaetzung.berechnen(e)
-        XCTAssertEqual(ergebnis.uebrigeSonderausgaben, 36)
+        XCTAssertEqual(ergebnis.übrigeSonderausgaben, 36)
         XCTAssertEqual(ergebnis.zuVersteuerndesEinkommen, 39_964)
     }
 
@@ -89,7 +89,7 @@ final class SteuerschaetzungTests: XCTestCase {
             altersvorsorge: 6_000, krankenUndPflegeBasis: 7_200
         )
         var gewerblich = freiberuflich
-        gewerblich.taetigkeitsart = .gewerblich
+        gewerblich.tätigkeitsart = .gewerblich
         gewerblich.gewerbesteuerHebesatz = 400
 
         let ohne = Steuerschaetzung.berechnen(freiberuflich)
@@ -100,14 +100,14 @@ final class SteuerschaetzungTests: XCTestCase {
         XCTAssertEqual(mit.angerechneteGewerbesteuer, Decimal(string: "4721.50"))
         XCTAssertEqual(mit.gewerbesteuer.restbelastung, Decimal(string: "248.50"))
 
-        // Genau die Restbelastung ist der Unterschied - alles andere waere ein
-        // doppelt gezaehlter Anrechnungsvorteil.
+        // Genau die Restbelastung ist der Unterschied - alles andere wäre ein
+        // doppelt gezählter Anrechnungsvorteil.
         XCTAssertEqual(mit.gesamtbelastung - ohne.gesamtbelastung, Decimal(string: "248.50"))
     }
 
     func testBeiHebesatz380BleibtKeineRestbelastung() {
         var e = Steuerschaetzung.Eingaben(steuerjahr: .jahr2025, gewinn: 60_000)
-        e.taetigkeitsart = .gewerblich
+        e.tätigkeitsart = .gewerblich
         e.gewerbesteuerHebesatz = 380
         let ergebnis = Steuerschaetzung.berechnen(e)
         XCTAssertEqual(ergebnis.gewerbesteuer.restbelastung, 0)
@@ -115,37 +115,37 @@ final class SteuerschaetzungTests: XCTestCase {
 
     func testFreiberuflerZahlenKeineGewerbesteuer() {
         var e = Steuerschaetzung.Eingaben(steuerjahr: .jahr2025, gewinn: 200_000)
-        e.taetigkeitsart = .freiberuflich
+        e.tätigkeitsart = .freiberuflich
         let ergebnis = Steuerschaetzung.berechnen(e)
         XCTAssertEqual(ergebnis.gewerbesteuer, .keine)
     }
 
     func testGewerbesteuerFreibetragGreift() {
         var e = Steuerschaetzung.Eingaben(steuerjahr: .jahr2025, gewinn: 24_500)
-        e.taetigkeitsart = .gewerblich
+        e.tätigkeitsart = .gewerblich
         let ergebnis = Steuerschaetzung.berechnen(e)
         XCTAssertEqual(ergebnis.gewerbesteuer.gewerbesteuer, 0)
     }
 
-    // MARK: - Solidaritaetszuschlag
+    // MARK: - Solidaritätszuschlag
 
     func testSoliSetztErstOberhalbDerFreigrenzeEin() {
         XCTAssertEqual(
-            Solidaritaetszuschlag.betrag(einkommensteuer: 19_950,
+            Solidaritätszuschlag.betrag(einkommensteuer: 19_950,
                                          steuerjahr: .jahr2025, splitting: false), 0)
         XCTAssertEqual(
-            Solidaritaetszuschlag.betrag(einkommensteuer: 21_000,
+            Solidaritätszuschlag.betrag(einkommensteuer: 21_000,
                                          steuerjahr: .jahr2025, splitting: false),
-            Decimal(string: "124.95"), "Milderungszone: 11,9 % des uebersteigenden Betrags")
+            Decimal(string: "124.95"), "Milderungszone: 11,9 % des übersteigenden Betrags")
         XCTAssertEqual(
-            Solidaritaetszuschlag.betrag(einkommensteuer: 40_000,
+            Solidaritätszuschlag.betrag(einkommensteuer: 40_000,
                                          steuerjahr: .jahr2025, splitting: false),
             2_200, "voller Satz von 5,5 %")
     }
 
     func testSoliFreigrenzeVerdoppeltSichBeiZusammenveranlagung() {
         XCTAssertEqual(
-            Solidaritaetszuschlag.betrag(einkommensteuer: 30_000,
+            Solidaritätszuschlag.betrag(einkommensteuer: 30_000,
                                          steuerjahr: .jahr2025, splitting: true), 0)
     }
 }

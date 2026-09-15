@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Eine einzelne Zahl mit Beschriftung - der Grundbaustein der Uebersicht.
+/// Eine einzelne Zahl mit Beschriftung - der Grundbaustein der Übersicht.
 struct KennzahlKachel: View {
 
     let titel: String
@@ -41,7 +41,7 @@ struct KennzahlKachel: View {
     }
 }
 
-/// Zeile aus Bezeichnung und Betrag - fuer alle Aufstellungen in der App.
+/// Zeile aus Bezeichnung und Betrag - für alle Aufstellungen in der App.
 struct ZeileMitBetrag: View {
 
     let bezeichnung: String
@@ -77,11 +77,11 @@ struct ZeileMitBetrag: View {
         HStack(spacing: 12) {
             KennzahlKachel(titel: "Gewinn", wert: Formatierung.euro(42_350),
                            hinweis: "vor Steuern", symbol: "chart.line.uptrend.xyaxis")
-            KennzahlKachel(titel: "Ruecklage", wert: Formatierung.euro(12_705),
+            KennzahlKachel(titel: "Rücklage", wert: Formatierung.euro(12_705),
                            hinweis: "30 % des Gewinns", farbe: .orange, symbol: "banknote")
         }
         List {
-            ZeileMitBetrag(bezeichnung: "Umsatzerloese", betrag: 52_000, unterzeile: "12 Belege")
+            ZeileMitBetrag(bezeichnung: "Umsatzerlöse", betrag: 52_000, unterzeile: "12 Belege")
             ZeileMitBetrag(bezeichnung: "Gewinn", betrag: 42_350, hervorgehoben: true)
         }
     }

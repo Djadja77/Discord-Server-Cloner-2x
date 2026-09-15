@@ -1,17 +1,17 @@
 import SwiftUI
 import SwiftData
 
-/// Der vollstaendige Rechenweg vom Gewinn bis zur Nachzahlung - nachvollziehbar Zeile fuer Zeile.
+/// Der vollständige Rechenweg vom Gewinn bis zur Nachzahlung - nachvollziehbar Zeile für Zeile.
 ///
 /// Die Ansicht zeigt bewusst jeden Zwischenschritt: wer im Herbst wissen will, warum die
-/// Nachzahlung so hoch ausfaellt, soll es hier ablesen koennen, statt einer Zahl vertrauen zu muessen.
-struct SchaetzungAnsicht: View {
+/// Nachzahlung so hoch ausfällt, soll es hier ablesen können, statt einer Zahl vertrauen zu müssen.
+struct SchätzungAnsicht: View {
 
     @Binding var jahr: Int
     @Query private var belege: [Beleg]
     @Query private var profile: [Steuerprofil]
     @Query private var alleJahresangaben: [Jahresangaben]
-    @Query private var wirtschaftsgueter: [Wirtschaftsgut]
+    @Query private var wirtschaftsgüter: [Wirtschaftsgut]
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
     private var angaben: Jahresangaben {
@@ -19,9 +19,9 @@ struct SchaetzungAnsicht: View {
     }
     private var steuerjahr: Steuerjahr { Steuerjahr.fuer(jahr) }
 
-    private var euer: EinnahmenUeberschussRechnung.Ergebnis {
-        EinnahmenUeberschussRechnung.berechnen(
-            belege: belege, wirtschaftsgueter: wirtschaftsgueter,
+    private var euer: EinnahmenÜberschussRechnung.Ergebnis {
+        EinnahmenÜberschussRechnung.berechnen(
+            belege: belege, wirtschaftsgüter: wirtschaftsgüter,
             jahr: jahr, kleinunternehmer: profil.kleinunternehmer
         )
     }
@@ -37,18 +37,18 @@ struct SchaetzungAnsicht: View {
         NavigationStack {
             List {
                 ergebnisAbschnitt
-                einkuenfteAbschnitt
-                if ergebnis.verlustabzug.verfuegbarerVortrag > 0 { verlustAbschnitt }
-                abzuegeAbschnitt
+                einkünfteAbschnitt
+                if ergebnis.verlustabzug.verfügbarerVortrag > 0 { verlustAbschnitt }
+                abzügeAbschnitt
                 if ergebnis.kinder.anzahlKinder > 0 { kinderAbschnitt }
                 steuerAbschnitt
-                if profil.taetigkeitsart == .gewerblich { gewerbesteuerAbschnitt }
-                saetzeAbschnitt
+                if profil.tätigkeitsart == .gewerblich { gewerbesteuerAbschnitt }
+                sätzeAbschnitt
                 rechtlicherHinweis
             }
-            .navigationTitle("Schaetzung")
+            .navigationTitle("Schätzung")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { JahresWaehler(jahr: $jahr) }
+                ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
             }
         }
     }
@@ -71,20 +71,20 @@ struct SchaetzungAnsicht: View {
         }
     }
 
-    private var einkuenfteAbschnitt: some View {
-        Section("Einkuenfte") {
+    private var einkünfteAbschnitt: some View {
+        Section("Einkünfte") {
             ZeileMitBetrag(
-                bezeichnung: profil.taetigkeitsart == .freiberuflich
-                    ? "Gewinn aus selbstaendiger Arbeit" : "Gewinn aus Gewerbebetrieb",
+                bezeichnung: profil.tätigkeitsart == .freiberuflich
+                    ? "Gewinn aus selbständiger Arbeit" : "Gewinn aus Gewerbebetrieb",
                 betrag: ergebnis.gewinn,
                 unterzeile: "\(euer.anzahlBelege) Belege in \(String(jahr))"
             )
-            if angaben.weitereEinkuenfte != 0 {
-                ZeileMitBetrag(bezeichnung: "Weitere Einkuenfte",
-                               betrag: angaben.weitereEinkuenfte)
+            if angaben.weitereEinkünfte != 0 {
+                ZeileMitBetrag(bezeichnung: "Weitere Einkünfte",
+                               betrag: angaben.weitereEinkünfte)
             }
-            ZeileMitBetrag(bezeichnung: "Gesamtbetrag der Einkuenfte",
-                           betrag: ergebnis.gesamtbetragDerEinkuenfte,
+            ZeileMitBetrag(bezeichnung: "Gesamtbetrag der Einkünfte",
+                           betrag: ergebnis.gesamtbetragDerEinkünfte,
                            hervorgehoben: true)
         }
     }
@@ -92,10 +92,10 @@ struct SchaetzungAnsicht: View {
     private var verlustAbschnitt: some View {
         Section {
             ZeileMitBetrag(bezeichnung: "Vortrag aus Vorjahren",
-                           betrag: ergebnis.verlustabzug.verfuegbarerVortrag)
+                           betrag: ergebnis.verlustabzug.verfügbarerVortrag)
             ZeileMitBetrag(bezeichnung: "In \(String(jahr)) verrechnet",
                            betrag: -ergebnis.verlustabzug.abgezogen)
-            ZeileMitBetrag(bezeichnung: "Rest fuer Folgejahre",
+            ZeileMitBetrag(bezeichnung: "Rest für Folgejahre",
                            betrag: ergebnis.verlustabzug.verbleibenderVortrag,
                            hervorgehoben: true)
         } header: {
@@ -103,73 +103,73 @@ struct SchaetzungAnsicht: View {
         } footer: {
             Text(ergebnis.verlustabzug.wurdeBegrenzt
                  ? "Die Mindestbesteuerung nach § 10d Abs. 2 EStG begrenzt den Abzug in diesem Jahr. Der Rest bleibt erhalten und wird vorgetragen."
-                 : "Der Verlustvortrag mindert den Gesamtbetrag der Einkuenfte, bevor Sonderausgaben abgezogen werden.")
+                 : "Der Verlustvortrag mindert den Gesamtbetrag der Einkünfte, bevor Sonderausgaben abgezogen werden.")
         }
     }
 
     private var kinderAbschnitt: some View {
         Section {
-            ZeileMitBetrag(bezeichnung: "Kinderfreibetraege",
+            ZeileMitBetrag(bezeichnung: "Kinderfreibeträge",
                            betrag: ergebnis.kinder.freibetrag,
-                           unterzeile: "\(ergebnis.kinder.anzahlKinder) Kinder, einschliesslich Betreuungsanteil")
-            ZeileMitBetrag(bezeichnung: "Steuerersparnis durch Freibetraege",
+                           unterzeile: "\(ergebnis.kinder.anzahlKinder) Kinder, einschließlich Betreuungsanteil")
+            ZeileMitBetrag(bezeichnung: "Steuerersparnis durch Freibeträge",
                            betrag: ergebnis.kinder.entlastung)
             ZeileMitBetrag(bezeichnung: "Kindergeldanspruch",
                            betrag: ergebnis.kinder.kindergeldanspruch)
 
-            Label(guenstigerpruefung, systemImage: ergebnis.kinder.freibetraegeAngesetzt
+            Label(günstigerprüfung, systemImage: ergebnis.kinder.freibeträgeAngesetzt
                   ? "checkmark.circle" : "eurosign.circle")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         } header: {
-            Text("Guenstigerpruefung")
+            Text("Günstigerprüfung")
         } footer: {
-            Text("Solidaritaetszuschlag und Kirchensteuer werden unabhaengig vom Ergebnis dieser Pruefung immer mit Kinderfreibetraegen bemessen (§ 51a EStG).")
+            Text("Solidaritätszuschlag und Kirchensteuer werden unabhängig vom Ergebnis dieser Prüfung immer mit Kinderfreibeträgen bemessen (§ 51a EStG).")
         }
     }
 
-    private var guenstigerpruefung: String {
-        ergebnis.kinder.freibetraegeAngesetzt
-            ? "Die Freibetraege sind guenstiger. Sie werden angesetzt, das Kindergeld wird der Steuer hinzugerechnet."
-            : "Das Kindergeld ist guenstiger. Es bleibt bei der Steuer ohne Kinderfreibetraege."
+    private var günstigerprüfung: String {
+        ergebnis.kinder.freibeträgeAngesetzt
+            ? "Die Freibeträge sind günstiger. Sie werden angesetzt, das Kindergeld wird der Steuer hinzugerechnet."
+            : "Das Kindergeld ist günstiger. Es bleibt bei der Steuer ohne Kinderfreibeträge."
     }
 
-    private var abzuegeAbschnitt: some View {
+    private var abzügeAbschnitt: some View {
         Section {
             ZeileMitBetrag(bezeichnung: "Altersvorsorge",
                            betrag: ergebnis.vorsorge.abziehbareAltersvorsorge,
-                           unterzeile: hoechstbetragHinweis)
+                           unterzeile: höchstbetragHinweis)
             ZeileMitBetrag(bezeichnung: "Kranken- und Pflegeversicherung",
                            betrag: ergebnis.vorsorge.abziehbareKrankenUndPflege)
             if ergebnis.vorsorge.abziehbareSonstige > 0 {
                 ZeileMitBetrag(bezeichnung: "Sonstige Versicherungen",
                                betrag: ergebnis.vorsorge.abziehbareSonstige)
             }
-            ZeileMitBetrag(bezeichnung: "Uebrige Sonderausgaben",
-                           betrag: ergebnis.uebrigeSonderausgaben,
+            ZeileMitBetrag(bezeichnung: "Übrige Sonderausgaben",
+                           betrag: ergebnis.übrigeSonderausgaben,
                            unterzeile: sonderausgabenHinweis)
-            if ergebnis.aussergewoehnlicheBelastungen > 0 {
-                ZeileMitBetrag(bezeichnung: "Aussergewoehnliche Belastungen",
-                               betrag: ergebnis.aussergewoehnlicheBelastungen)
+            if ergebnis.außergewöhnlicheBelastungen > 0 {
+                ZeileMitBetrag(bezeichnung: "Außergewöhnliche Belastungen",
+                               betrag: ergebnis.außergewöhnlicheBelastungen)
             }
             ZeileMitBetrag(bezeichnung: "Zu versteuerndes Einkommen",
                            betrag: ergebnis.zuVersteuerndesEinkommen,
                            hervorgehoben: true)
         } header: {
-            Text("Abzuege")
+            Text("Abzüge")
         } footer: {
-            Text("Die Betraege stammen aus dem Profil. Ohne Angaben rechnet die App nur mit dem Sonderausgaben-Pauschbetrag - die Schaetzung faellt dann deutlich zu hoch aus.")
+            Text("Die Beträge stammen aus dem Profil. Ohne Angaben rechnet die App nur mit dem Sonderausgaben-Pauschbetrag - die Schätzung fällt dann deutlich zu hoch aus.")
         }
     }
 
-    /// Faktor 2 bei Zusammenveranlagung - alle Hoechst- und Pauschbetraege verdoppeln sich.
+    /// Faktor 2 bei Zusammenveranlagung - alle Höchst- und Pauschbeträge verdoppeln sich.
     private var veranlagungsfaktor: Decimal {
         profil.veranlagungsart.splitting ? 2 : 1
     }
 
     private var sonderausgabenHinweis: String? {
         let pauschbetrag = steuerjahr.sonderausgabenPauschbetrag * veranlagungsfaktor
-        return ergebnis.uebrigeSonderausgaben == pauschbetrag ? "Pauschbetrag" : nil
+        return ergebnis.übrigeSonderausgaben == pauschbetrag ? "Pauschbetrag" : nil
     }
 
     private var soliFreigrenzeHinweis: String {
@@ -179,18 +179,18 @@ struct SchaetzungAnsicht: View {
 
     private var tarifHinweis: String {
         let tarifart = profil.veranlagungsart.splitting ? "Splittingtarif" : "Grundtarif"
-        guard ergebnis.kinder.freibetraegeAngesetzt else { return tarifart }
-        return tarifart + ", mit Kinderfreibetraegen und hinzugerechnetem Kindergeld"
+        guard ergebnis.kinder.freibeträgeAngesetzt else { return tarifart }
+        return tarifart + ", mit Kinderfreibeträgen und hinzugerechnetem Kindergeld"
     }
 
     private var hebesatzHinweis: String {
         "Hebesatz \(NSDecimalNumber(decimal: profil.gewerbesteuerHebesatz).intValue) %"
     }
 
-    private var hoechstbetragHinweis: String? {
-        let hoechst = steuerjahr.hoechstbetragAltersvorsorge * veranlagungsfaktor
-        guard angaben.beitragAltersvorsorge > hoechst else { return nil }
-        return "gekuerzt auf den Hoechstbetrag von \(Formatierung.euro(hoechst, mitCent: false))"
+    private var höchstbetragHinweis: String? {
+        let höchst = steuerjahr.höchstbetragAltersvorsorge * veranlagungsfaktor
+        guard angaben.beitragAltersvorsorge > höchst else { return nil }
+        return "gekürzt auf den Höchstbetrag von \(Formatierung.euro(höchst, mitCent: false))"
     }
 
     private var steuerAbschnitt: some View {
@@ -203,11 +203,11 @@ struct SchaetzungAnsicht: View {
                                betrag: -ergebnis.angerechneteGewerbesteuer,
                                unterzeile: "§ 35 EStG")
             }
-            if ergebnis.solidaritaetszuschlag > 0 {
-                ZeileMitBetrag(bezeichnung: "Solidaritaetszuschlag",
-                               betrag: ergebnis.solidaritaetszuschlag)
+            if ergebnis.solidaritätszuschlag > 0 {
+                ZeileMitBetrag(bezeichnung: "Solidaritätszuschlag",
+                               betrag: ergebnis.solidaritätszuschlag)
             } else {
-                ZeileMitBetrag(bezeichnung: "Solidaritaetszuschlag", betrag: 0,
+                ZeileMitBetrag(bezeichnung: "Solidaritätszuschlag", betrag: 0,
                                unterzeile: soliFreigrenzeHinweis)
             }
             if ergebnis.kirchensteuer > 0 {
@@ -257,8 +257,8 @@ struct SchaetzungAnsicht: View {
         }
     }
 
-    private var saetzeAbschnitt: some View {
-        Section("Steuersaetze") {
+    private var sätzeAbschnitt: some View {
+        Section("Steuersätze") {
             HStack {
                 Text("Durchschnittssatz")
                 Spacer()
@@ -269,7 +269,7 @@ struct SchaetzungAnsicht: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Grenzsteuersatz")
-                    Text("kostet der naechste verdiente Euro")
+                    Text("kostet der nächste verdiente Euro")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -280,8 +280,8 @@ struct SchaetzungAnsicht: View {
             }
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Ruecklagenquote")
-                    Text("Anteil des Gewinns fuer Steuern")
+                    Text("Rücklagenquote")
+                    Text("Anteil des Gewinns für Steuern")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -296,15 +296,15 @@ struct SchaetzungAnsicht: View {
     private var rechtlicherHinweis: some View {
         Section {
             Label {
-                Text("Diese Schaetzung ersetzt keine Steuerberatung. Sie bildet die haeufigsten Faelle ab, nicht jede Besonderheit \u{2013} etwa Verlustvortraege, Kinderfreibetraege oder den Progressionsvorbehalt.")
+                Text("Diese Schätzung ersetzt keine Steuerberatung. Sie bildet die häufigsten Fälle ab, nicht jede Besonderheit \u{2013} etwa Verlustvorträge, Kinderfreibeträge oder den Progressionsvorbehalt.")
             } icon: {
                 Image(systemName: "info.circle")
             }
             .font(.caption)
             .foregroundStyle(.secondary)
 
-            if !steuerjahr.amtlichGeprueft {
-                Label("Die Tarifwerte fuer \(String(steuerjahr.jahr)) sind noch nicht gegen die amtliche Tabelle geprueft.",
+            if !steuerjahr.amtlichGeprüft {
+                Label("Die Tarifwerte für \(String(steuerjahr.jahr)) sind noch nicht gegen die amtliche Tabelle geprüft.",
                       systemImage: "exclamationmark.triangle")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -314,6 +314,6 @@ struct SchaetzungAnsicht: View {
 }
 
 #Preview {
-    SchaetzungAnsicht(jahr: .constant(Calendar.kalender.component(.year, from: Date())))
+    SchätzungAnsicht(jahr: .constant(Calendar.kalender.component(.year, from: Date())))
         .modelContainer(Datenbank.vorschauContainer())
 }

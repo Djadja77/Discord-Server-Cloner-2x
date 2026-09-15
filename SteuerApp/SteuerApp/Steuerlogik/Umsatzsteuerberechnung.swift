@@ -1,22 +1,22 @@
 import Foundation
 
-/// Umsatzsteuer-Voranmeldung: geschuldete Umsatzsteuer abzueglich abziehbarer Vorsteuer.
+/// Umsatzsteuer-Voranmeldung: geschuldete Umsatzsteuer abzüglich abziehbarer Vorsteuer.
 ///
-/// Zugrunde liegt die Ist-Versteuerung (§ 20 UStG) - massgeblich ist also das Datum der
+/// Zugrunde liegt die Ist-Versteuerung (§ 20 UStG) - maßgeblich ist also das Datum der
 /// Zahlung, nicht das Rechnungsdatum. Wer nach vereinbarten Entgelten versteuert
 /// (Soll-Versteuerung), sollte bei den Belegen das Rechnungsdatum eintragen.
 struct Umsatzsteuerberechnung {
 
     enum Rhythmus: String, CaseIterable, Identifiable, Sendable {
         case monatlich
-        case vierteljaehrlich
+        case vierteljährlich
 
         var id: String { rawValue }
 
         var bezeichnung: String {
             switch self {
             case .monatlich: "Monatlich"
-            case .vierteljaehrlich: "Vierteljaehrlich"
+            case .vierteljährlich: "Vierteljährlich"
             }
         }
     }
@@ -33,12 +33,12 @@ struct Umsatzsteuerberechnung {
 
     struct Ergebnis: Equatable {
         let jahr: Int
-        let zeitraeume: [Zeitraum]
-        /// `true`, wenn wegen § 19 UStG gar keine Umsatzsteuer anfaellt.
+        let zeiträume: [Zeitraum]
+        /// `true`, wenn wegen § 19 UStG gar keine Umsatzsteuer anfällt.
         let kleinunternehmer: Bool
 
-        var umsatzsteuerGesamt: Decimal { zeitraeume.map(\.umsatzsteuer).summe }
-        var vorsteuerGesamt: Decimal { zeitraeume.map(\.vorsteuer).summe }
+        var umsatzsteuerGesamt: Decimal { zeiträume.map(\.umsatzsteuer).summe }
+        var vorsteuerGesamt: Decimal { zeiträume.map(\.vorsteuer).summe }
         var zahllastGesamt: Decimal { umsatzsteuerGesamt - vorsteuerGesamt }
     }
 
@@ -49,19 +49,19 @@ struct Umsatzsteuerberechnung {
         kleinunternehmer: Bool
     ) -> Ergebnis {
         guard !kleinunternehmer else {
-            return Ergebnis(jahr: jahr, zeitraeume: [], kleinunternehmer: true)
+            return Ergebnis(jahr: jahr, zeiträume: [], kleinunternehmer: true)
         }
 
         let belegeDesJahres = belege.filter { $0.jahr == jahr }
         let anzahl = rhythmus == .monatlich ? 12 : 4
 
-        let zeitraeume = (1...anzahl).map { index -> Zeitraum in
+        let zeiträume = (1...anzahl).map { index -> Zeitraum in
             let imZeitraum = belegeDesJahres.filter {
                 rhythmus == .monatlich ? $0.monat == index : $0.quartal == index
             }
             return Zeitraum(
                 bezeichnung: bezeichnung(index: index, rhythmus: rhythmus),
-                // Die Vorsteuer wird nicht um gesetzliche Abzugsbeschraenkungen gekuerzt:
+                // Die Vorsteuer wird nicht um gesetzliche Abzugsbeschränkungen gekürzt:
                 // bei Bewirtungskosten etwa sind 100 % der Vorsteuer abziehbar, obwohl
                 // ertragsteuerlich nur 70 % der Kosten anerkannt werden.
                 umsatzsteuer: imZeitraum.filter { $0.art == .einnahme }
@@ -71,15 +71,15 @@ struct Umsatzsteuerberechnung {
             )
         }
 
-        return Ergebnis(jahr: jahr, zeitraeume: zeitraeume, kleinunternehmer: false)
+        return Ergebnis(jahr: jahr, zeiträume: zeiträume, kleinunternehmer: false)
     }
 
     private static func bezeichnung(index: Int, rhythmus: Rhythmus) -> String {
         switch rhythmus {
-        case .vierteljaehrlich:
+        case .vierteljährlich:
             return "\(index). Quartal"
         case .monatlich:
-            let namen = ["Januar", "Februar", "Maerz", "April", "Mai", "Juni",
+            let namen = ["Januar", "Februar", "März", "April", "Mai", "Juni",
                          "Juli", "August", "September", "Oktober", "November", "Dezember"]
             return namen[index - 1]
         }

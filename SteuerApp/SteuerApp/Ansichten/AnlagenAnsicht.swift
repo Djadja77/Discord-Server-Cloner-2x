@@ -1,10 +1,10 @@
 import SwiftUI
 import SwiftData
 
-/// Das Anlagenverzeichnis: alles, was ueber mehrere Jahre abgeschrieben wird.
+/// Das Anlagenverzeichnis: alles, was über mehrere Jahre abgeschrieben wird.
 ///
-/// Anschaffungen oberhalb der Grenze fuer geringwertige Wirtschaftsgueter gehoeren hierher
-/// und nicht in die Belegliste - sonst wuerde der volle Betrag im Anschaffungsjahr als
+/// Anschaffungen oberhalb der Grenze für geringwertige Wirtschaftsgüter gehören hierher
+/// und nicht in die Belegliste - sonst würde der volle Betrag im Anschaffungsjahr als
 /// Betriebsausgabe erscheinen, was das Finanzamt nicht anerkennt.
 struct AnlagenAnsicht: View {
 
@@ -12,45 +12,45 @@ struct AnlagenAnsicht: View {
 
     @Environment(\.modelContext) private var kontext
     @Query(sort: \Wirtschaftsgut.anschaffungsdatum, order: .reverse)
-    private var wirtschaftsgueter: [Wirtschaftsgut]
+    private var wirtschaftsgüter: [Wirtschaftsgut]
 
     @State private var neuesGut = false
 
     private var abschreibungDesJahres: Decimal {
-        wirtschaftsgueter.map { $0.abschreibung(fuerJahr: jahr) }.summe
+        wirtschaftsgüter.map { $0.abschreibung(fuerJahr: jahr) }.summe
     }
 
     var body: some View {
         List {
-            if wirtschaftsgueter.isEmpty {
+            if wirtschaftsgüter.isEmpty {
                 ContentUnavailableView(
-                    "Kein Anlagevermoegen",
+                    "Kein Anlagevermögen",
                     systemImage: "shippingbox",
-                    description: Text("Anschaffungen ueber 800 Euro netto werden hier erfasst und ueber ihre Nutzungsdauer abgeschrieben.")
+                    description: Text("Anschaffungen über 800 Euro netto werden hier erfasst und über ihre Nutzungsdauer abgeschrieben.")
                 )
             } else {
                 Section {
                     ZeileMitBetrag(
                         bezeichnung: "Abschreibung \(String(jahr))",
                         betrag: abschreibungDesJahres,
-                        unterzeile: "fliesst als Betriebsausgabe in die EUER ein",
+                        unterzeile: "fließt als Betriebsausgabe in die EÜR ein",
                         hervorgehoben: true
                     )
                 }
 
-                Section("Wirtschaftsgueter") {
-                    ForEach(wirtschaftsgueter) { gut in
+                Section("Wirtschaftsgüter") {
+                    ForEach(wirtschaftsgüter) { gut in
                         NavigationLink {
                             WirtschaftsgutBearbeitenAnsicht(wirtschaftsgut: gut)
                         } label: {
                             zeile(fuer: gut)
                         }
                     }
-                    .onDelete(perform: loeschen)
+                    .onDelete(perform: löschen)
                 }
             }
         }
-        .navigationTitle("Anlagevermoegen")
+        .navigationTitle("Anlagevermögen")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -84,11 +84,11 @@ struct AnlagenAnsicht: View {
         let angeschafft = Formatierung.datum(gut.anschaffungsdatum)
         let kosten = Formatierung.euro(gut.anschaffungskostenNetto, mitCent: false)
         let rest = Formatierung.euro(gut.restbuchwert(endeJahr: jahr), mitCent: false)
-        return "\(angeschafft) \u{2013} \(kosten) ueber \(gut.nutzungsdauerJahre) Jahre \u{2013} Restwert \(rest)"
+        return "\(angeschafft) \u{2013} \(kosten) über \(gut.nutzungsdauerJahre) Jahre \u{2013} Restwert \(rest)"
     }
 
-    private func loeschen(_ indizes: IndexSet) {
-        indizes.map { wirtschaftsgueter[$0] }.forEach(kontext.delete)
+    private func löschen(_ indizes: IndexSet) {
+        indizes.map { wirtschaftsgüter[$0] }.forEach(kontext.delete)
     }
 }
 
@@ -98,7 +98,7 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
     let wirtschaftsgut: Wirtschaftsgut?
 
     @Environment(\.modelContext) private var kontext
-    @Environment(\.dismiss) private var schliessen
+    @Environment(\.dismiss) private var schließen
 
     @State private var bezeichnung = ""
     @State private var anschaffungsdatum = Date()
@@ -109,7 +109,7 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
 
     private var istNeu: Bool { wirtschaftsgut == nil }
 
-    /// Vorschau der Abschreibung ueber die gesamte Nutzungsdauer - macht sofort sichtbar,
+    /// Vorschau der Abschreibung über die gesamte Nutzungsdauer - macht sofort sichtbar,
     /// wie lange die Anschaffung steuerlich nachwirkt.
     private var vorschau: [(jahr: Int, betrag: Decimal)] {
         let entwurf = Wirtschaftsgut(
@@ -162,7 +162,7 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
             } header: {
                 Text("Abschreibungsdauer")
             } footer: {
-                Text("Massgeblich ist die betriebsgewoehnliche Nutzungsdauer nach der amtlichen AfA-Tabelle. Im Anschaffungsjahr wird nur zeitanteilig ab dem Anschaffungsmonat abgeschrieben.")
+                Text("Maßgeblich ist die betriebsgewöhnliche Nutzungsdauer nach der amtlichen AfA-Tabelle. Im Anschaffungsjahr wird nur zeitanteilig ab dem Anschaffungsmonat abgeschrieben.")
             }
 
             if !vorschau.isEmpty {
@@ -180,9 +180,9 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
 
             if !istNeu {
                 Section {
-                    Button("Wirtschaftsgut loeschen", role: .destructive) {
+                    Button("Wirtschaftsgut löschen", role: .destructive) {
                         if let wirtschaftsgut { kontext.delete(wirtschaftsgut) }
-                        schliessen()
+                        schließen()
                     }
                 }
             }
@@ -192,7 +192,7 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
         .toolbar {
             if istNeu {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { schliessen() }
+                    Button("Abbrechen") { schließen() }
                 }
             }
             ToolbarItem(placement: .confirmationAction) {
@@ -220,7 +220,7 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
         ziel.nutzungsdauerJahre = nutzungsdauer
         ziel.notiz = notiz
         if wirtschaftsgut == nil { kontext.insert(ziel) }
-        schliessen()
+        schließen()
     }
 }
 

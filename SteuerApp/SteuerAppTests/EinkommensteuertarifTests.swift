@@ -3,9 +3,9 @@ import XCTest
 
 /// Tests des Einkommensteuertarifs nach § 32a EStG.
 ///
-/// Die mit "amtliche Grundtabelle" gekennzeichneten Werte stammen aus der veroeffentlichten
-/// Einkommensteuer-Grundtabelle 2025. Die uebrigen Werte sind Regressionsanker: sie halten
-/// das Verhalten fest, damit eine spaetere Aenderung am Tarif nicht unbemerkt durchrutscht.
+/// Die mit "amtliche Grundtabelle" gekennzeichneten Werte stammen aus der veröffentlichten
+/// Einkommensteuer-Grundtabelle 2025. Die übrigen Werte sind Regressionsanker: sie halten
+/// das Verhalten fest, damit eine spätere Änderung am Tarif nicht unbemerkt durchrutscht.
 final class EinkommensteuertarifTests: XCTestCase {
 
     private let tarif = Einkommensteuertarif(steuerjahr: .jahr2025)
@@ -23,7 +23,7 @@ final class EinkommensteuertarifTests: XCTestCase {
         XCTAssertEqual(tarif.grundtarif(0), 0)
         XCTAssertEqual(tarif.grundtarif(5_000), 0)
         XCTAssertEqual(tarif.grundtarif(12_096), 0, "Grundfreibetrag 2025")
-        // Der erste Euro darueber loest wegen der Abrundung noch keine volle Euro-Steuer aus.
+        // Der erste Euro darüber löst wegen der Abrundung noch keine volle Euro-Steuer aus.
         XCTAssertEqual(tarif.grundtarif(12_097), 0)
     }
 
@@ -36,8 +36,8 @@ final class EinkommensteuertarifTests: XCTestCase {
     }
 
     func testTarifIstAnDenZonengrenzenStetig() {
-        // An den Uebergaengen darf die Steuer um hoechstens einen Euro springen -
-        // mehr waere ein Tippfehler in den Tarifkonstanten.
+        // An den Übergängen darf die Steuer um höchstens einen Euro springen -
+        // mehr wäre ein Tippfehler in den Tarifkonstanten.
         for grenze in [Decimal(17_443), Decimal(68_480), Decimal(277_825)] {
             let davor = tarif.grundtarif(grenze)
             let danach = tarif.grundtarif(grenze + 1)
@@ -75,7 +75,7 @@ final class EinkommensteuertarifTests: XCTestCase {
         var vorher: Decimal = 0
         for zve in stride(from: 0, through: 400_000, by: 500) {
             let jetzt = tarif.grundtarif(Decimal(zve))
-            XCTAssertGreaterThanOrEqual(jetzt, vorher, "Ruecksprung bei zvE \(zve)")
+            XCTAssertGreaterThanOrEqual(jetzt, vorher, "Rücksprung bei zvE \(zve)")
             vorher = jetzt
         }
     }

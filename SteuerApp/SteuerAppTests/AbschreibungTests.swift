@@ -29,7 +29,7 @@ final class AbschreibungTests: XCTestCase {
     }
 
     func testAnschaffungImJahresverlaufWirdZeitanteiligGekuerzt() {
-        // Juli: nur sechs der zwoelf Monate, dafuer reicht die Abschreibung ein Jahr laenger.
+        // Juli: nur sechs der zwölf Monate, dafür reicht die Abschreibung ein Jahr länger.
         let gut = wirtschaftsgut(kosten: 2_100, jahre: 3, angeschafft: 7)
         XCTAssertEqual(gut.abschreibung(fuerJahr: 2025), 350)
         XCTAssertEqual(gut.abschreibung(fuerJahr: 2026), 700)
@@ -45,7 +45,7 @@ final class AbschreibungTests: XCTestCase {
             let gut = wirtschaftsgut(kosten: kosten, jahre: jahre, angeschafft: monat)
             let summe = (gut.anschaffungsjahr...(gut.anschaffungsjahr + jahre + 1))
                 .map { gut.abschreibung(fuerJahr: $0) }.summe
-            XCTAssertEqual(summe, kosten, "\(kosten) ueber \(jahre) Jahre ab Monat \(monat)")
+            XCTAssertEqual(summe, kosten, "\(kosten) über \(jahre) Jahre ab Monat \(monat)")
         }
     }
 
@@ -70,15 +70,15 @@ final class AbschreibungTests: XCTestCase {
 
     func testAbschreibungFliesstAlsBetriebsausgabeInDieEuer() {
         let einnahme = Beleg(datum: datum(2025, 3), bruttoBetrag: 11_900,
-                             kategorie: .umsatzerloese)
+                             kategorie: .umsatzerlöse)
         let gut = wirtschaftsgut(kosten: 2_100, jahre: 3, angeschafft: 1)
 
-        let ergebnis = EinnahmenUeberschussRechnung.berechnen(
-            belege: [einnahme], wirtschaftsgueter: [gut],
+        let ergebnis = EinnahmenÜberschussRechnung.berechnen(
+            belege: [einnahme], wirtschaftsgüter: [gut],
             jahr: 2025, kleinunternehmer: false)
 
         XCTAssertEqual(ergebnis.summeAusgaben, 700)
-        XCTAssertEqual(ergebnis.gewinn, 9_300, "10.000 Einnahmen abzueglich 700 Abschreibung")
+        XCTAssertEqual(ergebnis.gewinn, 9_300, "10.000 Einnahmen abzüglich 700 Abschreibung")
         XCTAssertEqual(ergebnis.ausgaben.first?.kategorie, .abschreibung)
     }
 
@@ -87,8 +87,8 @@ final class AbschreibungTests: XCTestCase {
                             kategorie: .abschreibung, umsatzsteuersatz: .ohne)
         let gut = wirtschaftsgut(kosten: 2_100, jahre: 3, angeschafft: 1)
 
-        let ergebnis = EinnahmenUeberschussRechnung.berechnen(
-            belege: [manuell], wirtschaftsgueter: [gut],
+        let ergebnis = EinnahmenÜberschussRechnung.berechnen(
+            belege: [manuell], wirtschaftsgüter: [gut],
             jahr: 2025, kleinunternehmer: false)
 
         XCTAssertEqual(ergebnis.ausgaben.count, 1, "ein gemeinsamer Posten, nicht zwei")
@@ -98,8 +98,8 @@ final class AbschreibungTests: XCTestCase {
 
     func testAbschreibungAusserhalbDesJahresBleibtUnberuecksichtigt() {
         let gut = wirtschaftsgut(kosten: 2_100, jahre: 3, angeschafft: 1, jahr: 2020)
-        let ergebnis = EinnahmenUeberschussRechnung.berechnen(
-            belege: [], wirtschaftsgueter: [gut], jahr: 2025, kleinunternehmer: false)
+        let ergebnis = EinnahmenÜberschussRechnung.berechnen(
+            belege: [], wirtschaftsgüter: [gut], jahr: 2025, kleinunternehmer: false)
         XCTAssertTrue(ergebnis.ausgaben.isEmpty)
     }
 

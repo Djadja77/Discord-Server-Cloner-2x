@@ -3,7 +3,7 @@ import SwiftData
 
 /// Export der Belege und der Jahresauswertung als CSV.
 ///
-/// Semikolon als Trennzeichen und Komma als Dezimaltrennzeichen - so oeffnet Excel in
+/// Semikolon als Trennzeichen und Komma als Dezimaltrennzeichen - so öffnet Excel in
 /// deutscher Einstellung die Datei ohne Nachfrage. Die Datei beginnt mit einer
 /// UTF-8-Byte-Order-Mark, damit Umlaute korrekt ankommen.
 enum CSVExport {
@@ -38,7 +38,7 @@ enum CSVExport {
     /// Alle Belege eines Jahres - eine Zeile je Beleg.
     ///
     /// - Parameter fotonamen: Zuordnung von Beleg zu Dateiname im Archiv. Wird sie
-    ///   mitgegeben, nennt die letzte Spalte das zugehoerige Foto - damit laesst sich jede
+    ///   mitgegeben, nennt die letzte Spalte das zugehörige Foto - damit lässt sich jede
     ///   Zeile ohne Suchen dem Papier zuordnen.
     static func belege(
         _ belege: [Beleg],
@@ -47,7 +47,7 @@ enum CSVExport {
     ) -> String {
         var zeilen = [zeile([
             feld("Datum"), feld("Bezeichnung"), feld("Art"), feld("Kategorie"),
-            feld("EUER-Zeile"), feld("Brutto"), feld("USt-Satz"), feld("USt-Betrag"),
+            feld("EÜR-Zeile"), feld("Brutto"), feld("USt-Satz"), feld("USt-Betrag"),
             feld("Netto"), feld("Betrieblicher Anteil"), feld("Betrieblich netto"),
             feld("Beleg vorhanden"), feld("Belegdatei"), feld("Notiz"),
         ])]
@@ -74,20 +74,20 @@ enum CSVExport {
     }
 
     /// Die Jahresauswertung in der Gliederung der Anlage EUER.
-    static func euer(_ ergebnis: EinnahmenUeberschussRechnung.Ergebnis) -> String {
+    static func euer(_ ergebnis: EinnahmenÜberschussRechnung.Ergebnis) -> String {
         var zeilen = [zeile([
-            feld("Bereich"), feld("Kategorie"), feld("EUER-Zeile"),
-            feld("Betrag"), feld("Vor Kuerzung"), feld("Belege"),
+            feld("Bereich"), feld("Kategorie"), feld("EÜR-Zeile"),
+            feld("Betrag"), feld("Vor Kürzung"), feld("Belege"),
         ])]
 
-        func block(_ titel: String, _ posten: [EinnahmenUeberschussRechnung.Posten]) {
+        func block(_ titel: String, _ posten: [EinnahmenÜberschussRechnung.Posten]) {
             for p in posten {
                 zeilen.append(zeile([
                     feld(titel),
                     feld(p.kategorie.bezeichnung),
                     feld(p.kategorie.euerZeile.map(String.init) ?? ""),
                     zahl(p.betrag),
-                    zahl(p.betragVorKuerzung),
+                    zahl(p.betragVorKürzung),
                     String(p.anzahlBelege),
                 ]))
             }
@@ -107,7 +107,7 @@ enum CSVExport {
     }
 
     /// Schreibt den Text als CSV-Datei ins temporaere Verzeichnis und liefert die URL
-    /// zum Teilen ueber den Share-Sheet.
+    /// zum Teilen über den Share-Sheet.
     static func datei(inhalt: String, name: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
         let mitBOM = "\u{FEFF}" + inhalt

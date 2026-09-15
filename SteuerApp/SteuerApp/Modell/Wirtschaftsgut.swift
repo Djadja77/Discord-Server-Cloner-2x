@@ -1,12 +1,12 @@
 import Foundation
 import SwiftData
 
-/// Ein abnutzbares Wirtschaftsgut des Anlagevermoegens.
+/// Ein abnutzbares Wirtschaftsgut des Anlagevermögens.
 ///
-/// Anschaffungen oberhalb der Grenze fuer geringwertige Wirtschaftsgueter duerfen nicht
-/// sofort abgezogen, sondern muessen ueber die betriebsgewoehnliche Nutzungsdauer verteilt
-/// werden (§ 7 EStG). Die App rechnet die jaehrliche Abschreibung selbst aus, statt sie
-/// Jahr fuer Jahr von Hand als Beleg zu verlangen.
+/// Anschaffungen oberhalb der Grenze für geringwertige Wirtschaftsgüter dürfen nicht
+/// sofort abgezogen, sondern müssen über die betriebsgewöhnliche Nutzungsdauer verteilt
+/// werden (§ 7 EStG). Die App rechnet die jährliche Abschreibung selbst aus, statt sie
+/// Jahr für Jahr von Hand als Beleg zu verlangen.
 @Model
 final class Wirtschaftsgut {
 
@@ -14,10 +14,10 @@ final class Wirtschaftsgut {
     var anschaffungsdatum: Date = Date()
 
     /// Anschaffungskosten **ohne** Umsatzsteuer. Die Vorsteuer ist im Anschaffungsjahr
-    /// in voller Hoehe abziehbar und wird deshalb als eigener Beleg erfasst.
+    /// in voller Höhe abziehbar und wird deshalb als eigener Beleg erfasst.
     var anschaffungskostenNetto: Decimal = Decimal(0)
 
-    /// Betriebsgewoehnliche Nutzungsdauer in Jahren laut AfA-Tabelle.
+    /// Betriebsgewöhnliche Nutzungsdauer in Jahren laut AfA-Tabelle.
     var nutzungsdauerJahre: Int = 3
 
     var notiz: String = ""
@@ -44,21 +44,21 @@ final class Wirtschaftsgut {
     ///
     /// Im Anschaffungsjahr nur zeitanteilig ab dem Anschaffungsmonat. Im letzten Jahr wird
     /// der Restbuchwert angesetzt statt des rechnerischen Jahresbetrags - sonst bliebe durch
-    /// die Rundung auf Cent ein Rest stehen, und das Wirtschaftsgut waere nie ganz
+    /// die Rundung auf Cent ein Rest stehen, und das Wirtschaftsgut wäre nie ganz
     /// abgeschrieben.
     func abschreibung(fuerJahr jahr: Int) -> Decimal {
         guard nutzungsdauerJahre > 0, anschaffungskostenNetto > 0,
               jahr >= anschaffungsjahr, jahr <= letztesAbschreibungsjahr else { return 0 }
 
-        if jahr < letztesAbschreibungsjahr { return regulaereAbschreibung(jahr) }
+        if jahr < letztesAbschreibungsjahr { return reguläreAbschreibung(jahr) }
 
         let bisher = (anschaffungsjahr..<letztesAbschreibungsjahr)
-            .map(regulaereAbschreibung).summe
+            .map(reguläreAbschreibung).summe
         return (anschaffungskostenNetto - bisher).nichtNegativ
     }
 
-    /// Rechnerischer Jahresbetrag, im Anschaffungsjahr zeitanteilig gekuerzt.
-    private func regulaereAbschreibung(_ jahr: Int) -> Decimal {
+    /// Rechnerischer Jahresbetrag, im Anschaffungsjahr zeitanteilig gekürzt.
+    private func reguläreAbschreibung(_ jahr: Int) -> Decimal {
         let jahresbetrag = (anschaffungskostenNetto / Decimal(nutzungsdauerJahre)).gerundet()
         guard jahr == anschaffungsjahr else { return jahresbetrag }
         let monat = Calendar.kalender.component(.month, from: anschaffungsdatum)
@@ -76,7 +76,7 @@ final class Wirtschaftsgut {
     var letztesAbschreibungsjahr: Int {
         guard nutzungsdauerJahre > 0 else { return anschaffungsjahr }
         let anschaffungsmonat = Calendar.kalender.component(.month, from: anschaffungsdatum)
-        // Wird unterjaehrig angeschafft, reicht die Abschreibung ein Jahr laenger.
+        // Wird unterjährig angeschafft, reicht die Abschreibung ein Jahr länger.
         return anschaffungsjahr + nutzungsdauerJahre - (anschaffungsmonat == 1 ? 1 : 0)
     }
 }
@@ -86,7 +86,7 @@ enum Nutzungsdauervorlage: String, CaseIterable, Identifiable {
     case computer
     case smartphone
     case software
-    case bueromoebel
+    case büromöbel
     case fahrzeug
     case maschine
 
@@ -97,7 +97,7 @@ enum Nutzungsdauervorlage: String, CaseIterable, Identifiable {
         case .computer: "Computer, Notebook, Peripherie"
         case .smartphone: "Smartphone, Tablet"
         case .software: "Software"
-        case .bueromoebel: "Bueromoebel"
+        case .büromöbel: "Büromöbel"
         case .fahrzeug: "Personenkraftwagen"
         case .maschine: "Maschinen, Werkstattausstattung"
         }
@@ -108,7 +108,7 @@ enum Nutzungsdauervorlage: String, CaseIterable, Identifiable {
         case .computer: 1
         case .smartphone: 5
         case .software: 3
-        case .bueromoebel: 13
+        case .büromöbel: 13
         case .fahrzeug: 6
         case .maschine: 8
         }

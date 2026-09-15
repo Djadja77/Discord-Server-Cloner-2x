@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// Alle Belege eines Jahres - suchbar, filterbar, loeschbar.
+/// Alle Belege eines Jahres - suchbar, filterbar, löschbar.
 struct BelegeAnsicht: View {
 
     @Binding var jahr: Int
@@ -65,8 +65,8 @@ struct BelegeAnsicht: View {
                         suchtext.isEmpty ? "Keine Belege" : "Keine Treffer",
                         systemImage: "doc.text.magnifyingglass",
                         description: Text(suchtext.isEmpty
-                            ? "Fuer \(String(jahr)) ist noch nichts erfasst."
-                            : "Fuer \"\(suchtext)\" wurde nichts gefunden.")
+                            ? "Für \(String(jahr)) ist noch nichts erfasst."
+                            : "Für \"\(suchtext)\" wurde nichts gefunden.")
                     )
                 } else {
                     ForEach(nachMonat, id: \.monat) { gruppe in
@@ -79,7 +79,7 @@ struct BelegeAnsicht: View {
                                 }
                             }
                             .onDelete { indizes in
-                                loeschen(indizes, aus: gruppe.belege)
+                                löschen(indizes, aus: gruppe.belege)
                             }
                         }
                     }
@@ -90,9 +90,9 @@ struct BelegeAnsicht: View {
             .navigationTitle("Belege")
             .safeAreaInset(edge: .top) { filterleiste }
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { JahresWaehler(jahr: $jahr) }
+                ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
                 ToolbarItem(placement: .topBarTrailing) {
-                    BelegErfassenSchaltflaeche(jahr: jahr)
+                    BelegErfassenSchaltfläche(jahr: jahr)
                 }
             }
         }
@@ -120,17 +120,17 @@ struct BelegeAnsicht: View {
     }
 
     private func monatsname(_ monat: Int) -> String {
-        let namen = ["Januar", "Februar", "Maerz", "April", "Mai", "Juni",
+        let namen = ["Januar", "Februar", "März", "April", "Mai", "Juni",
                      "Juli", "August", "September", "Oktober", "November", "Dezember"]
         guard (1...12).contains(monat) else { return "" }
         return "\(namen[monat - 1]) \(String(jahr))"
     }
 
-    private func loeschen(_ indizes: IndexSet, aus belege: [Beleg]) {
+    private func löschen(_ indizes: IndexSet, aus belege: [Beleg]) {
         for index in indizes {
             let beleg = belege[index]
-            // Das Belegfoto mit loeschen, sonst bleiben Dateileichen im Archiv zurueck.
-            if let datei = beleg.belegbildDatei { Belegarchiv.loeschen(datei) }
+            // Das Belegfoto mit löschen, sonst bleiben Dateileichen im Archiv zurück.
+            if let datei = beleg.belegbildDatei { Belegarchiv.löschen(datei) }
             kontext.delete(beleg)
         }
     }

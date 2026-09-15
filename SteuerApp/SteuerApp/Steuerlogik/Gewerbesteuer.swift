@@ -2,16 +2,16 @@ import Foundation
 
 /// Gewerbesteuer und ihre Anrechnung auf die Einkommensteuer.
 ///
-/// Freiberufler (§ 18 EStG) zahlen **keine** Gewerbesteuer - fuer sie bleibt dieses Modul
-/// ungenutzt. Fuer Gewerbetreibende gilt:
+/// Freiberufler (§ 18 EStG) zahlen **keine** Gewerbesteuer - für sie bleibt dieses Modul
+/// ungenutzt. Für Gewerbetreibende gilt:
 ///
 /// 1. Gewerbeertrag = Gewinn, abgerundet auf volle 100 Euro (§ 11 Abs. 1 GewStG)
-/// 2. abzueglich Freibetrag von 24.500 Euro fuer natuerliche Personen
+/// 2. abzüglich Freibetrag von 24.500 Euro für natürliche Personen
 /// 3. mal Steuermesszahl 3,5 % ergibt den Steuermessbetrag
 /// 4. mal Hebesatz der Gemeinde ergibt die Gewerbesteuer
 ///
 /// Die Gewerbesteuer wird nach § 35 EStG auf die Einkommensteuer angerechnet, und zwar mit
-/// dem 3,8-fachen des Messbetrags, gedeckelt auf die tatsaechlich gezahlte Gewerbesteuer.
+/// dem 3,8-fachen des Messbetrags, gedeckelt auf die tatsächlich gezahlte Gewerbesteuer.
 /// Ab einem Hebesatz von rund 380 % bleibt daher eine echte Restbelastung.
 struct Gewerbesteuer {
 
@@ -22,10 +22,10 @@ struct Gewerbesteuer {
         let gewerbeertrag: Decimal
         let messbetrag: Decimal
         let gewerbesteuer: Decimal
-        /// Hoechstbetrag der Anrechnung nach § 35 EStG, noch vor der Deckelung auf die
-        /// tatsaechlich festgesetzte Einkommensteuer.
+        /// Höchstbetrag der Anrechnung nach § 35 EStG, noch vor der Deckelung auf die
+        /// tatsächlich festgesetzte Einkommensteuer.
         let anrechnungsvolumen: Decimal
-        /// Gewerbesteuer, die nach der Anrechnung tatsaechlich als Mehrbelastung bleibt.
+        /// Gewerbesteuer, die nach der Anrechnung tatsächlich als Mehrbelastung bleibt.
         let restbelastung: Decimal
 
         static let keine = Ergebnis(

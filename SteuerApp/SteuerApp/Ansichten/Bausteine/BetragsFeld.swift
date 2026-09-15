@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Eingabefeld fuer Geldbetraege - deutsche Schreibweise, Zifferntastatur mit Komma.
+/// Eingabefeld für Geldbeträge - deutsche Schreibweise, Zifferntastatur mit Komma.
 struct BetragsFeld: View {
 
     let titel: String
@@ -40,7 +40,7 @@ struct BetragsFeld: View {
 }
 
 /// Auswahl des Steuerjahres - in mehreren Ansichten oben rechts eingeblendet.
-struct JahresWaehler: View {
+struct JahresWähler: View {
 
     @Binding var jahr: Int
 

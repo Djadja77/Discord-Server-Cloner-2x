@@ -1,15 +1,15 @@
 import Foundation
 
-/// Rechenhilfen fuer Geldbetraege.
+/// Rechenhilfen für Geldbeträge.
 ///
-/// Alle Betraege in der App sind `Decimal`, damit Cent-Betraege exakt bleiben.
-/// `Double` wird ausschliesslich innerhalb der Tarifpolynome von `Einkommensteuertarif`
+/// Alle Beträge in der App sind `Decimal`, damit Cent-Beträge exakt bleiben.
+/// `Double` wird ausschließlich innerhalb der Tarifpolynome von `Einkommensteuertarif`
 /// verwendet - dort schreibt § 32a EStG ohnehin eine Abrundung auf volle Euro vor.
 extension Decimal {
 
     /// Auf volle Euro abgerundet (Richtung Null).
     ///
-    /// Fuer die in dieser App auftretenden Faelle (zu versteuerndes Einkommen, Gewerbeertrag)
+    /// Für die in dieser App auftretenden Fälle (zu versteuerndes Einkommen, Gewerbeertrag)
     /// sind die Werte nicht negativ, daher entspricht das dem gesetzlich geforderten Abrunden.
     var aufVolleEuroAbgerundet: Decimal {
         var eingabe = self
@@ -26,7 +26,7 @@ extension Decimal {
         return ergebnis
     }
 
-    /// Auf volle 100 Euro abgerundet - vorgeschrieben fuer den Gewerbeertrag (§ 11 Abs. 1 GewStG).
+    /// Auf volle 100 Euro abgerundet - vorgeschrieben für den Gewerbeertrag (§ 11 Abs. 1 GewStG).
     var aufVolle100EuroAbgerundet: Decimal {
         var eingabe = self / 100
         var hunderter = Decimal()

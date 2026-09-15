@@ -6,10 +6,10 @@ import PhotosUI
 /// Drei Wege, weil Belege auf drei Arten ankommen: als Stapel Papier vom Schreibtisch, als
 /// Bildschirmfoto einer E-Mail-Rechnung, oder einzeln nachgetragen. Alle drei muenden in
 /// denselben Entwurf.
-struct BelegErfassenSchaltflaeche: View {
+struct BelegErfassenSchaltfläche: View {
 
     let jahr: Int
-    /// `true` zeigt nur das Pluszeichen - fuer die Werkzeugleiste.
+    /// `true` zeigt nur das Pluszeichen - für die Werkzeugleiste.
     var kompakt: Bool = true
 
     @State private var einzelOffen = false
@@ -20,12 +20,12 @@ struct BelegErfassenSchaltflaeche: View {
     @State private var fotoauswahl: [PhotosPickerItem] = []
 
     var body: some View {
-        schaltflaeche
+        schaltfläche
             .sheet(isPresented: $einzelOffen) {
                 BelegBearbeitenAnsicht(beleg: nil, vorgabeJahr: jahr)
             }
-            // Zwei Blaetter nacheinander: das zweite wird erst beim Schliessen des ersten
-            // geoeffnet - sonst verschluckt SwiftUI die zweite Praesentation.
+            // Zwei Blaetter nacheinander: das zweite wird erst beim Schließen des ersten
+            // geöffnet - sonst verschluckt SwiftUI die zweite Präsentation.
             .sheet(isPresented: $scannerOffen, onDismiss: stapelOeffnenFallsBilder) {
                 BelegScanner { bilder in
                     stapelbilder = bilder
@@ -44,17 +44,17 @@ struct BelegErfassenSchaltflaeche: View {
             )
             .onChange(of: fotoauswahl) {
                 guard !fotoauswahl.isEmpty else { return }
-                let ausgewaehlt = fotoauswahl
+                let ausgewählt = fotoauswahl
                 fotoauswahl = []
                 Task {
-                    stapelbilder = await FotoImport.bilderLaden(aus: ausgewaehlt)
+                    stapelbilder = await FotoImport.bilderLaden(aus: ausgewählt)
                     stapelOeffnenFallsBilder()
                 }
             }
     }
 
     @ViewBuilder
-    private var schaltflaeche: some View {
+    private var schaltfläche: some View {
         if kompakt {
             Menu {
                 menueinträge

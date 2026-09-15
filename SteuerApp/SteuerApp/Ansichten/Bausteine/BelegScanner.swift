@@ -5,9 +5,9 @@ import PhotosUI
 
 /// Die Dokumentenkamera von iOS: erkennt Belegkanten, entzerrt und schneidet zu.
 ///
-/// Es werden **alle** gescannten Seiten zurueckgegeben. Wer nach einer Reise mit einem
-/// Stapel Quittungen zurueckkommt, scannt sie in einem Durchgang - jede Seite wird
-/// anschliessend zu einem eigenen Beleg.
+/// Es werden **alle** gescannten Seiten zurückgegeben. Wer nach einer Reise mit einem
+/// Stapel Quittungen zurückkommt, scannt sie in einem Durchgang - jede Seite wird
+/// anschließend zu einem eigenen Beleg.
 struct BelegScanner: UIViewControllerRepresentable {
 
     var fertig: ([UIImage]) -> Void
@@ -50,10 +50,10 @@ struct BelegScanner: UIViewControllerRepresentable {
     }
 }
 
-/// Laedt aus der Fotomediathek ausgewaehlte Bilder.
+/// Laedt aus der Fotomediathek ausgewählte Bilder.
 ///
 /// Nicht jeder Beleg kommt auf Papier: Rechnungen per E-Mail landen als Bildschirmfoto in
-/// der Mediathek und muessen denselben Weg nehmen koennen wie ein abfotografierter Kassenbon.
+/// der Mediathek und müssen denselben Weg nehmen können wie ein abfotografierter Kassenbon.
 enum FotoImport {
 
     static func bilderLaden(aus eintraege: [PhotosPickerItem]) async -> [UIImage] {
@@ -67,43 +67,43 @@ enum FotoImport {
     }
 }
 
-/// Belegfoto in voller Groesse, zoom- und verschiebbar.
+/// Belegfoto in voller Größe, zoom- und verschiebbar.
 ///
 /// Belege sind zehn Jahre aufzubewahren. Wer nach drei Jahren nachsehen will, was auf der
-/// Quittung stand, muss hineinzoomen koennen.
+/// Quittung stand, muss hineinzoomen können.
 struct BelegbildAnsicht: View {
 
     let bild: UIImage
 
-    @Environment(\.dismiss) private var schliessen
-    @State private var vergroesserung: CGFloat = 1
-    @State private var letzteVergroesserung: CGFloat = 1
+    @Environment(\.dismiss) private var schließen
+    @State private var vergrößerung: CGFloat = 1
+    @State private var letzteVergrößerung: CGFloat = 1
     @State private var versatz: CGSize = .zero
     @State private var letzterVersatz: CGSize = .zero
 
     var body: some View {
         NavigationStack {
-            GeometryReader { flaeche in
+            GeometryReader { fläche in
                 Image(uiImage: bild)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: flaeche.size.width, height: flaeche.size.height)
-                    .scaleEffect(vergroesserung)
+                    .frame(width: fläche.size.width, height: fläche.size.height)
+                    .scaleEffect(vergrößerung)
                     .offset(versatz)
                     .gesture(
                         MagnificationGesture()
                             .onChanged { wert in
-                                vergroesserung = min(max(letzteVergroesserung * wert, 1), 6)
+                                vergrößerung = min(max(letzteVergrößerung * wert, 1), 6)
                             }
                             .onEnded { _ in
-                                letzteVergroesserung = vergroesserung
-                                if vergroesserung <= 1 { zuruecksetzen() }
+                                letzteVergrößerung = vergrößerung
+                                if vergrößerung <= 1 { zuruecksetzen() }
                             }
                     )
                     .simultaneousGesture(
                         DragGesture()
                             .onChanged { wert in
-                                guard vergroesserung > 1 else { return }
+                                guard vergrößerung > 1 else { return }
                                 versatz = CGSize(
                                     width: letzterVersatz.width + wert.translation.width,
                                     height: letzterVersatz.height + wert.translation.height
@@ -112,9 +112,9 @@ struct BelegbildAnsicht: View {
                             .onEnded { _ in letzterVersatz = versatz }
                     )
                     .onTapGesture(count: 2) {
-                        // Doppeltippen schaltet zwischen Uebersicht und Detail um.
+                        // Doppeltippen schaltet zwischen Übersicht und Detail um.
                         withAnimation(.easeInOut(duration: 0.2)) {
-                            vergroesserung > 1 ? zuruecksetzen() : hineinzoomen()
+                            vergrößerung > 1 ? zuruecksetzen() : hineinzoomen()
                         }
                     }
             }
@@ -124,26 +124,26 @@ struct BelegbildAnsicht: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fertig") { schliessen() }
+                    Button("Fertig") { schließen() }
                 }
             }
         }
     }
 
     private func zuruecksetzen() {
-        vergroesserung = 1
-        letzteVergroesserung = 1
+        vergrößerung = 1
+        letzteVergrößerung = 1
         versatz = .zero
         letzterVersatz = .zero
     }
 
     private func hineinzoomen() {
-        vergroesserung = 3
-        letzteVergroesserung = 3
+        vergrößerung = 3
+        letzteVergrößerung = 3
     }
 }
 
-/// Teilen-Dialog fuer die CSV-Exporte.
+/// Teilen-Dialog für die CSV-Exporte.
 struct TeilenAnsicht: UIViewControllerRepresentable {
 
     let dateien: [URL]
