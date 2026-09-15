@@ -10,6 +10,7 @@ struct BelegeAnsicht: View {
 
     @State private var suchtext = ""
     @State private var filter: Filter = .alle
+    @FocusState private var sucheAktiv: Bool
 
     enum Filter: String, CaseIterable, Identifiable {
         case alle, einnahmen, ausgaben, ohneBeleg
@@ -86,9 +87,9 @@ struct BelegeAnsicht: View {
                 }
             }
             .listStyle(.insetGrouped)
-            .searchable(text: $suchtext, prompt: "Bezeichnung, Kategorie oder Notiz")
             .navigationTitle("Belege")
             .safeAreaInset(edge: .top) { filterleiste }
+            .scrollDismissesKeyboard(.immediately)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -98,15 +99,23 @@ struct BelegeAnsicht: View {
         }
     }
 
+    /// Eigenes Suchfeld statt `.searchable`.
+    ///
+    /// Das Systemsuchfeld lebt in der Navigationsleiste und blendet sich beim Scrollen
+    /// ein und aus. Zusammen mit dieser angehefteten Leiste schoben sich beide beim
+    /// Runterziehen übereinander - Titel, Suchfeld und Filter lagen dann sichtbar
+    /// aufeinander. Ein Feld innerhalb der Leiste macht die Überlagerung unmöglich.
     private var filterleiste: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
+            suchfeld
+
             Picker("Filter", selection: $filter) {
                 ForEach(Filter.allCases) { Text($0.bezeichnung).tag($0) }
             }
             .pickerStyle(.segmented)
 
             HStack {
-                Text("\(gefiltert.count) Belege")
+                Text(gefiltert.count == 1 ? "1 Beleg" : "\(gefiltert.count) Belege")
                 Spacer()
                 Text("Saldo \(Formatierung.euroMitVorzeichen(summeGefiltert))")
                     .monospacedDigit()
@@ -115,8 +124,39 @@ struct BelegeAnsicht: View {
             .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 16)
+        .padding(.top, 4)
         .padding(.bottom, 8)
         .background(.bar)
+    }
+
+    private var suchfeld: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+
+            TextField("Bezeichnung, Kategorie oder Notiz", text: $suchtext)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .submitLabel(.search)
+                .focused($sucheAktiv)
+
+            if !suchtext.isEmpty {
+                Button {
+                    suchtext = ""
+                    sucheAktiv = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Suche löschen")
+            }
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 9)
+        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
     }
 
     private func monatsname(_ monat: Int) -> String {

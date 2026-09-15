@@ -26,7 +26,8 @@ struct StapelErfassungAnsicht: View {
         let bild: UIImage
     }
 
-    private var sicherbare: [Posten] { posten.filter(\.entwurf.istVollständig) }
+    /// Wie viele Belege noch keinen Betrag haben - sie werden trotzdem gesichert.
+    private var ohneBetrag: Int { posten.filter { !$0.entwurf.istVollständig }.count }
 
     var body: some View {
         NavigationStack {
@@ -51,7 +52,7 @@ struct StapelErfassungAnsicht: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Sichern") { alleSichern() }
-                        .disabled(sicherbare.isEmpty || erkennungLäuft)
+                        .disabled(posten.isEmpty || erkennungLäuft)
                 }
             }
             .task { await auswerten() }
@@ -73,9 +74,8 @@ struct StapelErfassungAnsicht: View {
     }
 
     private var titel: String {
-        erkennungLäuft
-            ? "Belege werden gelesen"
-            : "\(posten.count) Belege"
+        if erkennungLäuft { return "Belege werden gelesen" }
+        return posten.count == 1 ? "1 Beleg" : "\(posten.count) Belege"
     }
 
     // MARK: - Bausteine
@@ -84,7 +84,9 @@ struct StapelErfassungAnsicht: View {
         VStack(spacing: 16) {
             ProgressView()
                 .controlSize(.large)
-            Text("\(bilder.count) Belege werden ausgelesen ...")
+                Text(bilder.count == 1
+                 ? "Beleg wird ausgelesen ..."
+                 : "\(bilder.count) Belege werden ausgelesen ...")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -128,7 +130,7 @@ struct StapelErfassungAnsicht: View {
                     .pickerStyle(.segmented)
                 } footer: {
                     if !eintrag.entwurf.istVollständig {
-                        Label("Ohne Betrag wird dieser Beleg nicht gesichert.",
+                        Label("Betrag nicht erkannt - wird mit 0,00 € gesichert und kann später nachgetragen werden.",
                               systemImage: "exclamationmark.triangle")
                             .font(.caption)
                     }
@@ -177,6 +179,17 @@ struct StapelErfassungAnsicht: View {
             )
             .font(.caption)
             .foregroundStyle(.secondary)
+
+            if ohneBetrag > 0 {
+                Label(
+                    ohneBetrag == 1
+                        ? "Bei einem Beleg wurde kein Betrag erkannt. Er wird trotzdem gesichert."
+                        : "Bei \(ohneBetrag) Belegen wurde kein Betrag erkannt. Sie werden trotzdem gesichert.",
+                    systemImage: "exclamationmark.triangle"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -217,10 +230,16 @@ struct StapelErfassungAnsicht: View {
     /// Bewusst in zwei Schritten: scheitert das Speichern eines Fotos mittendrin, wären
     /// sonst die ersten Belege schon in der Datenbank und ein zweiter Versuch würde sie
     /// verdoppeln. So bleibt der Stapel entweder ganz oder gar nicht erfasst.
+    ///
+    /// Gesichert wird **jeder** gescannte Beleg, auch der ohne erkannten Betrag. Das Foto
+    /// ist der aufbewahrungspflichtige Teil; ein Betrag lässt sich jederzeit nachtragen,
+    /// ein weggeworfener Scan nicht. Vorher fielen unvollständige Belege stillschweigend
+    /// heraus - wer einen einzelnen Bon scannte, dessen Betrag die Texterkennung nicht
+    /// fand, stand vor einem abgeblendeten Sichern-Knopf ohne Erklärung.
     private func alleSichern() {
         var dateien: [UUID: String] = [:]
         do {
-            for eintrag in sicherbare {
+            for eintrag in posten {
                 dateien[eintrag.id] = try Belegarchiv.speichern(eintrag.bild)
             }
         } catch {
@@ -229,7 +248,7 @@ struct StapelErfassungAnsicht: View {
             return
         }
 
-        for eintrag in sicherbare {
+        for eintrag in posten {
             var entwurf = eintrag.entwurf
             entwurf.belegbildDatei = dateien[eintrag.id]
             let beleg = Beleg()
