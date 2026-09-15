@@ -24,6 +24,10 @@ enum Datenbank {
     }
 
     /// Container nur im Arbeitsspeicher - fuer SwiftUI-Vorschauen und Tests.
+    ///
+    /// `@MainActor`, weil `mainContext` an den Hauptstrang gebunden ist. Aufgerufen wird
+    /// die Methode ausschliesslich aus `#Preview`-Bloecken, und die laufen ohnehin dort.
+    @MainActor
     static func vorschauContainer(mitBeispieldaten: Bool = true) -> ModelContainer {
         let konfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try! ModelContainer(for: schema, configurations: konfiguration)

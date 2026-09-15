@@ -227,23 +227,25 @@ struct EuerAnsicht: View {
     /// Dateien laeuft danach nebenher. SwiftData-Objekte duerfen den Hauptstrang nie
     /// verlassen, ein blockierter Hauptstrang friert aber die Fortschrittsanzeige ein -
     /// diese Trennung loest beides.
+    @MainActor
     private func archivExportieren() {
         exportLaeuft = true
         let bauplan = Unterlagenexport.bauplan(belege: belege, euer: euer, jahr: jahr)
 
-        Task.detached(priority: .userInitiated) {
+        Task {
             do {
-                let archiv = try Unterlagenexport.archivErstellen(bauplan)
-                await MainActor.run {
-                    exportDateien = [archiv]
-                    exportLaeuft = false
-                    exportOffen = true
-                }
+                // Nur das Schreiben der Dateien wandert vom Hauptstrang herunter. Der
+                // umgebende Task bleibt dort, deshalb brauchen die Zuweisungen danach
+                // keinen Sprung zurueck.
+                let archiv = try await Task.detached(priority: .userInitiated) {
+                    try Unterlagenexport.archivErstellen(bauplan)
+                }.value
+                exportDateien = [archiv]
+                exportLaeuft = false
+                exportOffen = true
             } catch {
-                await MainActor.run {
-                    fehler = error.localizedDescription
-                    exportLaeuft = false
-                }
+                fehler = error.localizedDescription
+                exportLaeuft = false
             }
         }
     }
