@@ -83,6 +83,50 @@ xcodebuild test -project SteuerApp/SteuerApp.xcodeproj \
   -scheme SteuerApp -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
+### Wenn der Build hängt
+
+Beim ersten Bauen auf einem Rechner blieb `xcodebuild` einmal ohne Fehlermeldung stehen –
+minutenlang keine Ausgabe mehr. Die letzte Zeile im Protokoll war:
+
+```
+ExecuteExternalTool .../actool --print-asset-tag-combinations .../Assets.xcassets
+```
+
+`actool` ist Apples Werkzeug für den Bilderkatalog. Es wurde gestartet und kehrte nie
+zurück. Die Ursache lag nicht im Katalog selbst – `AppIcon.png` ist regulär (1024×1024,
+8 Bit, Farbtyp 2, also RGB ohne Alphakanal, gültige Prüfsummen, keine Verschränkung), und
+das ist genau, was iOS für ein App-Symbol verlangt. Wahrscheinlicher war ein `actool` aus
+einem früheren, abgebrochenen Lauf, das die Sperre auf den Katalog hielt.
+
+Erster Schritt ist deshalb, hängende Werkzeuge zu beenden und die Zwischenstände
+wegzuwerfen:
+
+```bash
+killall -9 actool XCBBuildService xcodebuild 2>/dev/null
+rm -rf ~/Library/Developer/Xcode/DerivedData/SteuerApp-*
+```
+
+Hilft das nicht, lässt sich das Symbol für einen Testlauf ganz aus dem Bau nehmen. Kein
+Swift-Code greift auf den Katalog zu, es geht also nichts kaputt außer der Optik:
+
+```bash
+mv SteuerApp/SteuerApp/Assets.xcassets /tmp/Assets_aus
+xcodebuild -project SteuerApp/SteuerApp.xcodeproj -scheme SteuerApp \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  ASSETCATALOG_COMPILER_APPICON_NAME="" \
+  ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME="" build
+```
+
+Die App trägt dann ein leeres graues Symbol, läuft aber vollständig. Zurückschieben mit
+dem umgekehrten `mv`.
+
+Allgemein gilt: `xcodebuild` ohne `-quiet` laufen lassen und die Ausgabe mitschreiben, sonst
+ist eine Blockade nicht von einem langen Übersetzungslauf zu unterscheiden.
+
+```bash
+xcodebuild … build 2>&1 | tee ~/Desktop/steuerapp-log.txt
+```
+
 ### Prüfen ohne Xcode
 
 Wer keinen Mac zur Hand hat, kommt mit `Werkzeuge/aufrufe_pruefen.py` ein Stück weit:
