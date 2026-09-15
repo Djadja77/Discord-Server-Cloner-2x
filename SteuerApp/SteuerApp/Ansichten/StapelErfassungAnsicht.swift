@@ -44,6 +44,7 @@ struct StapelErfassungAnsicht: View {
                     liste
                 }
             }
+            .alsListe()
             .navigationTitle(titel)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

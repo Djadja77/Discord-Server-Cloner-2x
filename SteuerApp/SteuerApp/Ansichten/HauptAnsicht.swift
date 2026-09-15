@@ -43,17 +43,32 @@ struct HauptAnsicht: View {
         Datenbank.jahresangabenSicherstellen(fuer: jahr, in: kontext)
     }
 
-    /// Die Tableiste auf den Seitengrund setzen.
+    /// Tab- und Navigationsleiste auf den Seitengrund setzen.
     ///
-    /// SwiftUI bietet dafür keinen eigenen Weg - ohne diesen Umweg über UIKit bleibt die
-    /// Leiste im Systemgrau stehen und setzt einen hellen Streifen unter jeden Bildschirm.
+    /// SwiftUI bietet dafür keinen eigenen Weg - ohne diesen Umweg über UIKit bleiben
+    /// beide Leisten im Systemgrau stehen und setzen helle Streifen über und unter
+    /// jeden Bildschirm.
     private static func leistenGestalten() {
-        let leiste = UITabBarAppearance()
-        leiste.configureWithOpaqueBackground()
-        leiste.backgroundColor = UIColor(Stil.grund)
-        leiste.shadowColor = UIColor(Stil.trenner)
-        UITabBar.appearance().standardAppearance = leiste
-        UITabBar.appearance().scrollEdgeAppearance = leiste
+        let tableiste = UITabBarAppearance()
+        tableiste.configureWithOpaqueBackground()
+        tableiste.backgroundColor = UIColor(Stil.grund)
+        tableiste.shadowColor = UIColor(Stil.trenner)
+        UITabBar.appearance().standardAppearance = tableiste
+        UITabBar.appearance().scrollEdgeAppearance = tableiste
+
+        let navileiste = UINavigationBarAppearance()
+        navileiste.configureWithOpaqueBackground()
+        navileiste.backgroundColor = UIColor(Stil.grund)
+        // Kein Schlagschatten: die Karten darunter setzen die Kante selbst.
+        navileiste.shadowColor = .clear
+        navileiste.titleTextAttributes = [.foregroundColor: UIColor(Stil.schrift)]
+        navileiste.largeTitleTextAttributes = [
+            .foregroundColor: UIColor(Stil.schrift),
+            .font: UIFont.systemFont(ofSize: 30, weight: .bold)
+        ]
+        UINavigationBar.appearance().standardAppearance = navileiste
+        UINavigationBar.appearance().scrollEdgeAppearance = navileiste
+        UINavigationBar.appearance().compactAppearance = navileiste
     }
 }
 

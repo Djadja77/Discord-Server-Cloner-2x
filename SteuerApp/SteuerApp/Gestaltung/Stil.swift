@@ -159,3 +159,19 @@ extension View {
             .background(Stil.fläche, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
 }
+
+extension View {
+
+    /// Setzt eine `List` oder ein `Form` auf die Farben dieser App.
+    ///
+    /// Formulare bleiben bewusst Systemlisten: Auswahlfelder, Datumswähler und
+    /// Zifferntastaturen sind darin erprobt, nachgebaute Bedienelemente sind genau die
+    /// Stelle, an der Fehler entstehen. Verändert wird nur, was sie tragen.
+    func alsListe() -> some View {
+        self
+            .scrollContentBackground(.hidden)
+            .background(Stil.grund.ignoresSafeArea())
+            .listRowBackground(Stil.fläche)
+            .tint(Stil.akzent)
+    }
+}

@@ -60,6 +60,7 @@ struct EuerAnsicht: View {
                     exportAbschnitt
                 }
             }
+            .alsListe()
             .navigationTitle("Auswertung")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }

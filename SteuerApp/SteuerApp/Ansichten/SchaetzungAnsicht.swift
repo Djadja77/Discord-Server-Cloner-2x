@@ -46,6 +46,7 @@ struct SchätzungAnsicht: View {
                 sätzeAbschnitt
                 rechtlicherHinweis
             }
+            .alsListe()
             .navigationTitle("Schätzung")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }

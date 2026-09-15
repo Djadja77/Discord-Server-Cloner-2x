@@ -39,23 +39,14 @@ struct BetragsFeld: View {
     }
 }
 
-/// Auswahl des Steuerjahres - in mehreren Ansichten oben rechts eingeblendet.
+/// Auswahl des Steuerjahres - in mehreren Ansichten oben eingeblendet.
+///
+/// - Note: Hülle um `Jahrespille` aus der Gestaltungsschicht.
 struct JahresWähler: View {
 
     @Binding var jahr: Int
 
     var body: some View {
-        Menu {
-            Picker("Jahr", selection: $jahr) {
-                ForEach(Steuerjahr.alle.reversed()) { steuerjahr in
-                    Text(String(steuerjahr.jahr)).tag(steuerjahr.jahr)
-                }
-            }
-        } label: {
-            HStack(spacing: 4) {
-                Text(String(jahr)).font(.body.weight(.medium))
-                Image(systemName: "chevron.up.chevron.down").font(.caption2)
-            }
-        }
+        Jahrespille(jahr: $jahr)
     }
 }

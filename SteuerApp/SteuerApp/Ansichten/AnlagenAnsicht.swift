@@ -50,6 +50,7 @@ struct AnlagenAnsicht: View {
                 }
             }
         }
+        .alsListe()
         .navigationTitle("Anlagevermögen")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -187,6 +188,7 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
                 }
             }
         }
+        .alsListe()
         .navigationTitle(istNeu ? "Neues Wirtschaftsgut" : "Wirtschaftsgut")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

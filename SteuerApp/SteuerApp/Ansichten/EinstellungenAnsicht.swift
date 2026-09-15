@@ -41,6 +41,7 @@ struct EinstellungenAnsicht: View {
 
                 hinterlegteJahre
             }
+            .alsListe()
             .navigationTitle("Profil")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }

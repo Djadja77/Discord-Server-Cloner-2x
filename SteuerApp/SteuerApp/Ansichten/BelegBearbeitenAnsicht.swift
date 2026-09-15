@@ -78,6 +78,7 @@ struct BelegBearbeitenAnsicht: View {
             notizAbschnitt
             if !istNeu { löschenAbschnitt }
         }
+        .alsListe()
         .navigationTitle(istNeu ? "Neuer Beleg" : "Beleg")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
