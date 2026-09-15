@@ -24,6 +24,8 @@ struct EinstellungenAnsicht: View {
     }
     private var steuerjahr: Steuerjahr { Steuerjahr.fuer(jahr) }
 
+    @AppStorage("glasstaerke") private var glasstärke = Stil.Glasstärke.mittel.rawValue
+
     var body: some View {
         NavigationStack {
             Form {
@@ -40,6 +42,7 @@ struct EinstellungenAnsicht: View {
                 vorauszahlungAbschnitt
 
                 hinterlegteJahre
+                darstellungAbschnitt
             }
             .alsListe()
             .navigationTitle("Profil")
@@ -53,6 +56,32 @@ struct EinstellungenAnsicht: View {
     private func stammdatenSicherstellen() {
         Datenbank.profilSicherstellen(in: kontext)
         Datenbank.jahresangabenSicherstellen(fuer: jahr, in: kontext)
+    }
+
+    // MARK: - Darstellung
+
+    /// Wie stark das Glas tönt - dasselbe, was iOS 27 unter "Anzeige & Helligkeit >
+    /// Liquid Glass" anbietet, nur für diese App.
+    ///
+    /// Klares Glas sieht über ruhigem Hintergrund am besten aus, wird über einem
+    /// bunten Belegfoto aber schwer lesbar. Wer "Transparenz reduzieren" oder
+    /// "Kontrast erhöhen" in den Bedienungshilfen gesetzt hat, bekommt ohnehin die
+    /// deckende Darstellung - dieser Regler ist für alle dazwischen.
+    private var darstellungAbschnitt: some View {
+        Section {
+            Picker("Glas", selection: $glasstärke) {
+                ForEach(Stil.Glasstärke.allCases) { stärke in
+                    Text(stärke.bezeichnung).tag(stärke.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+        } header: {
+            Text("Darstellung")
+        } footer: {
+            Text("Klar zeigt am meisten vom Hintergrund, Getönt macht Text am besten lesbar. "
+                 + "Bei eingeschaltetem „Transparenz reduzieren\" in den Bedienungshilfen "
+                 + "sind die Flächen unabhängig davon deckend.")
+        }
     }
 
     // MARK: - Jahresübergreifend

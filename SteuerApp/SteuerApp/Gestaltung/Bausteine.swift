@@ -166,14 +166,8 @@ struct Filterpillen<Wert: Hashable>: View {
                             .foregroundStyle(aktiv ? .white : Stil.schriftGedämpft)
                             .padding(.horizontal, 15)
                             .padding(.vertical, 9)
-                            .background {
-                                if aktiv {
-                                    Capsule().fill(Stil.akzent)
-                                } else {
-                                    Capsule().fill(Stil.glas)
-                                }
-                            }
-                            .overlay(Capsule().strokeBorder(Stil.kanteFein, lineWidth: 0.8))
+                            .background { if aktiv { Capsule().fill(Stil.akzent) } }
+                            .alsGlas(Capsule())
                     }
                     .buttonStyle(.plain)
                 }
@@ -196,10 +190,13 @@ struct Kategoriesymbol: View {
     var body: some View {
         let ton = Stil.farbe(fuer: kategorie)
         ZStack {
-            Circle().fill(ton.opacity(0.22))
-            Circle().strokeBorder(Stil.kanteFein, lineWidth: 0.8)
+            Circle().fill(ton.opacity(0.24))
+            Circle().strokeBorder(Stil.umriss, lineWidth: 0.8)
+            Circle().inset(by: 0.8).strokeBorder(Stil.kanteFein, lineWidth: 0.8)
             Image(systemName: kategorie.symbol)
-                .font(.system(size: größe * 0.42, weight: .medium))
+                // Halbfett statt mittel: durch Glas gesehen franst ein dünner Strich
+                // aus. iOS 27 zeichnet Symbole aus demselben Grund schärfer.
+                .font(.system(size: größe * 0.42, weight: .semibold))
                 .foregroundStyle(ton)
         }
         .frame(width: größe, height: größe)
@@ -478,8 +475,7 @@ struct NebenknopfStil: ButtonStyle {
             .foregroundStyle(Stil.schrift)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(Stil.glas, in: Capsule())
-            .overlay(Capsule().strokeBorder(Stil.kante, lineWidth: 1))
+            .alsGlas(Capsule())
             .opacity(configuration.isPressed ? 0.78 : 1)
     }
 }
@@ -492,8 +488,7 @@ struct RundknopfStil: ButtonStyle {
             .font(.system(size: 16, weight: .semibold))
             .foregroundStyle(Stil.schrift)
             .frame(width: 40, height: 40)
-            .background(Stil.glas, in: Circle())
-            .overlay(Circle().strokeBorder(Stil.kanteFein, lineWidth: 0.9))
+            .alsGlas(Circle())
             .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
@@ -521,8 +516,7 @@ struct Jahrespille: View {
             .foregroundStyle(Stil.schrift)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(Stil.glas, in: Capsule())
-            .overlay(Capsule().strokeBorder(Stil.kanteFein, lineWidth: 0.9))
+            .alsGlas(Capsule())
         }
     }
 }
@@ -573,8 +567,7 @@ struct SchwebendeLeiste: View {
             }
         }
         .padding(5)
-        .background(Stil.glasDicht, in: Capsule())
-        .overlay(Capsule().strokeBorder(Stil.kante, lineWidth: 1))
+        .alsGlas(Capsule(), kräftig: true)
         .shadow(color: .black.opacity(0.28), radius: 20, y: 8)
         .padding(.horizontal, 12)
     }

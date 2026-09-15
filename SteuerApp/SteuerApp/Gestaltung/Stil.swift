@@ -49,29 +49,86 @@ enum Stil {
 
     // MARK: - Glas
 
-    /// Das Material der schwebenden Flächen.
-    static let glas: Material = .ultraThinMaterial
-
-    /// Ein kräftigeres Glas für Leisten, die über Inhalt liegen und ihn verdecken sollen.
-    static let glasDicht: Material = .regularMaterial
-
-    /// Die Lichtkante am Rand einer Glasfläche.
+    /// Wie stark das Glas tönt - entspricht dem Regler, den iOS 27 unter
+    /// "Anzeige & Helligkeit > Liquid Glass" anbietet.
     ///
-    /// Oben links hell, unten rechts fast weg - das ist es, was eine Fläche als Glas
-    /// lesbar macht und nicht als graues Rechteck. Ohne diese Kante verschwimmt jede
-    /// Karte mit ihrem Hintergrund.
+    /// Apple hat den Regler nachgereicht, weil klares Glas über unruhigem Inhalt
+    /// schwer zu lesen ist. Dieselbe Wahl gehört in die App: wer viele Belegfotos
+    /// mit hellen Flächen hat, dreht auf "Getönt" und liest wieder mühelos.
+    enum Glasstärke: Int, CaseIterable, Identifiable {
+        case klar = 0
+        case mittel = 1
+        case getönt = 2
+
+        var id: Int { rawValue }
+
+        var bezeichnung: String {
+            switch self {
+            case .klar: "Klar"
+            case .mittel: "Mittel"
+            case .getönt: "Getönt"
+            }
+        }
+
+        /// Das Material darunter. Je getönter, desto dichter streut es.
+        var material: Material {
+            switch self {
+            case .klar: .ultraThinMaterial
+            case .mittel: .thinMaterial
+            case .getönt: .regularMaterial
+            }
+        }
+
+        /// Zusätzlicher Schleier über dem Material.
+        ///
+        /// Das ist der Teil, den iOS 27 "bessere Streuung" nennt: Material allein
+        /// lässt kräftige Farben durchschlagen, und Text darauf fällt unter die
+        /// Lesbarkeitsgrenze von 4,5:1. Der Schleier hebt den Untergrund an, bevor
+        /// die Schrift darauf liegt.
+        var schleier: Double {
+            switch self {
+            case .klar: 0.04
+            case .mittel: 0.10
+            case .getönt: 0.20
+            }
+        }
+    }
+
+    /// Der Schleier über dem Material - im Dunkeln schwarz, im Hellen weiß.
+    static func schleierfarbe(_ stärke: Glasstärke) -> Color {
+        Color(uiColor: UIColor { merkmale in
+            merkmale.userInterfaceStyle == .dark
+                ? UIColor.black.withAlphaComponent(stärke.schleier)
+                : UIColor.white.withAlphaComponent(stärke.schleier + 0.30)
+        })
+    }
+
+    /// Deckende Fläche für alle, die "Transparenz reduzieren" eingeschaltet haben.
+    static let flächeDeckend = farbe(dunkel: 0x16151E, hell: 0xFFFFFF)
+
+    /// Die Lichtkante innen an einer Glasfläche - die Spiegelung.
+    ///
+    /// Oben links hell, unten rechts fast weg. Sie macht eine Fläche als Glas
+    /// lesbar und nicht als graues Rechteck.
     static var kante: LinearGradient {
         LinearGradient(
-            colors: [Color.white.opacity(0.30), Color.white.opacity(0.06)],
+            colors: [Color.white.opacity(0.42), Color.white.opacity(0.06)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
 
-    /// Schwächere Kante für kleine Elemente - Pillen, Knöpfe, Symbolkreise.
+    /// Der dunkle Umriss außen.
+    ///
+    /// In iOS 26 fehlte er, und Glasflächen verschwammen vor unruhigem Hintergrund.
+    /// iOS 27 hat ihn nachgezogen: er trennt die Fläche vom Grund, unabhängig davon,
+    /// was gerade dahinter liegt.
+    static let umriss = Color.black.opacity(0.28)
+
+    /// Schwächere Lichtkante für kleine Elemente - Pillen, Knöpfe, Symbolkreise.
     static var kanteFein: LinearGradient {
         LinearGradient(
-            colors: [Color.white.opacity(0.22), Color.white.opacity(0.04)],
+            colors: [Color.white.opacity(0.30), Color.white.opacity(0.04)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -231,6 +288,51 @@ struct Verlaufsgrund: View {
     }
 }
 
+/// Macht aus einer beliebigen Form eine Glasfläche nach den Regeln von iOS 27.
+///
+/// Drei Schichten, jede mit einer Aufgabe:
+/// 1. **Material** streut, was dahinter liegt.
+/// 2. **Schleier** hebt den Untergrund an, damit Schrift darauf über der
+///    Lesbarkeitsgrenze von 4,5:1 bleibt - iOS 26 hatte ihn nicht, und genau
+///    deshalb war Text über Fotos dort schwer zu lesen.
+/// 3. **Zwei Ränder**: außen ein dunkler Umriss, der die Fläche vom Grund trennt,
+///    innen eine helle Kante als Spiegelung. Nur der helle Rand allein lässt Glas
+///    vor unruhigem Hintergrund verschwimmen.
+///
+/// Wer "Transparenz reduzieren" eingeschaltet hat, bekommt eine deckende Fläche;
+/// bei "Kontrast erhöhen" schaltet die Tönung selbsttätig auf die stärkste Stufe.
+struct Glasfläche<Form: InsettableShape>: ViewModifier {
+
+    let form: Form
+    /// Für Leisten, die über Inhalt liegen und ihn sichtbar abtrennen müssen.
+    var kräftig = false
+
+    @Environment(\.accessibilityReduceTransparency) private var transparenzReduziert
+    @Environment(\.colorSchemeContrast) private var kontrast
+    @AppStorage("glasstaerke") private var stärkeRoh = Stil.Glasstärke.mittel.rawValue
+
+    private var stärke: Stil.Glasstärke {
+        guard kontrast != .increased else { return .getönt }
+        return Stil.Glasstärke(rawValue: stärkeRoh) ?? .mittel
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                if transparenzReduziert {
+                    form.fill(Stil.flächeDeckend)
+                } else {
+                    ZStack {
+                        form.fill(kräftig ? .regularMaterial : stärke.material)
+                        form.fill(Stil.schleierfarbe(stärke))
+                    }
+                }
+            }
+            .overlay { form.strokeBorder(Stil.umriss, lineWidth: 1) }
+            .overlay { form.inset(by: 1).strokeBorder(Stil.kante, lineWidth: 0.9) }
+    }
+}
+
 extension View {
 
     /// Legt den Verlaufsgrund unter eine Ansicht und setzt die Akzentfarbe.
@@ -244,26 +346,22 @@ extension View {
             .toolbar(.hidden, for: .tabBar)
     }
 
-    /// Macht aus einer Ansicht eine schwebende Glasfläche.
+    /// Glas in einer beliebigen Form - Kapsel, Kreis, abgerundetes Rechteck.
+    func alsGlas<Form: InsettableShape>(_ form: Form, kräftig: Bool = false) -> some View {
+        modifier(Glasfläche(form: form, kräftig: kräftig))
+    }
+
+    /// Glas als abgerundetes Rechteck, ohne eigenes Polster.
+    func alsGlas(radius: CGFloat = Stil.radiusKarte, kräftig: Bool = false) -> some View {
+        alsGlas(RoundedRectangle(cornerRadius: radius, style: .continuous), kräftig: kräftig)
+    }
+
+    /// Eine schwebende Glaskarte mit Polster.
     func alsKarte(radius: CGFloat = Stil.radiusKarte, polster: CGFloat = 18) -> some View {
         self
             .padding(polster)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Stil.glas, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(Stil.kante, lineWidth: 1)
-            )
-    }
-
-    /// Glas ohne eigenes Polster - für Behälter, die ihre Zeilen selbst einrücken.
-    func alsGlas(radius: CGFloat = Stil.radiusKarte) -> some View {
-        self
-            .background(Stil.glas, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(Stil.kante, lineWidth: 1)
-            )
+            .alsGlas(radius: radius)
     }
 
     /// Setzt eine `List` oder ein `Form` auf die Farben dieser App.

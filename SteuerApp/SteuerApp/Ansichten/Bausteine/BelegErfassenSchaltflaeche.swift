@@ -63,8 +63,7 @@ struct BelegErfassenSchaltfläche: View {
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Stil.schrift)
                     .frame(width: 40, height: 40)
-                    .background(Stil.glas, in: Circle())
-                    .overlay(Circle().strokeBorder(Stil.kanteFein, lineWidth: 0.9))
+                    .alsGlas(Circle())
             }
             .accessibilityLabel("Beleg erfassen")
         } else {
