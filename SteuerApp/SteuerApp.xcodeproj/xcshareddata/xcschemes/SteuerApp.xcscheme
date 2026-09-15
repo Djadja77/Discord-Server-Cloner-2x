@@ -11,11 +11,18 @@
                ReferencedContainer = "container:SteuerApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry buildForTesting = "YES" buildForRunning = "NO" buildForProfiling = "NO" buildForArchiving = "NO" buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "57A1B2C357A1B2C357A10003"
+               BuildableName = "SteuerAppTests.xctest"
+               BlueprintName = "SteuerAppTests"
+               ReferencedContainer = "container:SteuerApp.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction buildConfiguration = "Debug" selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv = "YES">
-      <TestPlans>
-      </TestPlans>
       <Testables>
          <TestableReference skipped = "NO">
             <BuildableReference
