@@ -79,9 +79,9 @@ struct SchätzungAnsicht: View {
                 betrag: ergebnis.gewinn,
                 unterzeile: "\(euer.anzahlBelege) Belege in \(String(jahr))"
             )
-            if angaben.weitereEinkünfte != 0 {
+            if angaben.weitereEinkuenfte != 0 {
                 ZeileMitBetrag(bezeichnung: "Weitere Einkünfte",
-                               betrag: angaben.weitereEinkünfte)
+                               betrag: angaben.weitereEinkuenfte)
             }
             ZeileMitBetrag(bezeichnung: "Gesamtbetrag der Einkünfte",
                            betrag: ergebnis.gesamtbetragDerEinkünfte,
@@ -148,9 +148,9 @@ struct SchätzungAnsicht: View {
             ZeileMitBetrag(bezeichnung: "Übrige Sonderausgaben",
                            betrag: ergebnis.übrigeSonderausgaben,
                            unterzeile: sonderausgabenHinweis)
-            if ergebnis.außergewöhnlicheBelastungen > 0 {
+            if ergebnis.aussergewoehnlicheBelastungen > 0 {
                 ZeileMitBetrag(bezeichnung: "Außergewöhnliche Belastungen",
-                               betrag: ergebnis.außergewöhnlicheBelastungen)
+                               betrag: ergebnis.aussergewoehnlicheBelastungen)
             }
             ZeileMitBetrag(bezeichnung: "Zu versteuerndes Einkommen",
                            betrag: ergebnis.zuVersteuerndesEinkommen,

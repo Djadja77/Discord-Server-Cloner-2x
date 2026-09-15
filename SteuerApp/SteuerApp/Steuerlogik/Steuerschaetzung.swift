@@ -26,14 +26,14 @@ struct Steuerschaetzung {
     struct Eingaben {
         var steuerjahr: Steuerjahr
         var gewinn: Decimal
-        var weitereEinkünfte: Decimal = 0
+        var weitereEinkuenfte: Decimal = 0
         var tätigkeitsart: Tätigkeitsart = .freiberuflich
         var veranlagungsart: Veranlagungsart = .einzel
         var kirchensteuersatz: Kirchensteuersatz = .keine
         var gewerbesteuerHebesatz: Decimal = 400
         var vorsorgeaufwendungen = Vorsorgeaufwendungen()
         var weitereSonderausgaben: Decimal = 0
-        var außergewöhnlicheBelastungen: Decimal = 0
+        var aussergewoehnlicheBelastungen: Decimal = 0
         var geleisteteVorauszahlungen: Decimal = 0
         var verlustvortragAusVorjahren: Decimal = 0
         var anzahlKinder: Int = 0
@@ -57,10 +57,10 @@ struct Steuerschaetzung {
             self.veranlagungsart = profil.veranlagungsart
             self.kirchensteuersatz = profil.kirchensteuersatz
             self.gewerbesteuerHebesatz = profil.gewerbesteuerHebesatz
-            self.weitereEinkünfte = jahresangaben.weitereEinkünfte
+            self.weitereEinkuenfte = jahresangaben.weitereEinkuenfte
             self.vorsorgeaufwendungen = jahresangaben.vorsorgeaufwendungen
             self.weitereSonderausgaben = jahresangaben.weitereSonderausgaben
-            self.außergewöhnlicheBelastungen = jahresangaben.außergewöhnlicheBelastungen
+            self.aussergewoehnlicheBelastungen = jahresangaben.aussergewoehnlicheBelastungen
             self.geleisteteVorauszahlungen = jahresangaben.geleisteteVorauszahlungen
             self.verlustvortragAusVorjahren = jahresangaben.verlustvortragAusVorjahren
             self.anzahlKinder = jahresangaben.anzahlKinder
@@ -77,7 +77,7 @@ struct Steuerschaetzung {
         let verlustabzug: Verlustverrechnung.Ergebnis
         let vorsorge: Vorsorgeaufwendungen.Ergebnis
         let übrigeSonderausgaben: Decimal
-        let außergewöhnlicheBelastungen: Decimal
+        let aussergewoehnlicheBelastungen: Decimal
         let zuVersteuerndesEinkommen: Decimal
 
         let kinder: Kinderfreibetrag.Ergebnis
@@ -131,7 +131,7 @@ struct Steuerschaetzung {
         )
         }
 
-        let gesamtbetrag = e.gewinn + e.weitereEinkünfte
+        let gesamtbetrag = e.gewinn + e.weitereEinkuenfte
 
         let verlust = Verlustverrechnung.anwenden(
             gesamtbetragDerEinkünfte: gesamtbetrag,
@@ -151,7 +151,7 @@ struct Steuerschaetzung {
             - verlust.abgezogen
             - vorsorge.summe
             - übrigeSonderausgaben
-            - e.außergewöhnlicheBelastungen.nichtNegativ
+            - e.aussergewoehnlicheBelastungen.nichtNegativ
         ).nichtNegativ
 
         let kinder = Kinderfreibetrag.prüfen(
@@ -210,7 +210,7 @@ struct Steuerschaetzung {
             verlustabzug: verlust,
             vorsorge: vorsorge,
             übrigeSonderausgaben: übrigeSonderausgaben,
-            außergewöhnlicheBelastungen: e.außergewöhnlicheBelastungen.nichtNegativ,
+            aussergewoehnlicheBelastungen: e.aussergewoehnlicheBelastungen.nichtNegativ,
             zuVersteuerndesEinkommen: zve,
             kinder: kinder,
             tariflicheEinkommensteuer: tariflich,

@@ -39,10 +39,15 @@ enum Veranlagungsart: String, CaseIterable, Codable, Identifiable, Sendable {
 /// Alles, was jährlich neu ist - Beiträge, Vorauszahlungen, Kinder, Verlustvortrag -
 /// steht in `Jahresangaben`. Diese Trennung ist der Grund, warum ein Wechsel des
 /// Steuerjahres in der App nicht die Zahlen des Vorjahres überschreibt.
+///
+/// - Note: Die Namen der gespeicherten Eigenschaften bleiben ohne Umlaute. SwiftData legt
+///   sie als Feldnamen in der Datenbank ab, und dort gehören nur ASCII-Zeichen hin -
+///   ein `ä` im Feldnamen bringt den Aufbau des Containers zum Absturz. Alles, was auf dem
+///   Bildschirm erscheint, trägt dagegen selbstverständlich Umlaute.
 @Model
 final class Steuerprofil {
 
-    var tätigkeitsartCode: String = Tätigkeitsart.freiberuflich.rawValue
+    var taetigkeitsartCode: String = Tätigkeitsart.freiberuflich.rawValue
     var veranlagungsartCode: String = Veranlagungsart.einzel.rawValue
     var kirchensteuersatzCode: String = Kirchensteuersatz.keine.rawValue
 
@@ -55,8 +60,8 @@ final class Steuerprofil {
     init() {}
 
     var tätigkeitsart: Tätigkeitsart {
-        get { Tätigkeitsart(rawValue: tätigkeitsartCode) ?? .freiberuflich }
-        set { tätigkeitsartCode = newValue.rawValue }
+        get { Tätigkeitsart(rawValue: taetigkeitsartCode) ?? .freiberuflich }
+        set { taetigkeitsartCode = newValue.rawValue }
     }
 
     var veranlagungsart: Veranlagungsart {

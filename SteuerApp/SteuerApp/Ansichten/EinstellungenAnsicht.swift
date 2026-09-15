@@ -137,7 +137,7 @@ struct EinstellungenAnsicht: View {
         Section {
             BetragsFeld(
                 titel: "Weitere Einkünfte",
-                betrag: jahresbindung(\.weitereEinkünfte),
+                betrag: jahresbindung(\.weitereEinkuenfte),
                 hinweis: "Arbeitslohn, Vermietung, Rente"
             )
         } footer: {
@@ -222,7 +222,7 @@ struct EinstellungenAnsicht: View {
             )
             BetragsFeld(
                 titel: "Außergewöhnliche Belastungen",
-                betrag: jahresbindung(\.außergewöhnlicheBelastungen),
+                betrag: jahresbindung(\.aussergewoehnlicheBelastungen),
                 hinweis: "nach Abzug der zumutbaren Belastung"
             )
         } header: {

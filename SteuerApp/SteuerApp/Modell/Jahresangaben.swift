@@ -6,6 +6,9 @@ import SwiftData
 /// Je Jahr existiert höchstens ein Datensatz; `Datenbank.jahresangabenSicherstellen(fuer:in:)` legt ihn
 /// beim ersten Zugriff an. Beiträge und Vorauszahlungen ändern sich jährlich, deshalb
 /// wäre ein einziger Satz für alle Jahre schlicht falsch.
+///
+/// - Note: Die Namen der gespeicherten Eigenschaften bleiben ohne Umlaute - siehe
+///   `Steuerprofil`.
 @Model
 final class Jahresangaben {
 
@@ -14,7 +17,7 @@ final class Jahresangaben {
 
     /// Einkünfte, die nicht über die Belege erfasst werden
     /// (Arbeitslohn, Vermietung, Kapitalerträge über dem Sparerpauschbetrag).
-    var weitereEinkünfte: Decimal = Decimal(0)
+    var weitereEinkuenfte: Decimal = Decimal(0)
 
     // Vorsorgeaufwendungen
     var beitragAltersvorsorge: Decimal = Decimal(0)
@@ -25,7 +28,7 @@ final class Jahresangaben {
     var weitereSonderausgaben: Decimal = Decimal(0)
 
     /// Außergewöhnliche Belastungen nach Abzug der zumutbaren Belastung.
-    var außergewöhnlicheBelastungen: Decimal = Decimal(0)
+    var aussergewoehnlicheBelastungen: Decimal = Decimal(0)
 
     /// Bereits geleistete Einkommensteuer-Vorauszahlungen dieses Jahres.
     var geleisteteVorauszahlungen: Decimal = Decimal(0)
