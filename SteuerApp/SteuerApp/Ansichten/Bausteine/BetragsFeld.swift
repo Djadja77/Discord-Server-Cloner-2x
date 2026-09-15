@@ -5,7 +5,7 @@ struct BetragsFeld: View {
 
     let titel: String
     @Binding var betrag: Decimal
-    var hinweis: String?
+    var hinweis: String? = nil
 
     @FocusState private var fokussiert: Bool
 

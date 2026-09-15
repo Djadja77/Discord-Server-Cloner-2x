@@ -5,9 +5,9 @@ struct KennzahlKachel: View {
 
     let titel: String
     let wert: String
-    var hinweis: String?
+    var hinweis: String? = nil
     var farbe: Color = .primary
-    var symbol: String?
+    var symbol: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -46,7 +46,7 @@ struct ZeileMitBetrag: View {
 
     let bezeichnung: String
     let betrag: Decimal
-    var unterzeile: String?
+    var unterzeile: String? = nil
     var hervorgehoben: Bool = false
     var mitVorzeichen: Bool = false
 

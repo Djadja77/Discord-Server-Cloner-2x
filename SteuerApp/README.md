@@ -83,6 +83,23 @@ xcodebuild test -project SteuerApp/SteuerApp.xcodeproj \
   -scheme SteuerApp -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
+### Prüfen ohne Xcode
+
+Wer keinen Mac zur Hand hat, kommt mit `Werkzeuge/aufrufe_pruefen.py` ein Stück weit:
+
+```bash
+pip install tree_sitter tree_sitter_swift
+cd SteuerApp && python3 Werkzeuge/aufrufe_pruefen.py
+```
+
+Das Skript parst alle Swift-Dateien mit einem echten Swift-Parser und vergleicht jeden
+Aufruf mit der zugehörigen Deklaration – Argumentbeschriftungen, Reihenfolge, Existenz des
+Mitglieds. Damit fällt die Fehlerklasse auf, die beim Schreiben ohne Compiler entsteht.
+
+Es ersetzt den Compiler nicht: Argumenttypen, Sichtbarkeit, Protokollkonformität und alles
+aus SwiftUI, Foundation und SwiftData bleiben ungeprüft. Ein sauberer Lauf heißt, dass die
+Aufrufe zu den eigenen Deklarationen passen – nicht, dass das Projekt übersetzt.
+
 ## Aufbau
 
 ```

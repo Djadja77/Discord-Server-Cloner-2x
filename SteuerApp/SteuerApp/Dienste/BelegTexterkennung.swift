@@ -11,11 +11,11 @@ import Vision
 enum BelegTexterkennung {
 
     struct Vorschlag: Equatable {
-        var bruttoBetrag: Decimal?
-        var datum: Date?
-        var haendler: String?
-        var umsatzsteuersatz: Umsatzsteuersatz?
-        var kategorie: Belegkategorie?
+        var bruttoBetrag: Decimal? = nil
+        var datum: Date? = nil
+        var haendler: String? = nil
+        var umsatzsteuersatz: Umsatzsteuersatz? = nil
+        var kategorie: Belegkategorie? = nil
         var erkannteZeilen: [String] = []
 
         static let leer = Vorschlag()
