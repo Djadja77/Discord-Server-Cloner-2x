@@ -46,7 +46,10 @@ Auswertung.
 - Einnahmen-Überschuss-Rechnung nach § 4 Abs. 3 EStG, nach Kategorien aufgeschlüsselt
 - Anlagenverzeichnis mit linearer Abschreibung (§ 7 EStG), zeitanteilig ab Anschaffungsmonat
 - Umsatzsteuer-Voranmeldung monatlich oder vierteljährlich, mit Zahllast je Zeitraum
-- CSV-Export von Belegliste und Jahresauswertung für Excel oder die Steuerberatung
+- **Vollständige Unterlagen als ZIP**: beide Auswertungen plus sämtliche Belegfotos, benannt
+  nach Datum, Bezeichnung und Betrag. Die Belegliste nennt zu jeder Zeile die zugehörige
+  Bilddatei, sodass sich jede Zahl ohne Suchen dem Papier zuordnen lässt
+- alternativ nur die Zahlen als CSV für Excel oder Numbers
 
 **Schätzen**
 - Einkommensteuer nach § 32a EStG, Grund- und Splittingtarif

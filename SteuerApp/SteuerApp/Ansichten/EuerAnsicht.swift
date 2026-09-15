@@ -17,6 +17,7 @@ struct EuerAnsicht: View {
 
     @State private var exportDateien: [URL] = []
     @State private var exportOffen = false
+    @State private var exportLaeuft = false
     @State private var fehler: String?
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
@@ -195,16 +196,59 @@ struct EuerAnsicht: View {
     private var exportAbschnitt: some View {
         Section {
             Button {
-                exportieren()
+                archivExportieren()
             } label: {
-                Label("Belege und Auswertung exportieren", systemImage: "square.and.arrow.up")
+                HStack {
+                    Label("Vollstaendige Unterlagen", systemImage: "doc.zipper")
+                    if exportLaeuft {
+                        Spacer()
+                        ProgressView()
+                    }
+                }
             }
+            .disabled(exportLaeuft)
+
+            Button {
+                nurZahlenExportieren()
+            } label: {
+                Label("Nur Auswertung als CSV", systemImage: "tablecells")
+            }
+            .disabled(exportLaeuft)
+        } header: {
+            Text("Export")
         } footer: {
-            Text("Zwei CSV-Dateien mit Semikolon als Trennzeichen \u{2013} direkt in Excel oder Numbers zu oeffnen und an die Steuerberatung weiterzugeben.")
+            Text("Die vollstaendigen Unterlagen enthalten beide Auswertungen und saemtliche Belegfotos als ZIP-Archiv \u{2013} das ist der Stand, den die Steuerberatung braucht. Die Belegliste nennt zu jeder Zeile die zugehoerige Bilddatei.")
         }
     }
 
-    private func exportieren() {
+    /// Archiv mit Belegfotos - kann bei vielen Belegen einen Moment dauern.
+    ///
+    /// Der Bauplan wird auf dem Hauptstrang aus der Datenbank gelesen, das Schreiben der
+    /// Dateien laeuft danach nebenher. SwiftData-Objekte duerfen den Hauptstrang nie
+    /// verlassen, ein blockierter Hauptstrang friert aber die Fortschrittsanzeige ein -
+    /// diese Trennung loest beides.
+    private func archivExportieren() {
+        exportLaeuft = true
+        let bauplan = Unterlagenexport.bauplan(belege: belege, euer: euer, jahr: jahr)
+
+        Task.detached(priority: .userInitiated) {
+            do {
+                let archiv = try Unterlagenexport.archivErstellen(bauplan)
+                await MainActor.run {
+                    exportDateien = [archiv]
+                    exportLaeuft = false
+                    exportOffen = true
+                }
+            } catch {
+                await MainActor.run {
+                    fehler = error.localizedDescription
+                    exportLaeuft = false
+                }
+            }
+        }
+    }
+
+    private func nurZahlenExportieren() {
         do {
             let belegdatei = try CSVExport.datei(
                 inhalt: CSVExport.belege(belege, jahr: jahr),

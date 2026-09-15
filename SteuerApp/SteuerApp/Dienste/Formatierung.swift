@@ -62,4 +62,13 @@ enum Formatierung {
     }()
 
     static func datum(_ wert: Date) -> String { datumsformat.string(from: wert) }
+
+    /// Sortierbares Datum fuer Dateinamen: `2025-03-14`.
+    static let dateinamendatum: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = Calendar.kalender.timeZone
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
 }

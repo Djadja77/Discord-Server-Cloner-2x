@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// Export der Belege und der Jahresauswertung als CSV.
 ///
@@ -35,12 +36,20 @@ enum CSVExport {
     }
 
     /// Alle Belege eines Jahres - eine Zeile je Beleg.
-    static func belege(_ belege: [Beleg], jahr: Int) -> String {
+    ///
+    /// - Parameter fotonamen: Zuordnung von Beleg zu Dateiname im Archiv. Wird sie
+    ///   mitgegeben, nennt die letzte Spalte das zugehoerige Foto - damit laesst sich jede
+    ///   Zeile ohne Suchen dem Papier zuordnen.
+    static func belege(
+        _ belege: [Beleg],
+        jahr: Int,
+        fotonamen: [PersistentIdentifier: String] = [:]
+    ) -> String {
         var zeilen = [zeile([
             feld("Datum"), feld("Bezeichnung"), feld("Art"), feld("Kategorie"),
             feld("EUER-Zeile"), feld("Brutto"), feld("USt-Satz"), feld("USt-Betrag"),
             feld("Netto"), feld("Betrieblicher Anteil"), feld("Betrieblich netto"),
-            feld("Beleg vorhanden"), feld("Notiz"),
+            feld("Beleg vorhanden"), feld("Belegdatei"), feld("Notiz"),
         ])]
 
         for beleg in belege.filter({ $0.jahr == jahr }).sorted(by: { $0.datum < $1.datum }) {
@@ -57,6 +66,7 @@ enum CSVExport {
                 feld(Formatierung.prozent(beleg.betrieblicherAnteil, nachkommastellen: 0)),
                 zahl(beleg.betrieblichesNetto),
                 feld(beleg.belegbildDatei == nil ? "nein" : "ja"),
+                feld(fotonamen[beleg.persistentModelID] ?? ""),
                 feld(beleg.notiz),
             ]))
         }
