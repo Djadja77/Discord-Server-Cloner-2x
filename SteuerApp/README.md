@@ -10,12 +10,37 @@ die dabei zählt – **wie viel von dem Geld auf dem Konto gehört mir eigentlic
 ## Funktionsumfang
 
 **Belege erfassen**
-- Beleg mit der Dokumentenkamera abfotografieren; Kanten werden erkannt und entzerrt
-- Texterkennung schlägt Betrag und Datum vor – als Vorschlag, der überschrieben werden kann
+- **Stapel scannen**: einen ganzen Packen Quittungen in einem Durchgang abfotografieren.
+  Jede Seite wird zu einem eigenen Beleg, alle werden parallel ausgelesen und liegen
+  danach zur Kontrolle nebeneinander
+- Dokumentenkamera erkennt Belegkanten, entzerrt und schneidet zu
+- Texterkennung schlägt **Händler, Betrag, Datum, Umsatzsteuersatz und Kategorie** vor –
+  als Vorschlag, der immer überschreibbar ist
+- Import aus der Fotomediathek für Rechnungen, die per E-Mail kommen
+- Belegfoto in voller Größe, zoom- und verschiebbar
 - 26 Kategorien in der Gliederung der Anlage EÜR, jeweils mit Hinweis auf die EÜR-Zeile
 - Umsatzsteuersatz je Beleg (0 %, 7 %, 19 %)
 - betrieblicher Anteil für gemischt genutzte Kosten wie Telefon oder Fahrzeug
 - Suche, Monatsgruppierung, Filter nach Einnahmen, Ausgaben und fehlenden Belegfotos
+
+### Was die Texterkennung leistet – und was nicht
+
+Erkannt wird, was deutsche Belege üblicherweise zeigen. Der **Betrag** kommt bevorzugt aus
+der Zeile mit einem Summenwort, sonst ist es der größte Betrag des Belegs. Der **Händler**
+ist die erste Kopfzeile, die weder Überschrift noch Anschrift ist. Der **Steuersatz** wird
+nur übernommen, wenn er eindeutig ist: steht nur ein Satz auf dem Beleg, ist die Sache klar;
+stehen beide da, muss der ausgewiesene Steuerbetrag zur Summe passen. Bei einem echten
+Mischbeleg – Speisen zu 7 %, Getränke zu 19 % – bleibt das Feld leer, statt zu raten.
+
+Die **Kategorie** stammt aus einer Stichwortliste gängiger Anbieter. Verglichen wird auf
+Teilzeichenketten, was ohne Sorgfalt danebengeht: „Espresso" enthält „esso", „Huber" enthält
+„uber", „Notarzt" enthält „notar". Solche Stichworte tragen deshalb ein führendes Leerzeichen,
+und `KategorievorschlagTests` prüft genau diese Fälle.
+
+Jeder erkannte Wert füllt nur ein leeres Feld – eine Korrektur von Hand überschreibt die
+Texterkennung nie. Ein erkanntes Datum wird zudem nur übernommen, wenn es ins bearbeitete
+Steuerjahr fällt: ein falsch gelesenes Jahr sortierte den Beleg sonst unbemerkt aus der
+Auswertung.
 
 **Auswerten**
 - Einnahmen-Überschuss-Rechnung nach § 4 Abs. 3 EStG, nach Kategorien aufgeschlüsselt
@@ -59,10 +84,10 @@ xcodebuild test -project SteuerApp/SteuerApp.xcodeproj \
 
 ```
 SteuerApp/
-├── Modell/          SwiftData-Objekte: Beleg, Wirtschaftsgut, Profil, Jahresangaben
+├── Modell/          SwiftData-Objekte und Belegentwurf
 ├── Steuerlogik/     reine Rechenlogik, ohne SwiftUI und ohne Datenbank
 ├── Ansichten/       SwiftUI-Oberfläche, fünf Bereiche
-├── Dienste/         Formatierung, Belegarchiv, CSV-Export, Texterkennung
+├── Dienste/         Formatierung, Belegarchiv, CSV-Export, Texterkennung, Kategorien
 └── Werkzeuge/       Generator für das App-Icon (reines Python, ohne Abhängigkeiten)
 ```
 
@@ -157,7 +182,8 @@ Farben und Geometrie stehen als Konstanten oben in der Datei. Wer das Motiv änd
 ## Datenschutz
 
 Alle Daten bleiben auf dem Gerät. Die App verschickt nichts, meldet nichts und bindet keine
-fremden Dienste ein. Belege und Texterkennung werden lokal verarbeitet. Belegfotos liegen als
+fremden Dienste ein. Auch die Texterkennung läuft lokal über Apples Vision-Framework — kein
+Beleg verlässt das Telefon. Belegfotos liegen als
 Dateien in „Application Support“ und sind damit vom Geräte-Backup erfasst; die Datenbank
 selbst bleibt dadurch klein.
 

@@ -10,7 +10,6 @@ struct BelegeAnsicht: View {
 
     @State private var suchtext = ""
     @State private var filter: Filter = .alle
-    @State private var belegAnlegen = false
 
     enum Filter: String, CaseIterable, Identifiable {
         case alle, einnahmen, ausgaben, ohneBeleg
@@ -93,15 +92,8 @@ struct BelegeAnsicht: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { JahresWaehler(jahr: $jahr) }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        belegAnlegen = true
-                    } label: {
-                        Label("Beleg erfassen", systemImage: "plus")
-                    }
+                    BelegErfassenSchaltflaeche(jahr: jahr)
                 }
-            }
-            .sheet(isPresented: $belegAnlegen) {
-                BelegBearbeitenAnsicht(beleg: nil, vorgabeJahr: jahr)
             }
         }
     }

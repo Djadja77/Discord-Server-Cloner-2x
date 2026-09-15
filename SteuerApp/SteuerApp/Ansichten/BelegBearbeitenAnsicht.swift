@@ -1,10 +1,11 @@
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 /// Beleg erfassen oder bearbeiten.
 ///
-/// Gearbeitet wird auf einem Entwurf statt direkt auf dem Datenbankobjekt: so laesst sich
-/// ein neuer Beleg verwerfen, ohne dass halbfertige Daten in der Datenbank landen.
+/// Gearbeitet wird auf einem `Belegentwurf` statt direkt auf dem Datenbankobjekt: so laesst
+/// sich ein neuer Beleg verwerfen, ohne dass halbfertige Daten in der Datenbank landen.
 struct BelegBearbeitenAnsicht: View {
 
     /// `nil` legt einen neuen Beleg an.
@@ -14,25 +15,16 @@ struct BelegBearbeitenAnsicht: View {
     @Environment(\.modelContext) private var kontext
     @Environment(\.dismiss) private var schliessen
 
-    @State private var entwurf = Entwurf()
+    @State private var entwurf = Belegentwurf()
     @State private var geladen = false
     @State private var scannerOffen = false
+    @State private var grossansichtOffen = false
     @State private var erkennungLaeuft = false
     @State private var neuesBild: UIImage?
+    @State private var fotoauswahl: PhotosPickerItem?
     @State private var meldung: String?
 
     private var istNeu: Bool { beleg == nil }
-
-    struct Entwurf {
-        var datum = Date()
-        var bezeichnung = ""
-        var bruttoBetrag: Decimal = 0
-        var kategorie: Belegkategorie = .sonstigeAusgaben
-        var umsatzsteuersatz: Umsatzsteuersatz = .regel
-        var betrieblicherAnteil: Double = 1.0
-        var notiz = ""
-        var belegbildDatei: String?
-    }
 
     var body: some View {
         Group {
@@ -44,11 +36,26 @@ struct BelegBearbeitenAnsicht: View {
         }
         .onAppear(perform: entwurfLaden)
         .sheet(isPresented: $scannerOffen) {
-            BelegScanner { bild in
+            BelegScanner { bilder in
                 scannerOffen = false
-                if let bild { bildUebernehmen(bild) }
+                // In der Einzelmaske zaehlt nur die erste Seite. Wer einen Stapel scannen
+                // will, nimmt die Stapelerfassung - darauf weist die Belegliste hin.
+                if let erstes = bilder.first { bildUebernehmen(erstes) }
             }
             .ignoresSafeArea()
+        }
+        .fullScreenCover(isPresented: $grossansichtOffen) {
+            if let bild = angezeigtesBild {
+                BelegbildAnsicht(bild: bild)
+            }
+        }
+        .onChange(of: fotoauswahl) {
+            guard let fotoauswahl else { return }
+            Task {
+                let bilder = await FotoImport.bilderLaden(aus: [fotoauswahl])
+                if let erstes = bilder.first { bildUebernehmen(erstes) }
+                self.fotoauswahl = nil
+            }
         }
         .alert("Hinweis", isPresented: Binding(
             get: { meldung != nil },
@@ -78,15 +85,10 @@ struct BelegBearbeitenAnsicht: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { verwerfen() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Sichern") { sichern() }
-                        .disabled(entwurf.bruttoBetrag <= 0)
-                }
-            } else {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Sichern") { sichern() }
-                        .disabled(entwurf.bruttoBetrag <= 0)
-                }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Sichern") { sichern() }
+                    .disabled(!entwurf.istVollstaendig)
             }
         }
     }
@@ -94,24 +96,29 @@ struct BelegBearbeitenAnsicht: View {
     private var belegbildAbschnitt: some View {
         Section {
             if let bild = angezeigtesBild {
-                Image(uiImage: bild)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 220)
-                    .frame(maxWidth: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(alignment: .topTrailing) {
-                        Button {
-                            bildEntfernen()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title3)
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .black.opacity(0.5))
-                        }
-                        .padding(8)
+                Button {
+                    grossansichtOffen = true
+                } label: {
+                    Image(uiImage: bild)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 220)
+                        .frame(maxWidth: .infinity)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+                .overlay(alignment: .topTrailing) {
+                    Button {
+                        bildEntfernen()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .black.opacity(0.5))
                     }
-                    .listRowInsets(EdgeInsets())
+                    .padding(8)
+                }
+                .listRowInsets(EdgeInsets())
             }
 
             Button {
@@ -121,6 +128,10 @@ struct BelegBearbeitenAnsicht: View {
                     angezeigtesBild == nil ? "Beleg fotografieren" : "Neu fotografieren",
                     systemImage: "doc.viewfinder"
                 )
+            }
+
+            PhotosPicker(selection: $fotoauswahl, matching: .images) {
+                Label("Aus Fotomediathek", systemImage: "photo.on.rectangle")
             }
 
             if erkennungLaeuft {
@@ -255,25 +266,9 @@ struct BelegBearbeitenAnsicht: View {
         geladen = true
 
         if let beleg {
-            entwurf = Entwurf(
-                datum: beleg.datum,
-                bezeichnung: beleg.bezeichnung,
-                bruttoBetrag: beleg.bruttoBetrag,
-                kategorie: beleg.kategorie,
-                umsatzsteuersatz: beleg.umsatzsteuersatz,
-                betrieblicherAnteil: beleg.betrieblicherAnteil,
-                notiz: beleg.notiz,
-                belegbildDatei: beleg.belegbildDatei
-            )
+            entwurf = Belegentwurf(beleg: beleg)
         } else {
-            // Neue Belege bekommen ein Datum im gerade betrachteten Jahr - sonst legt man
-            // im Februar versehentlich Belege im laufenden statt im bearbeiteten Jahr an.
-            let heute = Date()
-            let aktuellesJahr = Calendar.kalender.component(.year, from: heute)
-            entwurf.datum = vorgabeJahr == aktuellesJahr
-                ? heute
-                : Calendar.kalender.date(from: DateComponents(
-                    year: vorgabeJahr, month: 12, day: 31, hour: 12)) ?? heute
+            entwurf.datum = Belegentwurf.vorgabedatum(fuerJahr: vorgabeJahr)
         }
     }
 
@@ -283,18 +278,8 @@ struct BelegBearbeitenAnsicht: View {
 
         Task {
             let vorschlag = await BelegTexterkennung.auswerten(bild: bild)
-            await MainActor.run {
-                // Erkannte Werte nur dort einsetzen, wo noch nichts eingegeben wurde -
-                // eine Korrektur von Hand darf die Texterkennung nicht ueberschreiben.
-                if entwurf.bruttoBetrag == 0, let betrag = vorschlag.bruttoBetrag {
-                    entwurf.bruttoBetrag = betrag
-                }
-                if let datum = vorschlag.datum,
-                   Calendar.kalender.component(.year, from: datum) == vorgabeJahr {
-                    entwurf.datum = datum
-                }
-                erkennungLaeuft = false
-            }
+            entwurf.uebernehmen(vorschlag, steuerjahr: vorgabeJahr)
+            erkennungLaeuft = false
         }
     }
 
@@ -307,13 +292,12 @@ struct BelegBearbeitenAnsicht: View {
     }
 
     private func sichern() {
-        var dateiname = entwurf.belegbildDatei
         if let neuesBild {
             do {
                 // Das alte Foto erst entfernen, wenn das neue sicher geschrieben ist.
                 let neuerName = try Belegarchiv.speichern(neuesBild)
-                if let alt = dateiname { Belegarchiv.loeschen(alt) }
-                dateiname = neuerName
+                if let alt = entwurf.belegbildDatei { Belegarchiv.loeschen(alt) }
+                entwurf.belegbildDatei = neuerName
             } catch {
                 meldung = error.localizedDescription
                 return
@@ -321,15 +305,7 @@ struct BelegBearbeitenAnsicht: View {
         }
 
         let ziel = beleg ?? Beleg()
-        ziel.datum = entwurf.datum
-        ziel.bezeichnung = entwurf.bezeichnung
-        ziel.bruttoBetrag = entwurf.bruttoBetrag
-        ziel.kategorie = entwurf.kategorie
-        ziel.umsatzsteuersatz = entwurf.umsatzsteuersatz
-        ziel.betrieblicherAnteil = entwurf.betrieblicherAnteil
-        ziel.notiz = entwurf.notiz
-        ziel.belegbildDatei = dateiname
-
+        entwurf.anwenden(auf: ziel)
         if beleg == nil { kontext.insert(ziel) }
         neuesBild = nil
         schliessen()

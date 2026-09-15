@@ -10,8 +10,6 @@ struct UebersichtAnsicht: View {
     @Query private var alleJahresangaben: [Jahresangaben]
     @Query private var wirtschaftsgueter: [Wirtschaftsgut]
 
-    @State private var belegAnlegen = false
-
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
     private var angaben: Jahresangaben {
         alleJahresangaben.first { $0.jahr == jahr } ?? Jahresangaben(jahr: jahr)
@@ -53,15 +51,8 @@ struct UebersichtAnsicht: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { JahresWaehler(jahr: $jahr) }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        belegAnlegen = true
-                    } label: {
-                        Label("Beleg erfassen", systemImage: "plus")
-                    }
+                    BelegErfassenSchaltflaeche(jahr: jahr)
                 }
-            }
-            .sheet(isPresented: $belegAnlegen) {
-                BelegBearbeitenAnsicht(beleg: nil, vorgabeJahr: jahr)
             }
         }
     }
@@ -186,12 +177,11 @@ struct UebersichtAnsicht: View {
                 .foregroundStyle(.secondary)
             Text("Noch keine Belege fuer \(String(jahr))")
                 .font(.headline)
-            Text("Beleg abfotografieren - Betrag und Datum werden vorgeschlagen.")
+            Text("Belege abfotografieren \u{2013} Haendler, Betrag, Datum und Steuersatz werden vorgeschlagen. Auch ein ganzer Stapel auf einmal.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            Button("Ersten Beleg erfassen") { belegAnlegen = true }
-                .buttonStyle(.borderedProminent)
+            BelegErfassenSchaltflaeche(jahr: jahr, kompakt: false)
                 .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
