@@ -114,8 +114,8 @@ Einen weiteren `Steuerjahr`-Eintrag anlegen und in `Steuerjahr.alle` aufnehmen. 
 zieht automatisch nach. Nötig sind die Werte aus § 32a Abs. 1 EStG, die Freigrenze des
 Solidaritätszuschlags und die Höchstbeträge der Vorsorgeaufwendungen.
 
-`SteuerjahrKonsistenzTests` prüft danach jeden Eintrag gegen die Eckwerte, die der Gesetzgeber
-dem Tarif zugrunde legt: Der Grenzsteuersatz beträgt am Ende der ersten Progressionszone exakt
+`SteuerjahrTarifwerteTests` und `SteuerjahrKonsistenzTests` prüfen danach jeden Eintrag. Der
+zweite vergleicht ihn mit den Eckwerten, die der Gesetzgeber dem Tarif zugrunde legt: Der Grenzsteuersatz beträgt am Ende der ersten Progressionszone exakt
 23,97 % und am Ende der zweiten exakt 42 %, und der Sockelbetrag der dritten Zone ist die Steuer
 am Ende der zweiten. Diese Bedingungen verknüpfen die Tarifkonstanten miteinander – ein
 Zahlendreher verletzt sie sofort. Das ist genau der Fehler, der beim jährlichen Nachtragen am
@@ -123,14 +123,29 @@ wahrscheinlichsten ist.
 
 ### Stand der Prüfung
 
-| Jahr | Grundfreibetrag | Kindergeld | Status |
-|------|-----------------|------------|--------|
-| 2024 | 11.784 € | 250 €/Monat | intern konsistent, **nicht** gegen die amtliche Grundtabelle abgeglichen |
-| 2025 | 12.096 € | 255 €/Monat | gegen die amtliche Grundtabelle geprüft |
-| 2026 | 12.348 € | 259 €/Monat | intern konsistent, **nicht** gegen die amtliche Grundtabelle abgeglichen |
+| Jahr | Grundfreibetrag | Kindergeld | Tarifkonstanten |
+|------|-----------------|------------|-----------------|
+| 2024 | 11.784 € | 250 €/Monat | gegen § 32a EStG abgeglichen |
+| 2025 | 12.096 € | 255 €/Monat | gegen § 32a EStG und das amtliche Einkommensteuer-Handbuch abgeglichen |
+| 2026 | 12.348 € | 259 €/Monat | gegen § 32a EStG abgeglichen |
 
-Kinderfreibeträge, Kindergeldsätze und Vorsorge-Höchstbeträge stehen in derselben Datei und
-sind ebenfalls zu prüfen – der Konsistenztest deckt nur den Einkommensteuertarif ab.
+Ebenfalls geprüft: Freigrenzen des Solidaritätszuschlags, Kinderfreibeträge, Betreuungs-
+freibetrag und Kindergeldsätze aller drei Jahre sowie die Höchstbeträge der Altersvorsorge
+für 2025 und 2026.
+
+Beim Abgleich fielen zwei Abweichungen auf, die inzwischen korrigiert sind: Die Abzugsbeträge
+der oberen Tarifzonen für 2024 lauten **10.636,31 €** und **18.971,06 €** – rechnerisch aus
+der Stetigkeit hergeleitet kommt man auf elf Cent weniger, und im Gesetz steht der
+veröffentlichte Wert. Der Höchstbetrag der Altersvorsorge 2026 beträgt **30.826 €**.
+
+Ein Wert bleibt abgeleitet statt belegt: der Höchstbetrag der Altersvorsorge für **2024**
+(27.566 €) folgt aus 24,7 % der Beitragsbemessungsgrenze der knappschaftlichen
+Rentenversicherung, ist aber nicht gegen eine amtliche Fundstelle geprüft.
+
+Zwei Tests sichern das ab. `SteuerjahrTarifwerteTests` hält die Zahlen auf den
+veröffentlichten Werten fest – wer eine ändert, muss den Test mitändern und stolpert dabei
+über die Quellenangabe. `SteuerjahrKonsistenzTests` prüft zusätzlich, ob die Zahlen
+zueinander passen. Der eine Test fängt falsche Werte, der andere Tippfehler.
 
 Alle drei Jahre erfüllen die oben genannten gesetzlichen Eckwerte exakt. Für 2025 stimmen die
 Ergebnisse zusätzlich mit veröffentlichten Werten der Einkommensteuer-Grundtabelle überein.

@@ -8,10 +8,16 @@ import Foundation
 /// `SteuerjahrKonsistenzTests` prueft jeden Eintrag gegen die im Tarif eingebauten
 /// Stuetzstellen (Eckwerte der Grenzsteuersaetze) und meldet Tippfehler.
 ///
-/// - Important: Die Werte fuer 2024 und 2026 sind nach bestem Wissen eingetragen, aber
-///   **nicht** gegen die amtliche Grundtabelle geprueft. Vor dem produktiven Einsatz bitte
-///   gegen den aktuellen § 32a EStG abgleichen. 2025 ist gegen die amtliche Grundtabelle
-///   verifiziert (siehe `EinkommensteuertarifTests`).
+/// ## Herkunft der Werte
+/// Die Tarifkonstanten aller drei Jahre sind gegen den Wortlaut des § 32a Abs. 1 EStG
+/// abgeglichen, fuer 2025 zusaetzlich gegen das amtliche Einkommensteuer-Handbuch des
+/// Bundesfinanzministeriums. `SteuerjahrTarifwerteTests` haelt sie fest: wer hier eine
+/// Zahl aendert, muss den Test mitaendern und stolpert dabei ueber die Quellenangabe.
+///
+/// - Important: Die Hoechstbetraege der Altersvorsorge folgen der Beitragsbemessungsgrenze
+///   der knappschaftlichen Rentenversicherung und aendern sich jaehrlich. Fuer 2024 ist der
+///   Wert aus der Bemessungsgrundlage abgeleitet und nicht gegen eine amtliche Quelle
+///   geprueft - siehe README, Abschnitt "Stand der Prüfung".
 struct Steuerjahr: Identifiable, Hashable, Sendable {
 
     // MARK: - Einkommensteuertarif (§ 32a Abs. 1 EStG)
@@ -110,10 +116,10 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
             faktorZone2: 954.80,
             faktorZone3: 181.19,
             sockelZone3: 991.21,
-            abzugZone4: 10_636.20,
-            abzugZone5: 18_970.95
+            abzugZone4: 10_636.31,
+            abzugZone5: 18_971.06
         ),
-        amtlichGeprueft: false
+        amtlichGeprueft: true
     )
 
     static let jahr2025 = Steuerjahr(
@@ -145,7 +151,7 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
 
     static let jahr2026 = Steuerjahr(
         soliFreigrenze: 20_350,
-        hoechstbetragAltersvorsorge: 30_529,
+        hoechstbetragAltersvorsorge: 30_826,
         hoechstbetragSonstigeVorsorge: 2_800,
         sonderausgabenPauschbetrag: 36,
         gewerbesteuerFreibetrag: 24_500,
@@ -167,7 +173,7 @@ struct Steuerjahr: Identifiable, Hashable, Sendable {
             abzugZone4: 11_135.63,
             abzugZone5: 19_470.38
         ),
-        amtlichGeprueft: false
+        amtlichGeprueft: true
     )
 
     static let alle: [Steuerjahr] = [jahr2024, jahr2025, jahr2026]
