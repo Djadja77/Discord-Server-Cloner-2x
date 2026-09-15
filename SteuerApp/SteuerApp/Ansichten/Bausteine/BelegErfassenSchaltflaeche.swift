@@ -59,18 +59,27 @@ struct BelegErfassenSchaltfläche: View {
             Menu {
                 menueinträge
             } label: {
-                Label("Beleg erfassen", systemImage: "plus")
+                Image(systemName: "plus")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Stil.schrift)
+                    .frame(width: 38, height: 38)
+                    .background(Stil.flächeHoch, in: Circle())
             }
+            .accessibilityLabel("Beleg erfassen")
         } else {
             Menu {
                 menueinträge
             } label: {
-                Label("Beleg erfassen", systemImage: "doc.viewfinder")
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.viewfinder")
+                    Text("Beleg erfassen")
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 15)
+                .background(Stil.akzent, in: Capsule())
             }
-            .menuStyle(.button)
-            .buttonStyle(.borderedProminent)
         }
     }
 

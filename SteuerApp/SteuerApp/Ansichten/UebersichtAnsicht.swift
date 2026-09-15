@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// Die Startseite: Wie laeuft das Jahr, und wie viel Geld gehört dem Finanzamt?
+/// Die Startseite: Wie läuft das Jahr, und wie viel Geld gehört dem Finanzamt?
 struct UebersichtAnsicht: View {
 
     @Binding var jahr: Int
@@ -16,10 +16,12 @@ struct UebersichtAnsicht: View {
     }
     private var steuerjahr: Steuerjahr { Steuerjahr.fuer(jahr) }
 
-    private var euer: EinnahmenÜberschussRechnung.Ergebnis {
+    private var euer: EinnahmenÜberschussRechnung.Ergebnis { euerFuer(jahr) }
+
+    private func euerFuer(_ welchesJahr: Int) -> EinnahmenÜberschussRechnung.Ergebnis {
         EinnahmenÜberschussRechnung.berechnen(
             belege: belege, wirtschaftsgüter: wirtschaftsgüter,
-            jahr: jahr, kleinunternehmer: profil.kleinunternehmer
+            jahr: welchesJahr, kleinunternehmer: profil.kleinunternehmer
         )
     }
 
@@ -30,109 +32,155 @@ struct UebersichtAnsicht: View {
         ))
     }
 
-    private var letzteBelege: [Beleg] {
-        Array(belege.filter { $0.jahr == jahr }.prefix(5))
+    /// Wie sich der Gewinn gegenüber dem Vorjahr entwickelt hat.
+    ///
+    /// Nur wenn im Vorjahr überhaupt etwas erfasst ist - sonst wäre die Zahl entweder
+    /// unendlich oder schlicht erfunden.
+    private var veränderungZumVorjahr: Double? {
+        let vorher = euerFuer(jahr - 1).gewinn
+        guard vorher > 0 else { return nil }
+        return (euer.gewinn - vorher).alsDouble / vorher.alsDouble
     }
+
+    private var desJahres: [Beleg] { belege.filter { $0.jahr == jahr } }
+
+    private var monatswerte: [Decimal] {
+        var werte = [Decimal](repeating: 0, count: 12)
+        for beleg in desJahres where (1...12).contains(beleg.monat) {
+            werte[beleg.monat - 1] += beleg.art == .einnahme ? beleg.bruttoBetrag
+                                                             : -beleg.bruttoBetrag
+        }
+        return werte
+    }
+
+    private var letzteBelege: [Beleg] { Array(desJahres.prefix(5)) }
+
+    // MARK: - Aufbau
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    kennzahlen
-                    ruecklage
-                    if !letzteBelege.isEmpty { letzteBewegungen }
-                    if euer.anzahlBelege == 0 { leererZustand }
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    kopfzeile
+                    gewinnkarte
+
+                    if euer.anzahlBelege == 0 {
+                        leererZustand
+                    } else {
+                        kacheln
+                        rücklagekarte
+                        if !letzteBelege.isEmpty { letzteBewegungen }
+                    }
+
                     hinweisWennJahrUngeprüft
                 }
-                .padding(16)
+                .padding(.bottom, 28)
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Übersicht \(String(jahr))")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
-                ToolbarItem(placement: .topBarTrailing) {
-                    BelegErfassenSchaltfläche(jahr: jahr)
-                }
-            }
+            .scrollIndicators(.hidden)
+            .aufGrund()
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
     // MARK: - Bausteine
 
-    private var kennzahlen: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                KennzahlKachel(
-                    titel: "Betriebseinnahmen",
-                    wert: Formatierung.euro(euer.summeEinnahmen, mitCent: false),
-                    hinweis: profil.kleinunternehmer ? "brutto" : "netto",
-                    symbol: "arrow.down.circle"
-                )
-                KennzahlKachel(
-                    titel: "Betriebsausgaben",
-                    wert: Formatierung.euro(euer.summeAusgaben, mitCent: false),
-                    hinweis: "\(euer.anzahlBelege) Belege",
-                    symbol: "arrow.up.circle"
-                )
-            }
-            HStack(spacing: 12) {
-                KennzahlKachel(
-                    titel: "Gewinn",
-                    wert: Formatierung.euro(euer.gewinn, mitCent: false),
-                    hinweis: "vor Steuern",
-                    farbe: euer.gewinn < 0 ? .red : .primary,
-                    symbol: "chart.line.uptrend.xyaxis"
-                )
-                KennzahlKachel(
-                    titel: "Geschätzte Steuer",
-                    wert: Formatierung.euro(schätzung.gesamtbelastung, mitCent: false),
-                    hinweis: "Durchschnittssatz \(Formatierung.prozent(schätzung.durchschnittssteuersatz))",
-                    farbe: .orange,
-                    symbol: "building.columns"
-                )
-            }
+    private var kopfzeile: some View {
+        HStack {
+            Text("Übersicht")
+                .font(Stil.titel())
+                .foregroundStyle(Stil.schrift)
+            Spacer()
+            Jahrespille(jahr: $jahr)
+            BelegErfassenSchaltfläche(jahr: jahr)
         }
+        .padding(.horizontal, Stil.rand)
+        .padding(.top, 8)
+        .padding(.bottom, 18)
     }
 
-    /// Bewusst kein NavigationLink: die Schätzung hat einen eigenen Tab. Ein zweiter Weg
-    /// dorthin würde nur eine zweite Navigationsleiste erzeugen.
-    /// Bewusst kein NavigationLink: die Schätzung hat einen eigenen Tab. Ein zweiter Weg
-    /// dorthin würde nur eine zweite Navigationsleiste erzeugen.
-    private var ruecklage: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label(
-                schätzung.istErstattung ? "Voraussichtliche Erstattung" : "Noch zurückzulegen",
-                systemImage: schätzung.istErstattung ? "arrow.down.circle.fill" : "banknote.fill"
+    private var gewinnkarte: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Betragskopf(
+                beschriftung: "Gewinn \(String(jahr))",
+                betrag: euer.gewinn,
+                mitVorzeichen: false,
+                veränderung: veränderungZumVorjahr,
+                beischrift: euer.anzahlBelege == 1
+                    ? "aus 1 Beleg" : "aus \(euer.anzahlBelege) Belegen"
             )
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(.secondary)
+            Monatsbalken(werte: monatswerte, hervorgehoben: desJahres.map(\.monat).max().map { $0 - 1 })
+        }
+        .alsKarte()
+        .padding(.horizontal, Stil.rand)
+    }
+
+    private var kacheln: some View {
+        HStack(spacing: 12) {
+            Kachel(
+                beschriftung: "Einnahmen",
+                wert: Formatierung.euro(euer.summeEinnahmen, mitCent: false),
+                beischrift: profil.kleinunternehmer ? "brutto" : "netto",
+                farbe: Stil.haben,
+                symbol: "arrow.down"
+            )
+            Kachel(
+                beschriftung: "Ausgaben",
+                wert: Formatierung.euro(euer.summeAusgaben, mitCent: false),
+                beischrift: euer.anzahlBelege == 1 ? "1 Beleg" : "\(euer.anzahlBelege) Belege",
+                symbol: "arrow.up"
+            )
+        }
+        .padding(.horizontal, Stil.rand)
+        .padding(.top, 12)
+    }
+
+    private var rücklagekarte: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack {
+                Text(schätzung.istErstattung ? "Voraussichtliche Erstattung" : "Noch zurückzulegen")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Stil.schriftGedämpft)
+                Spacer()
+                Statusmarke(
+                    text: Formatierung.prozent(schätzung.durchschnittssteuersatz, nachkommastellen: 0)
+                        + " Steuersatz",
+                    farbe: Stil.schriftGedämpft
+                )
+            }
 
             Text(Formatierung.euro(abs(schätzung.offenerBetrag)))
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(schätzung.istErstattung ? Color.green : Color.orange)
+                .font(Stil.hauptzahl(34))
+                .foregroundStyle(schätzung.istErstattung ? Stil.haben : Stil.warnung)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
 
-            Text(begruendung)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
             if euer.gewinn > 0 {
-                ProgressView(value: min(schätzung.ruecklagenquote, 1))
-                    .tint(.orange)
+                balkenAnteil(min(schätzung.ruecklagenquote, 1))
                 Text("\(Formatierung.prozent(schätzung.ruecklagenquote, nachkommastellen: 0)) des Gewinns gehören dem Finanzamt")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Stil.schriftLeise)
             }
+
+            Hinweiszeile(text: begründung)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground),
-                    in: RoundedRectangle(cornerRadius: 16))
+        .alsKarte()
+        .padding(.horizontal, Stil.rand)
+        .padding(.top, 12)
     }
 
-    private var begruendung: String {
+    private func balkenAnteil(_ anteil: Double) -> some View {
+        GeometryReader { fläche in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Stil.flächeHoch)
+                Capsule()
+                    .fill(Stil.warnung)
+                    .frame(width: max(fläche.size.width * anteil, 4))
+            }
+        }
+        .frame(height: 7)
+    }
+
+    private var begründung: String {
         let vorauszahlung = schätzung.geleisteteVorauszahlungen
         if vorauszahlung > 0 {
             return "Steuerlast \(Formatierung.euro(schätzung.gesamtbelastung, mitCent: false)) "
@@ -144,65 +192,58 @@ struct UebersichtAnsicht: View {
     }
 
     private var letzteBewegungen: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Zuletzt erfasst")
-                .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 4)
+        VStack(alignment: .leading, spacing: 0) {
+            Abschnittskopf(text: "Zuletzt erfasst")
+                .padding(.horizontal, Stil.rand + 4)
 
             VStack(spacing: 0) {
-                ForEach(letzteBelege) { beleg in
+                ForEach(Array(letzteBelege.enumerated()), id: \.element.id) { stelle, beleg in
                     NavigationLink {
                         BelegBearbeitenAnsicht(beleg: beleg, vorgabeJahr: jahr)
                     } label: {
                         BelegZeile(beleg: beleg)
                     }
                     .buttonStyle(.plain)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
 
-                    if beleg.id != letzteBelege.last?.id {
-                        Divider().padding(.leading, 14)
+                    if stelle < letzteBelege.count - 1 {
+                        Trennzeile(einzug: Stil.symbolgröße + 13)
                     }
                 }
             }
-            .background(Color(.secondarySystemGroupedBackground),
-                        in: RoundedRectangle(cornerRadius: 14))
+            .padding(.horizontal, 15)
+            .background(Stil.fläche, in: RoundedRectangle(cornerRadius: Stil.radiusKarte,
+                                                          style: .continuous))
+            .padding(.horizontal, Stil.rand)
         }
     }
 
     private var leererZustand: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "doc.text.viewfinder")
-                .font(.largeTitle)
-                .foregroundStyle(.secondary)
-            Text("Noch keine Belege für \(String(jahr))")
-                .font(.headline)
-            Text("Belege abfotografieren \u{2013} Händler, Betrag, Datum und Steuersatz werden vorgeschlagen. Auch ein ganzer Stapel auf einmal.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+        VStack(spacing: 16) {
+            LeerHinweis(
+                symbol: "doc.text.viewfinder",
+                titel: "Noch keine Belege für \(String(jahr))",
+                text: "Belege abfotografieren – Händler, Betrag, Datum und Steuersatz werden vorgeschlagen. Auch ein ganzer Stapel auf einmal."
+            )
             BelegErfassenSchaltfläche(jahr: jahr, kompakt: false)
-                .padding(.top, 4)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 22)
         }
-        .frame(maxWidth: .infinity)
-        .padding(24)
-        .background(Color(.secondarySystemGroupedBackground),
-                    in: RoundedRectangle(cornerRadius: 16))
+        .alsKarte(polster: 0)
+        .padding(.horizontal, Stil.rand)
+        .padding(.top, 12)
     }
 
     @ViewBuilder
     private var hinweisWennJahrUngeprüft: some View {
         if !steuerjahr.amtlichGeprüft {
-            Label(
-                "Die Tarifwerte für \(String(steuerjahr.jahr)) sind noch nicht gegen die amtliche Tabelle geprüft.",
-                systemImage: "exclamationmark.triangle"
+            Hinweiszeile(
+                text: "Die Tarifwerte für \(String(steuerjahr.jahr)) sind noch nicht gegen die amtliche Tabelle geprüft.",
+                symbol: "exclamationmark.triangle",
+                farbe: Stil.warnung
             )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(Color(.secondarySystemGroupedBackground),
-                        in: RoundedRectangle(cornerRadius: 12))
+            .alsKarte(polster: 14)
+            .padding(.horizontal, Stil.rand)
+            .padding(.top, 12)
         }
     }
 }
@@ -213,37 +254,16 @@ struct BelegZeile: View {
     let beleg: Beleg
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: beleg.kategorie.symbol)
-                .font(.system(size: 15))
-                .frame(width: 32, height: 32)
-                .background(
-                    (beleg.art == .einnahme ? Color.green : Color.orange).opacity(0.15),
-                    in: Circle()
-                )
-                .foregroundStyle(beleg.art == .einnahme ? Color.green : Color.orange)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(beleg.bezeichnung.isEmpty ? beleg.kategorie.bezeichnung : beleg.bezeichnung)
-                    .lineLimit(1)
-                HStack(spacing: 4) {
-                    Text(Formatierung.datum(beleg.datum))
-                    Text("-")
-                    Text(beleg.kategorie.bezeichnung).lineLimit(1)
-                    if beleg.belegbildDatei != nil {
-                        Image(systemName: "paperclip")
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 8)
-
-            Text(Formatierung.euro(beleg.bruttoBetrag))
-                .font(.subheadline.monospacedDigit())
-                .foregroundStyle(beleg.art == .einnahme ? Color.green : .primary)
-        }
+        Buchungszeile(
+            kategorie: beleg.kategorie,
+            bezeichnung: beleg.bezeichnung.isEmpty ? beleg.kategorie.bezeichnung
+                                                   : beleg.bezeichnung,
+            beischrift: "\(Formatierung.datum(beleg.datum)) · \(beleg.kategorie.bezeichnung)",
+            betrag: beleg.bruttoBetrag,
+            istEinnahme: beleg.art == .einnahme,
+            mitBild: beleg.belegbildDatei != nil,
+            unvollständig: beleg.bruttoBetrag == 0
+        )
     }
 }
 
