@@ -106,42 +106,170 @@ struct Veränderungsmarke: View {
 
 // MARK: - Diagramm
 
-/// Ein Balken je Monat. Der hervorgehobene Monat trägt die Akzentfarbe.
+/// Ein Balken je Monat, mit Nulllinie und Beschriftung.
+///
+/// Zwölf nackte Striche mit den Anfangsbuchstaben darunter sind ein Rätsel:
+/// "J F M A M J J A S O N D" liest niemand als Jahresachse, und drei der zwölf
+/// Buchstaben sind doppelt. Darum steht jetzt darüber, was die Balken zeigen,
+/// die Achse trägt echte Kürzel an den Quartalen, und Minusmonate hängen unter
+/// der Nulllinie statt so auszusehen wie Plusmonate.
 struct Monatsbalken: View {
 
     /// Zwölf Werte, Januar bis Dezember.
     let werte: [Decimal]
+
+    /// Welcher Monat hervorgehoben wird - null-basiert.
     var hervorgehoben: Int?
+
+    /// Höhe der Balkenfläche ohne Kopfzeile und Achsenbeschriftung.
     var höhe: CGFloat = 78
 
-    private let kürzel = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
+    /// Sagt in einer Zeile, was die Balken überhaupt zeigen.
+    var beschriftung: String = "Verlauf im Jahr"
 
-    private var größter: Double {
-        max(werte.map { abs($0.alsDouble) }.max() ?? 0, 1)
+    private static let kürzel = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
+                                 "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
+
+    private static let namen = ["Januar", "Februar", "März", "April", "Mai", "Juni",
+                                "Juli", "August", "September", "Oktober", "November", "Dezember"]
+
+    /// Der Wert eines Monats - auch dann sicher, wenn weniger als zwölf
+    /// Werte hereingereicht wurden.
+    private func betrag(_ monat: Int) -> Decimal {
+        werte.indices.contains(monat) ? werte[monat] : 0
+    }
+
+    private var zahlen: [Double] {
+        var werteJeMonat = [Double](repeating: 0, count: 12)
+        for (monat, wert) in werte.prefix(12).enumerated() { werteJeMonat[monat] = wert.alsDouble }
+        return werteJeMonat
+    }
+
+    /// Wie weit der Ausschlag nach oben und nach unten reicht. Beide Zonen
+    /// teilen sich die Höhe im Verhältnis ihrer Ausschläge, damit ein Balken
+    /// von -200 Euro halb so lang ist wie einer von +400 Euro.
+    private var zonen: (oben: CGFloat, unten: CGFloat) {
+        let hoch = max(zahlen.max() ?? 0, 0)
+        let tief = max(-(zahlen.min() ?? 0), 0)
+        let spanne = hoch + tief
+        guard spanne > 0 else { return (höhe, 0) }
+        return (höhe * CGFloat(hoch / spanne), höhe * CGFloat(tief / spanne))
     }
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 5) {
-            ForEach(Array(werte.prefix(12).enumerated()), id: \.offset) { monat, wert in
-                VStack(spacing: 6) {
-                    // Immer mindestens zwei Punkte hoch, damit leere Monate sichtbar
-                    // bleiben - ein unsichtbarer Balken sieht aus wie ein Fehler.
-                    RoundedRectangle(cornerRadius: 3.5, style: .continuous)
-                        .fill(monat == hervorgehoben
-                              ? AnyShapeStyle(Stil.akzent)
-                              : AnyShapeStyle(Color.white.opacity(0.14)))
-                        .frame(height: max(höhe * CGFloat(abs(wert.alsDouble) / größter), 2))
+        VStack(alignment: .leading, spacing: 10) {
+            kopfzeile
+            diagramm
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(beschriftung)
+        .accessibilityValue(vorlesetext)
+    }
 
-                    Text(kürzel[monat])
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(monat == hervorgehoben
-                                         ? Stil.schrift : Stil.schriftLeise)
+    // MARK: - Teile
+
+    private var kopfzeile: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(beschriftung)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Stil.schriftGedämpft)
+
+            Spacer(minLength: 0)
+
+            if let stelle = hervorgehoben, zahlen.indices.contains(stelle) {
+                Text("\(Self.kürzel[stelle]) \(Formatierung.euroMitVorzeichen(betrag(stelle), mitCent: false))")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Stil.schrift)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    private var diagramm: some View {
+        let zone = zonen
+        return HStack(alignment: .bottom, spacing: 5) {
+            ForEach(Array(zahlen.enumerated()), id: \.offset) { monat, wert in
+                VStack(spacing: 6) {
+                    säule(wert: wert, zone: zone, hervor: monat == hervorgehoben)
+                    achsenkürzel(monat)
                 }
                 .frame(maxWidth: .infinity)
             }
         }
-        .frame(height: höhe + 18, alignment: .bottom)
-        .accessibilityHidden(true)
+        .overlay(alignment: .top) {
+            // Nulllinie - nur nötig, wenn es überhaupt Minusmonate gibt.
+            if zone.unten > 0 {
+                Rectangle()
+                    .fill(Stil.trenner)
+                    .frame(height: 0.8)
+                    .offset(y: zone.oben)
+            }
+        }
+    }
+
+    private func säule(wert: Double, zone: (oben: CGFloat, unten: CGFloat), hervor: Bool) -> some View {
+        let anteil = anteilVon(wert)
+        return VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
+                Color.clear
+                if wert >= 0 {
+                    RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+                        .fill(farbe(wert: wert, hervor: hervor))
+                        .frame(height: max(zone.oben * anteil, 2))
+                }
+            }
+            .frame(height: zone.oben)
+
+            ZStack(alignment: .top) {
+                Color.clear
+                if wert < 0 {
+                    RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+                        .fill(farbe(wert: wert, hervor: hervor))
+                        .frame(height: max(zone.unten * anteil, 2))
+                }
+            }
+            .frame(height: zone.unten)
+        }
+    }
+
+    /// Wie hoch der Balken in seiner Zone steht - immer bezogen auf den
+    /// größten Ausschlag in derselben Richtung.
+    private func anteilVon(_ wert: Double) -> CGFloat {
+        if wert >= 0 {
+            let hoch = max(zahlen.max() ?? 0, 0)
+            return hoch > 0 ? CGFloat(wert / hoch) : 0
+        }
+        let tief = max(-(zahlen.min() ?? 0), 0)
+        return tief > 0 ? CGFloat(-wert / tief) : 0
+    }
+
+    /// Plus ist grün, Minus rot, der hervorgehobene Monat kräftig. Ein leerer
+    /// Monat bekommt einen neutralen Stummel - ein unsichtbarer Balken sieht
+    /// aus wie ein Fehler.
+    private func farbe(wert: Double, hervor: Bool) -> Color {
+        guard wert != 0 else { return Stil.trenner }
+        let grundton = wert > 0 ? Stil.haben : Stil.gefahr
+        return hervor ? grundton : grundton.opacity(0.38)
+    }
+
+    /// Beschriftet die Quartale und immer den hervorgehobenen Monat. Alle zwölf
+    /// Kürzel nebeneinander wären auf einem iPhone Kleingedrucktes.
+    private func achsenkürzel(_ monat: Int) -> some View {
+        let zeigen = monat % 3 == 0 || monat == hervorgehoben
+        return Text(Self.kürzel[monat])
+            .font(.system(size: 10, weight: monat == hervorgehoben ? .semibold : .regular))
+            .foregroundStyle(monat == hervorgehoben ? Stil.schrift : Stil.schriftLeise)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .opacity(zeigen ? 1 : 0)
+    }
+
+    private var vorlesetext: String {
+        let teile = zahlen.enumerated().compactMap { monat, wert -> String? in
+            guard wert != 0 else { return nil }
+            return "\(Self.namen[monat]) \(Formatierung.euroMitVorzeichen(betrag(monat), mitCent: false))"
+        }
+        return teile.isEmpty ? "Noch nichts erfasst" : teile.joined(separator: ", ")
     }
 }
 

@@ -149,10 +149,22 @@ struct BelegeAnsicht: View {
                 betrag: summeGefiltert,
                 beischrift: beischriftSaldo
             )
-            Monatsbalken(werte: monatswerte, hervorgehoben: jüngsterMonat)
+            Monatsbalken(werte: monatswerte,
+                         hervorgehoben: jüngsterMonat,
+                         beschriftung: verlaufsbeschriftung)
         }
         .alsKarte()
         .padding(.horizontal, Stil.rand)
+    }
+
+    /// Sagt über dem Diagramm, was die Balken zeigen - das hängt am Filter.
+    private var verlaufsbeschriftung: String {
+        switch filter {
+        case .alle: "Saldo je Monat"
+        case .einnahmen: "Einnahmen je Monat"
+        case .ausgaben: "Ausgaben je Monat"
+        case .ohneBetrag, .ohneBeleg: "\(filter.bezeichnung) je Monat"
+        }
     }
 
     private var beischriftSaldo: String {

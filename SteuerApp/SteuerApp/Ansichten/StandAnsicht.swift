@@ -270,7 +270,8 @@ struct StandAnsicht: View {
                 hochzählen: false
             )
             Monatsbalken(werte: monatswerte,
-                         hervorgehoben: desJahres.map(\.monat).max().map { $0 - 1 })
+                         hervorgehoben: desJahres.map(\.monat).max().map { $0 - 1 },
+                         beschriftung: "Gewinn je Monat")
         }
         .alsKarte()
         .padding(.horizontal, Stil.rand)
