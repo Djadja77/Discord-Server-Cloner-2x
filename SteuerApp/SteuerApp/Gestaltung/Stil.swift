@@ -84,17 +84,34 @@ enum Stil {
             }
         }
 
-        /// Zusätzlicher Schleier über dem Material.
+        /// Wie stark der Schleier im Hellen deckt.
         ///
         /// Das ist der Teil, den iOS 27 "bessere Streuung" nennt: Material allein
         /// lässt kräftige Farben durchschlagen, und Text darauf fällt unter die
         /// Lesbarkeitsgrenze von 4,5:1. Der Schleier hebt den Untergrund an, bevor
         /// die Schrift darauf liegt.
-        var schleier: Double {
+        ///
+        /// Die drei Stufen lagen einmal bei 0,52 / 0,58 / 0,68 - über einer ohnehin
+        /// fast weissen Fläche ein Unterschied, den niemand sieht. Der Regler schien
+        /// deshalb wirkungslos. Jetzt spannen sie den ganzen Bereich von "sieht den
+        /// Verlauf" bis "deckt ihn ab".
+        var deckungHell: Double {
+            switch self {
+            case .klar: 0.30
+            case .mittel: 0.58
+            case .getönt: 0.86
+            }
+        }
+
+        /// Wie stark der Schleier im Dunkeln anhebt.
+        ///
+        /// Im Dunkeln gibt es nichts abzudecken - dort fehlt Licht. Deshalb hebt der
+        /// Schleier an, und die Stufen unterscheiden sich entsprechend deutlich.
+        var aufhellungDunkel: Double {
             switch self {
             case .klar: 0.04
-            case .mittel: 0.10
-            case .getönt: 0.20
+            case .mittel: 0.11
+            case .getönt: 0.19
             }
         }
     }
@@ -114,8 +131,8 @@ enum Stil {
         Color(uiColor: UIColor { merkmale in
             merkmale.userInterfaceStyle == .dark
                 ? UIColor(red: 0.478, green: 0.420, blue: 1.0,
-                          alpha: 0.08 + Double(stärke.rawValue) * 0.025)
-                : UIColor.white.withAlphaComponent(min(stärke.schleier + 0.48, 0.92))
+                          alpha: stärke.aufhellungDunkel)
+                : UIColor.white.withAlphaComponent(stärke.deckungHell)
         })
     }
 

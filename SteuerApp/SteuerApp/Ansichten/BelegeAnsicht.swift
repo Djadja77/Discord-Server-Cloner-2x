@@ -11,6 +11,8 @@ struct BelegeAnsicht: View {
     /// Von außen gesetzt: die Liste "Zu erledigen" auf dem Stand springt mit einem
     /// gesetzten Filter hierher.
     @Binding var filter: Filter
+    /// Setzt den Belegeinzug an der Wurzel der App in Gang.
+    @Binding var aufnahme: Aufnahmeart?
     @State private var suchtext = ""
     @FocusState private var sucheAktiv: Bool
     @State private var zuLöschen: Beleg?
@@ -101,6 +103,7 @@ struct BelegeAnsicht: View {
                                 ? "Für \(String(jahr)) ist noch nichts erfasst."
                                 : "Für „\(suchtext)\" wurde nichts gefunden."
                         )
+                        if suchtext.isEmpty { erfassungsknöpfe }
                     } else {
                         ForEach(nachMonat, id: \.monat) { gruppe in
                             monatsgruppe(gruppe)
@@ -130,12 +133,13 @@ struct BelegeAnsicht: View {
     // MARK: - Bausteine
 
     private var kopfzeile: some View {
-        HStack {
+        HStack(spacing: 10) {
             Text("Belege")
                 .font(Stil.titel())
                 .foregroundStyle(Stil.schrift)
             Spacer()
             Jahrespille(jahr: $jahr)
+            neuknopf
         }
         .padding(.horizontal, Stil.rand)
         .padding(.top, 8)
@@ -155,6 +159,39 @@ struct BelegeAnsicht: View {
         }
         .alsKarte()
         .padding(.horizontal, Stil.rand)
+    }
+
+    /// Der sichtbare Weg zu einem neuen Beleg.
+    ///
+    /// Vorher lagen Fotomediathek und Handeintrag ausschließlich auf dem langen Druck
+    /// des Scanknopfs. Wer das nicht zufällig ausprobiert, findet sie nie - und für
+    /// eine Rechnung, die als Bildschirmfoto in der Mediathek liegt, gibt es dann
+    /// scheinbar keinen Weg in die App.
+    private var neuknopf: some View {
+        Menu {
+            Button("Beleg scannen", systemImage: "doc.viewfinder") { aufnahme = .scannen }
+            Button("Aus Fotomediathek", systemImage: "photo.on.rectangle") { aufnahme = .mediathek }
+            Button("Von Hand eintragen", systemImage: "square.and.pencil") { aufnahme = .vonHand }
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Stil.schrift)
+                .frame(width: 38, height: 34)
+                .alsGlas(Capsule())
+        }
+        .accessibilityLabel("Beleg hinzufügen")
+    }
+
+    /// Im leeren Jahr führen die beiden häufigsten Wege direkt unter dem Hinweis.
+    private var erfassungsknöpfe: some View {
+        VStack(spacing: 10) {
+            Button("Beleg scannen") { aufnahme = .scannen }
+                .buttonStyle(HauptknopfStil())
+            Button("Aus Fotomediathek") { aufnahme = .mediathek }
+                .buttonStyle(NebenknopfStil())
+        }
+        .padding(.horizontal, Stil.rand + 14)
+        .padding(.top, 20)
     }
 
     /// Sagt über dem Diagramm, was die Balken zeigen - das hängt am Filter.
@@ -277,7 +314,8 @@ struct BelegeAnsicht: View {
 #Preview {
     BelegeAnsicht(
         jahr: .constant(Calendar.kalender.component(.year, from: Date())),
-        filter: .constant(.alle)
+        filter: .constant(.alle),
+        aufnahme: .constant(nil)
     )
     .modelContainer(Datenbank.vorschauContainer())
 }

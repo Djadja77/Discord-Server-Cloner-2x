@@ -728,23 +728,29 @@ struct SchwebendeLeiste: View {
     /// Das Scannen sitzt in der Mitte und ist als einziges gefüllt.
     ///
     /// Ein Tipp öffnet sofort die Kamera - der schnellste Weg zum Beleg. Die beiden
-    /// anderen Wege (Fotomediathek, von Hand) liegen im Kontextmenü, damit der
+    /// anderen Wege (Fotomediathek, von Hand) liegen auf dem langen Druck, damit der
     /// häufige Fall keinen Umweg über eine Auswahl nimmt.
+    ///
+    /// Als `Menu` mit `primaryAction` und nicht als Knopf mit `contextMenu`: ein
+    /// Kontextmenü an einer Schaltfläche, die auf den kurzen Druck sofort etwas tut,
+    /// ist schwer zu treffen. Den sichtbaren Weg zu allen drei Möglichkeiten hält die
+    /// Kopfzeile auf "Belege" bereit - hier zu raten sollte niemand müssen.
     private var scanknopf: some View {
-        Button(action: scannen) {
+        Menu {
+            Button("Beleg scannen", systemImage: "doc.viewfinder", action: scannen)
+            Button("Aus Fotomediathek", systemImage: "photo.on.rectangle", action: ausMediathek)
+            Button("Von Hand eintragen", systemImage: "square.and.pencil", action: vonHand)
+        } label: {
             Image(systemName: "doc.viewfinder")
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: 54, height: 46)
                 .background(Stil.akzent, in: Capsule())
                 .overlay(Capsule().strokeBorder(Stil.kante, lineWidth: 1))
+        } primaryAction: {
+            scannen()
         }
-        .buttonStyle(.plain)
         .accessibilityLabel("Beleg scannen")
-        .contextMenu {
-            Button("Aus Fotomediathek", systemImage: "photo.on.rectangle", action: ausMediathek)
-            Button("Von Hand eintragen", systemImage: "square.and.pencil", action: vonHand)
-        }
     }
 
     private func knopf(fuer bereich: Bereich) -> some View {

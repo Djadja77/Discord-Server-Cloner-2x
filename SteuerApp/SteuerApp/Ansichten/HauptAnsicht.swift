@@ -35,7 +35,7 @@ struct HauptAnsicht: View {
                 StandAnsicht(jahr: $jahr, bereich: $bereich, belegfilter: $belegfilter)
                     .tag(SchwebendeLeiste.Bereich.stand)
 
-                BelegeAnsicht(jahr: $jahr, filter: $belegfilter)
+                BelegeAnsicht(jahr: $jahr, filter: $belegfilter, aufnahme: $aufnahme)
                     .tag(SchwebendeLeiste.Bereich.belege)
 
                 SteuerAnsicht(jahr: $jahr)

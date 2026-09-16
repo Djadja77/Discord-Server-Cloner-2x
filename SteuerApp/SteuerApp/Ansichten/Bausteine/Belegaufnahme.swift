@@ -24,6 +24,7 @@ struct Belegeinzug: ViewModifier {
     @State private var fotoauswahlOffen = false
     @State private var stapelbilder: [UIImage] = []
     @State private var fotoauswahl: [PhotosPickerItem] = []
+    @State private var stapelStartet = false
 
     func body(content: Content) -> some View {
         content
@@ -55,9 +56,13 @@ struct Belegeinzug: ViewModifier {
                 fotoauswahl = []
                 Task {
                     stapelbilder = await FotoImport.bilderLaden(aus: ausgewählt)
-                    stapelOeffnenFallsBilder()
+                    stapelOeffnenFallsMöglich()
                 }
             }
+            // Die Fotoauswahl hat kein onDismiss wie ein sheet. Beide Wege - Laden
+            // fertig und Auswahl geschlossen - können in beliebiger Reihenfolge
+            // eintreffen, deshalb prüft jeder von ihnen denselben Zustand.
+            .onChange(of: fotoauswahlOffen) { stapelOeffnenFallsMöglich() }
     }
 
     private func starten() {
@@ -71,9 +76,32 @@ struct Belegeinzug: ViewModifier {
         art = nil
     }
 
+    /// Nach dem Scanner: dessen `onDismiss` feuert erst, wenn das Blatt weg ist.
     private func stapelOeffnenFallsBilder() {
         guard !stapelbilder.isEmpty else { return }
         stapelOffen = true
+    }
+
+    /// Nach der Fotomediathek.
+    ///
+    /// Hier lag der Fehler, wegen dem sich über die Mediathek kein Beleg anlegen
+    /// liess: die Erfassung wurde geöffnet, während sich die Fotoauswahl noch
+    /// schloss. SwiftUI verschluckt eine Präsentation, die während einer laufenden
+    /// Entlassung startet - das Blatt kam nie, und es sah aus, als passiere nichts.
+    ///
+    /// Beim Scanner löst `onDismiss` das sauber. Die Fotoauswahl bietet kein
+    /// `onDismiss`, deshalb der kurze Abstand: er überbrückt die Entlassungs-
+    /// animation. `stapelStartet` verhindert, dass beide Auslöser doppelt öffnen.
+    @MainActor
+    private func stapelOeffnenFallsMöglich() {
+        guard !stapelbilder.isEmpty, !stapelOffen, !stapelStartet,
+              !fotoauswahlOffen, !scannerOffen else { return }
+        stapelStartet = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(350))
+            stapelStartet = false
+            stapelOffen = true
+        }
     }
 }
 
