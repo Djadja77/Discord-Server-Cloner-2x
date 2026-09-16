@@ -196,21 +196,45 @@ struct StapelErfassungAnsicht: View {
 
     // MARK: - Verhalten
 
+    /// Wie viele Belege gleichzeitig durch die Texterkennung laufen.
+    ///
+    /// Nicht alle auf einmal: jede Erkennung hält ein entzerrtes Vollbild im Speicher,
+    /// und ein Stapel von zwanzig Quittungen würde zwanzig davon nebeneinander halten.
+    /// Vier ausgelastete Läufe sind auf dem Gerät genauso schnell wie zwanzig sich
+    /// gegenseitig behindernde - nur ohne die Speicherspitze.
+    private static let gleichzeitigeErkennungen = 4
+
+    /// Liest alle Belege aus, immer nur ein paar gleichzeitig.
+    ///
+    /// Sobald einer fertig ist, rückt genau einer nach. Damit bleibt die Auslastung
+    /// konstant, statt am Anfang alles loszutreten und am Ende zu warten.
+    private func vorschlaegeLesen() async -> [Int: BelegTexterkennung.Vorschlag] {
+        await withTaskGroup(of: (Int, BelegTexterkennung.Vorschlag).self) { gruppe in
+            var ergebnis: [Int: BelegTexterkennung.Vorschlag] = [:]
+            var nächster = 0
+
+            func nachschieben() {
+                guard nächster < bilder.count else { return }
+                let stelle = nächster
+                let bild = bilder[stelle]
+                gruppe.addTask { (stelle, await BelegTexterkennung.auswerten(bild: bild)) }
+                nächster += 1
+            }
+
+            for _ in 0..<min(Self.gleichzeitigeErkennungen, bilder.count) { nachschieben() }
+
+            for await (stelle, vorschlag) in gruppe {
+                ergebnis[stelle] = vorschlag
+                nachschieben()
+            }
+            return ergebnis
+        }
+    }
+
     private func auswerten() async {
         guard posten.isEmpty else { return }
 
-        // Alle Belege nebeneinander auslesen: bei einem Stapel von zehn Quittungen ist das
-        // der Unterschied zwischen einem Wimpernschlag und einer halben Minute Warten.
-        let vorschläge: [Int: BelegTexterkennung.Vorschlag] = await withTaskGroup(
-            of: (Int, BelegTexterkennung.Vorschlag).self
-        ) { gruppe in
-            for (index, bild) in bilder.enumerated() {
-                gruppe.addTask { (index, await BelegTexterkennung.auswerten(bild: bild)) }
-            }
-            var ergebnis: [Int: BelegTexterkennung.Vorschlag] = [:]
-            for await (index, vorschlag) in gruppe { ergebnis[index] = vorschlag }
-            return ergebnis
-        }
+        let vorschläge = await vorschlaegeLesen()
 
         var neue: [Posten] = []
         for (index, bild) in bilder.enumerated() {

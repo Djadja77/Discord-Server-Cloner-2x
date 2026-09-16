@@ -8,6 +8,8 @@ import SwiftData
 struct EuerAnsicht: View {
 
     @Binding var jahr: Int
+    /// `true`, wenn `SteuerAnsicht` den Verlaufsgrund schon gelegt hat.
+    var eingebettet = false
     @Query private var belege: [Beleg]
     @Query private var profile: [Steuerprofil]
     @Query private var wirtschaftsgüter: [Wirtschaftsgut]
@@ -41,41 +43,38 @@ struct EuerAnsicht: View {
         )
     }
 
+    /// - Note: Ohne eigenen `NavigationStack` und ohne Titel - beides stellt
+    ///   `SteuerAnsicht` bereit, die diese Ansicht als einen von drei Abschnitten
+    ///   führt. Zwei ineinandergeschachtelte Stapel ergäben zwei Navigationsleisten.
     var body: some View {
-        NavigationStack {
-            List {
-                if euer.anzahlBelege == 0 {
-                    ContentUnavailableView(
-                        "Keine Daten für \(String(jahr))",
-                        systemImage: "tablecells",
-                        description: Text("Erfasse Belege, dann erscheint hier die Auswertung.")
-                    )
-                    anlagenAbschnitt
-                } else {
-                    einnahmenAbschnitt
-                    ausgabenAbschnitt
-                    ergebnisAbschnitt
-                    umsatzsteuerAbschnitt
-                    anlagenAbschnitt
-                    exportAbschnitt
-                }
+        List {
+            if euer.anzahlBelege == 0 {
+                ContentUnavailableView(
+                    "Keine Daten für \(String(jahr))",
+                    systemImage: "tablecells",
+                    description: Text("Erfasse Belege, dann erscheint hier die Auswertung.")
+                )
+                anlagenAbschnitt
+            } else {
+                einnahmenAbschnitt
+                ausgabenAbschnitt
+                ergebnisAbschnitt
+                umsatzsteuerAbschnitt
+                anlagenAbschnitt
+                exportAbschnitt
             }
-            .alsListe()
-            .navigationTitle("Auswertung")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
-            }
-            .sheet(isPresented: $exportOffen) {
-                TeilenAnsicht(dateien: exportDateien)
-            }
-            .alert("Export fehlgeschlagen", isPresented: Binding(
-                get: { fehler != nil },
-                set: { if !$0 { fehler = nil } }
-            )) {
-                Button("OK") { fehler = nil }
-            } message: {
-                Text(fehler ?? "")
-            }
+        }
+        .alsListe(mitGrund: !eingebettet)
+        .sheet(isPresented: $exportOffen) {
+            TeilenAnsicht(dateien: exportDateien)
+        }
+        .alert("Export fehlgeschlagen", isPresented: Binding(
+            get: { fehler != nil },
+            set: { if !$0 { fehler = nil } }
+        )) {
+            Button("OK") { fehler = nil }
+        } message: {
+            Text(fehler ?? "")
         }
     }
 
@@ -238,6 +237,15 @@ struct EuerAnsicht: View {
                 // Nur das Schreiben der Dateien wandert vom Hauptstrang herunter. Der
                 // umgebende Task bleibt dort, deshalb brauchen die Zuweisungen danach
                 // keinen Sprung zurück.
+                //
+                // `Task.detached` ist hier bewusst gewählt, obwohl es sonst zu meiden
+                // ist: es erbt weder Priorität noch Abbruch noch task-lokale Werte.
+                // Beides ist hier ohne Bedeutung - der Export ist ein einmaliger
+                // Vorgang, und die Priorität steht ausdrücklich dabei. Der saubere
+                // Ersatz wäre `@concurrent`, das gibt es aber erst ab Swift 6.2. Eine
+                // schlicht `nonisolated async` markierte Funktion wäre der falsche
+                // Weg: unter Swift 6.2 bliebe sie auf dem Hauptstrang und würde die
+                // Oberfläche genau während des Schreibens einfrieren.
                 let archiv = try await Task.detached(priority: .userInitiated) {
                     try Unterlagenexport.archivErstellen(bauplan)
                 }.value

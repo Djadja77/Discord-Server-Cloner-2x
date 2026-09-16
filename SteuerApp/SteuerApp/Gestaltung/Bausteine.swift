@@ -523,53 +523,81 @@ struct Jahrespille: View {
 
 // MARK: - Die schwebende Bedienleiste
 
-/// Die fünf Bereiche der App als Glaskapsel, die über dem Inhalt schwebt.
+/// Die Bereiche der App als Glaskapsel, die über dem Inhalt schwebt.
 ///
-/// Statt eines Balkens am unteren Rand liegt die Leiste frei auf dem Bildschirm, mit
-/// Inhalt darunter, der durch das Glas scheint. Der ausgewählte Bereich bekommt eine
-/// eigene getönte Kapsel, die beim Wechseln hinüberfährt - über `matchedGeometryEffect`,
-/// damit sie tatsächlich gleitet und nicht an zwei Stellen aufblitzt.
+/// Vier Bereiche und in der Mitte das Scannen. Die Reihenfolge folgt der Häufigkeit:
+/// links, was täglich gebraucht wird, rechts, was einmal im Jahr drankommt. Das
+/// Scannen liegt in der Mitte, weil dort der Daumen ohnehin steht und weil es die
+/// häufigste Handlung der ganzen App ist - vorher steckte es in einem Pluszeichen
+/// oben in der Ecke.
 struct SchwebendeLeiste: View {
 
     @Binding var auswahl: Bereich
+    /// Wird beim Tippen auf die Mitte gerufen.
+    let scannen: () -> Void
+    /// Die beiden selteneren Wege, im Kontextmenü der Mitte.
+    let ausMediathek: () -> Void
+    let vonHand: () -> Void
     @Namespace private var kapsel
 
     enum Bereich: Int, CaseIterable, Identifiable {
-        case übersicht, belege, schätzung, auswertung, profil
+        case stand, belege, steuer, mehr
 
         var id: Int { rawValue }
 
         var titel: String {
             switch self {
-            case .übersicht: "Übersicht"
+            case .stand: "Stand"
             case .belege: "Belege"
-            case .schätzung: "Schätzung"
-            case .auswertung: "Auswertung"
-            case .profil: "Profil"
+            case .steuer: "Steuer"
+            case .mehr: "Mehr"
             }
         }
 
         var symbol: String {
             switch self {
-            case .übersicht: "square.grid.2x2.fill"
+            case .stand: "gauge.with.needle"
             case .belege: "list.bullet"
-            case .schätzung: "chart.bar.fill"
-            case .auswertung: "doc.text.fill"
-            case .profil: "person.fill"
+            case .steuer: "building.columns"
+            case .mehr: "ellipsis"
             }
         }
     }
 
     var body: some View {
         HStack(spacing: 2) {
-            ForEach(Bereich.allCases) { bereich in
-                knopf(fuer: bereich)
-            }
+            knopf(fuer: .stand)
+            knopf(fuer: .belege)
+            scanknopf
+            knopf(fuer: .steuer)
+            knopf(fuer: .mehr)
         }
         .padding(5)
         .alsGlas(Capsule(), kräftig: true)
         .shadow(color: .black.opacity(0.28), radius: 20, y: 8)
         .padding(.horizontal, 12)
+    }
+
+    /// Das Scannen sitzt in der Mitte und ist als einziges gefüllt.
+    ///
+    /// Ein Tipp öffnet sofort die Kamera - der schnellste Weg zum Beleg. Die beiden
+    /// anderen Wege (Fotomediathek, von Hand) liegen im Kontextmenü, damit der
+    /// häufige Fall keinen Umweg über eine Auswahl nimmt.
+    private var scanknopf: some View {
+        Button(action: scannen) {
+            Image(systemName: "doc.viewfinder")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 54, height: 46)
+                .background(Stil.akzent, in: Capsule())
+                .overlay(Capsule().strokeBorder(Stil.kante, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Beleg scannen")
+        .contextMenu {
+            Button("Aus Fotomediathek", systemImage: "photo.on.rectangle", action: ausMediathek)
+            Button("Von Hand eintragen", systemImage: "square.and.pencil", action: vonHand)
+        }
     }
 
     private func knopf(fuer bereich: Bereich) -> some View {

@@ -8,6 +8,8 @@ import SwiftData
 struct SchätzungAnsicht: View {
 
     @Binding var jahr: Int
+    /// `true`, wenn `SteuerAnsicht` den Verlaufsgrund schon gelegt hat.
+    var eingebettet = false
     @Query private var belege: [Beleg]
     @Query private var profile: [Steuerprofil]
     @Query private var alleJahresangaben: [Jahresangaben]
@@ -33,25 +35,21 @@ struct SchätzungAnsicht: View {
         ))
     }
 
+    /// - Note: Ohne eigenen `NavigationStack` und ohne Titel - beides stellt
+    ///   `SteuerAnsicht` bereit.
     var body: some View {
-        NavigationStack {
-            List {
-                ergebnisAbschnitt
-                einkünfteAbschnitt
-                if ergebnis.verlustabzug.verfügbarerVortrag > 0 { verlustAbschnitt }
-                abzügeAbschnitt
-                if ergebnis.kinder.anzahlKinder > 0 { kinderAbschnitt }
-                steuerAbschnitt
-                if profil.tätigkeitsart == .gewerblich { gewerbesteuerAbschnitt }
-                sätzeAbschnitt
-                rechtlicherHinweis
-            }
-            .alsListe()
-            .navigationTitle("Schätzung")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
-            }
+        List {
+            ergebnisAbschnitt
+            einkünfteAbschnitt
+            if ergebnis.verlustabzug.verfügbarerVortrag > 0 { verlustAbschnitt }
+            abzügeAbschnitt
+            if ergebnis.kinder.anzahlKinder > 0 { kinderAbschnitt }
+            steuerAbschnitt
+            if profil.tätigkeitsart == .gewerblich { gewerbesteuerAbschnitt }
+            sätzeAbschnitt
+            rechtlicherHinweis
         }
+        .alsListe(mitGrund: !eingebettet)
     }
 
     // MARK: - Abschnitte

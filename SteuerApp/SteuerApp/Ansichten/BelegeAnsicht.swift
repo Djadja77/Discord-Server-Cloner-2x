@@ -8,8 +8,10 @@ struct BelegeAnsicht: View {
     @Environment(\.modelContext) private var kontext
     @Query(sort: \Beleg.datum, order: .reverse) private var alleBelege: [Beleg]
 
+    /// Von außen gesetzt: die Liste "Zu erledigen" auf dem Stand springt mit einem
+    /// gesetzten Filter hierher.
+    @Binding var filter: Filter
     @State private var suchtext = ""
-    @State private var filter: Filter = .alle
     @FocusState private var sucheAktiv: Bool
     @State private var zuLöschen: Beleg?
 
@@ -134,7 +136,6 @@ struct BelegeAnsicht: View {
                 .foregroundStyle(Stil.schrift)
             Spacer()
             Jahrespille(jahr: $jahr)
-            BelegErfassenSchaltfläche(jahr: jahr)
         }
         .padding(.horizontal, Stil.rand)
         .padding(.top, 8)
@@ -262,6 +263,9 @@ struct BelegeAnsicht: View {
 }
 
 #Preview {
-    BelegeAnsicht(jahr: .constant(Calendar.kalender.component(.year, from: Date())))
-        .modelContainer(Datenbank.vorschauContainer())
+    BelegeAnsicht(
+        jahr: .constant(Calendar.kalender.component(.year, from: Date())),
+        filter: .constant(.alle)
+    )
+    .modelContainer(Datenbank.vorschauContainer())
 }

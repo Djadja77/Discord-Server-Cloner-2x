@@ -45,7 +45,7 @@ struct EinstellungenAnsicht: View {
                 darstellungAbschnitt
             }
             .alsListe()
-            .navigationTitle("Profil")
+            .navigationTitle("Mehr")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
             }

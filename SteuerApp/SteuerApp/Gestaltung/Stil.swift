@@ -369,10 +369,13 @@ extension View {
     /// Formulare bleiben bewusst Systemlisten: Auswahlfelder, Datumswähler und
     /// Zifferntastaturen sind darin erprobt, nachgebaute Bedienelemente sind genau die
     /// Stelle, an der Fehler entstehen. Verändert wird nur, was sie tragen.
-    func alsListe() -> some View {
+    /// - Parameter mitGrund: `false`, wenn die umgebende Ansicht den Verlauf schon
+    ///   legt. Zweimal gezeichnet säße jeder Verlauf in seinem eigenen Rahmen, und
+    ///   die Lichter der Kopfzeile träfen die der Liste nicht.
+    func alsListe(mitGrund: Bool = true) -> some View {
         self
             .scrollContentBackground(.hidden)
-            .background(Verlaufsgrund())
+            .background { if mitGrund { Verlaufsgrund() } }
             .listRowBackground(Stil.fläche.opacity(0.55))
             .tint(Stil.akzent)
             .safeAreaPadding(.bottom, Stil.leistenhöhe)
