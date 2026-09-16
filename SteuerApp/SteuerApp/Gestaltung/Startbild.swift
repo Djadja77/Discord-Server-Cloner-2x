@@ -1,10 +1,14 @@
 import SwiftUI
 
-/// Der Start der App: eine Glaskarte legt sich über den Verlauf und füllt sich.
+/// Der Start der App: ein Suchrahmen stellt scharf, eine Scanlinie fährt durch.
 ///
-/// Die Reihenfolge ist dieselbe wie später auf der Übersicht - Marke, Name, Betrag,
-/// Monatsbalken. Wer die App zum zehnten Mal öffnet, sieht deshalb nichts Fremdes,
-/// sondern den Bildschirm dahinter beim Entstehen.
+/// Das Bild zeigt, was die App tut - einen Beleg erfassen. Vorher stand hier eine
+/// Gewinnzahl, die aber erfunden war und so tat, als wäre sie die des Nutzers. Eine
+/// Zahl, die nicht stimmt, gehört auf keinen Bildschirm dieser App, am wenigsten auf
+/// den ersten.
+///
+/// Der Ablauf ist der einer Dokumentenkamera: der Rahmen fährt von außen herein und
+/// rastet ein, die Linie tastet ab, und was sie überstreicht, wird sichtbar.
 ///
 /// - Note: Bei eingeschaltetem "Bewegung reduzieren" erscheint dasselbe Bild ohne
 ///   Bewegung und deutlich kürzer.
@@ -15,28 +19,23 @@ struct Startbild: View {
 
     @Environment(\.accessibilityReduceMotion) private var bewegungReduziert
 
-    @State private var karteDa = false
-    @State private var markeGesetzt = false
+    @State private var rahmenEingerastet = false
+    @State private var abtastung: CGFloat = 0
+    @State private var markeSichtbar = false
     @State private var nameSichtbar = false
-    @State private var betrag: Double = 0
-    @State private var betragSichtbar = false
-    @State private var balkenhöhe: CGFloat = 0
     @State private var sichtbar = true
 
-    /// Beispielverlauf für die Balken - die Form eines gewöhnlichen Jahres.
-    private let verlauf: [CGFloat] = [0.32, 0.44, 0.38, 0.55, 0.49, 0.62,
-                                      0.58, 0.71, 0.84, 0.66, 0.78, 0.94]
-    private let zielbetrag: Double = 35_942.09
+    private let rahmengröße: CGFloat = 138
+    private let eckenlänge: CGFloat = 30
 
     var body: some View {
         ZStack {
             Verlaufsgrund()
 
-            karte
-                .frame(maxWidth: 340)
-                .padding(.horizontal, 32)
-                .scaleEffect(karteDa ? 1 : 0.92)
-                .opacity(karteDa ? 1 : 0)
+            VStack(spacing: 0) {
+                suchrahmen
+                name.padding(.top, 30)
+            }
         }
         .opacity(sichtbar ? 1 : 0)
         .contentShape(Rectangle())
@@ -48,40 +47,73 @@ struct Startbild: View {
 
     // MARK: - Bausteine
 
-    private var karte: some View {
-        VStack(spacing: 0) {
+    /// Die vier Ecken einer Dokumentenkamera, dazwischen die Marke und die Scanlinie.
+    private var suchrahmen: some View {
+        ZStack {
+            ecke(drehung: 0, ausrichtung: .topLeading)
+            ecke(drehung: 90, ausrichtung: .topTrailing)
+            ecke(drehung: 180, ausrichtung: .bottomTrailing)
+            ecke(drehung: 270, ausrichtung: .bottomLeading)
+
             marke
-            name.padding(.top, 18)
-            betragszeile.padding(.top, 28)
-            balken.padding(.top, 22)
+            scanlinie
         }
-        .padding(.vertical, 30)
-        .padding(.horizontal, 24)
-        .frame(maxWidth: .infinity)
-        .alsGlas(radius: 32)
+        .frame(width: rahmengröße, height: rahmengröße)
+        // Der ganze Rahmen fährt von außen herein und rastet ein - eine Feder mit
+        // wenig Dämpfung, damit es sich wie ein Einrasten anfühlt und nicht wie ein
+        // Einblenden.
+        .scaleEffect(rahmenEingerastet ? 1 : 1.35)
+        .opacity(rahmenEingerastet ? 1 : 0)
+    }
+
+    private func ecke(drehung: Double, ausrichtung: Alignment) -> some View {
+        Eckwinkel()
+            .stroke(
+                Stil.akzent,
+                style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
+            )
+            .frame(width: eckenlänge, height: eckenlänge)
+            .rotationEffect(.degrees(drehung))
+            .frame(width: rahmengröße, height: rahmengröße, alignment: ausrichtung)
     }
 
     private var marke: some View {
-        RoundedRectangle(cornerRadius: Stil.innenradius(außen: 32, polster: 6),
-                         style: .continuous)
-            .fill(Stil.akzent)
-            .frame(width: 70, height: 70)
-            .overlay(
-                RoundedRectangle(cornerRadius: Stil.innenradius(außen: 32, polster: 6),
-                                 style: .continuous)
-                    .strokeBorder(Stil.kante, lineWidth: 1)
+        Image(systemName: "eurosign")
+            .font(.system(size: 46, weight: .bold))
+            .foregroundStyle(Stil.schrift)
+            .opacity(markeSichtbar ? 1 : 0)
+            .scaleEffect(markeSichtbar ? 1 : 0.86)
+    }
+
+    /// Die Linie, die den Rahmen abtastet.
+    ///
+    /// Ein schmaler Streifen mit Schein nach oben und unten - so liest man ihn als
+    /// Licht, nicht als Strich. Sie läuft von der oberen Kante zur unteren und
+    /// verschwindet dort.
+    private var scanlinie: some View {
+        let weg = rahmengröße - 8
+        return Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: [Stil.akzent.opacity(0), Stil.akzent, Stil.akzent.opacity(0)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
             )
+            .frame(height: 16)
             .overlay(
-                Image(systemName: "eurosign")
-                    .font(.system(size: 31, weight: .bold))
-                    .foregroundStyle(.white)
+                Rectangle()
+                    .fill(Stil.akzent)
+                    .frame(height: 1.5)
             )
-            .scaleEffect(markeGesetzt ? 1 : 0.6)
-            .opacity(markeGesetzt ? 1 : 0)
+            .offset(y: -weg / 2 + weg * abtastung)
+            .opacity(abtastung > 0 && abtastung < 1 ? 1 : 0)
+            .frame(width: rahmengröße - 16, height: rahmengröße)
+            .clipped()
     }
 
     private var name: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 5) {
             Text("Steuer")
                 .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundStyle(Stil.schrift)
@@ -93,75 +125,35 @@ struct Startbild: View {
         .offset(y: nameSichtbar ? 0 : 8)
     }
 
-    private var betragszeile: some View {
-        VStack(spacing: 5) {
-            Text("GEWINN 2026")
-                .font(.system(size: 10.5, weight: .semibold))
-                .tracking(1.0)
-                .foregroundStyle(Stil.schriftLeise)
-
-            ZählenderBetrag(
-                wert: betrag,
-                schrift: Stil.hauptzahl(34),
-                farbe: Stil.haben,
-                mitVorzeichen: true
-            )
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
-        }
-        .opacity(betragSichtbar ? 1 : 0)
-    }
-
-    private var balken: some View {
-        HStack(alignment: .bottom, spacing: 5) {
-            ForEach(Array(verlauf.enumerated()), id: \.offset) { stelle, anteil in
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(stelle == verlauf.count - 1
-                          ? AnyShapeStyle(Stil.akzent)
-                          : AnyShapeStyle(Color.white.opacity(0.16)))
-                    .frame(height: max(58 * anteil * balkenhöhe, 2))
-                    .animation(
-                        bewegungReduziert
-                            ? .none
-                            : .spring(response: 0.5, dampingFraction: 0.78)
-                                .delay(Double(stelle) * 0.035),
-                        value: balkenhöhe
-                    )
-            }
-        }
-        .frame(height: 58, alignment: .bottom)
-    }
-
     // MARK: - Ablauf
 
     @MainActor
     private func ablaufSpielen() async {
         guard !bewegungReduziert else {
-            karteDa = true
-            markeGesetzt = true
+            rahmenEingerastet = true
+            markeSichtbar = true
             nameSichtbar = true
-            betragSichtbar = true
-            betrag = zielbetrag
-            balkenhöhe = 1
-            try? await Task.sleep(for: .milliseconds(850))
+            try? await Task.sleep(for: .milliseconds(800))
             abschließen()
             return
         }
 
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.82)) { karteDa = true }
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.62)) {
+            rahmenEingerastet = true
+        }
 
-        try? await Task.sleep(for: .milliseconds(140))
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.62)) { markeGesetzt = true }
+        try? await Task.sleep(for: .milliseconds(320))
+        withAnimation(.easeInOut(duration: 0.8)) { abtastung = 1 }
 
-        try? await Task.sleep(for: .milliseconds(260))
-        withAnimation(.easeOut(duration: 0.35)) { nameSichtbar = true }
+        // Die Marke erscheint, während die Linie über sie hinweggeht - nicht davor
+        // und nicht danach, sonst löst sich der Zusammenhang auf.
+        try? await Task.sleep(for: .milliseconds(340))
+        withAnimation(.easeOut(duration: 0.3)) { markeSichtbar = true }
 
         try? await Task.sleep(for: .milliseconds(300))
-        withAnimation(.easeOut(duration: 0.25)) { betragSichtbar = true }
-        withAnimation(.easeOut(duration: 0.85)) { betrag = zielbetrag }
-        balkenhöhe = 1
+        withAnimation(.easeOut(duration: 0.35)) { nameSichtbar = true }
 
-        try? await Task.sleep(for: .milliseconds(1000))
+        try? await Task.sleep(for: .milliseconds(700))
         abschließen()
     }
 
@@ -173,6 +165,18 @@ struct Startbild: View {
             try? await Task.sleep(for: .milliseconds(320))
             fertig()
         }
+    }
+}
+
+/// Ein Eckwinkel des Suchrahmens: zwei Striche, die sich in der Ecke treffen.
+private struct Eckwinkel: Shape {
+
+    func path(in rahmen: CGRect) -> Path {
+        var weg = Path()
+        weg.move(to: CGPoint(x: rahmen.minX, y: rahmen.maxY))
+        weg.addLine(to: CGPoint(x: rahmen.minX, y: rahmen.minY))
+        weg.addLine(to: CGPoint(x: rahmen.maxX, y: rahmen.minY))
+        return weg
     }
 }
 

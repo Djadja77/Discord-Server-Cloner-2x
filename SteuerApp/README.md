@@ -83,11 +83,9 @@ xcodebuild test -project SteuerApp/SteuerApp.xcodeproj \
   -scheme SteuerApp -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
-### Kein Bilderkatalog im Projekt
+### Wenn der Build ohne Meldung hängt
 
-Das Projekt enthält bewusst keine `Assets.xcassets`. Der Grund steht in der
-Baugeschichte: `xcodebuild` blieb zweimal auf zwei verschiedenen Rechnern ohne
-Fehlermeldung an derselben Stelle stehen –
+`xcodebuild` blieb zweimal ohne Fehlermeldung an derselben Stelle stehen:
 
 ```
 ExecuteExternalTool .../actool --print-asset-tag-combinations .../Assets.xcassets
@@ -95,33 +93,45 @@ ExecuteExternalTool .../actool --print-asset-tag-combinations .../Assets.xcasset
 
 In Xcode heißt derselbe Schritt **„Compute asset tag combinations"**. `actool` wird
 gestartet und kehrt nicht zurück; der Bau steht, ohne dass etwas im Protokoll darauf
-hinweist. Beim ersten Mal kostete das mehrere Stunden Suche.
+hinweist.
 
-Am Katalog selbst lag es nicht: `AppIcon.png` ist regulär (1024×1024, 8 Bit, Farbtyp 2,
-also RGB ohne Alphakanal, gültige Prüfsummen, keine Verschränkung), und
-`AccentColor.colorset` ist gültiges JSON mit einem Hell- und einem Dunkelwert. Die
-Ursache liegt in `actool` oder seinem Zwischenspeicher, nicht in den Dateien.
+Am Katalog liegt es nicht. `AppIcon.png` ist regulär (1024×1024, 8 Bit, Farbtyp 2, also
+RGB ohne Alphakanal, gültige Prüfsummen, keine Verschränkung), und
+`AccentColor.colorset` ist gültiges JSON mit einem Hell- und einem Dunkelwert.
 
-Ein App-Symbol ist Kosmetik; ein Bau, der ohne Meldung hängt, kostet Stunden. Deshalb
-ist der Katalog draußen und die beiden Einstellungen
-`ASSETCATALOG_COMPILER_APPICON_NAME` und `..._GLOBAL_ACCENT_COLOR_NAME` sind aus der
-Projektdatei entfernt. Die Akzentfarbe kommt ohnehin aus `Gestaltung/Stil.swift`, nicht
-aus dem Katalog – sichtbar fehlt nur das Symbol auf dem Home-Bildschirm.
+**Erster Verdacht: das Quarantänemerkmal.** Beide Male kam das Projekt aus einem im
+Browser heruntergeladenen Archiv. macOS setzt auf solche Dateien
+`com.apple.quarantine`, und Xcode-Werkzeuge warten dann gelegentlich auf eine
+Freigabe, die nie kommt. Vor dem ersten Bau eines ausgepackten Archivs also:
 
-Die Vorlage liegt weiter unter `Werkzeuge/appicon/AppIcon-1024.png`.
+```bash
+xattr -cr <Projektordner>
+```
 
-**Symbol wieder hinzufügen.** Nicht von Hand, sondern über Xcode selbst: *File → New →
-File from Template → Asset Catalog*, darin *AppIcon* anlegen und die PNG hineinziehen.
-Xcode schreibt den Katalog dann in der Form, die die eigene Version erwartet. Hängt der
-Bau danach wieder an „Compute asset tag combinations", liegt es zweifelsfrei an `actool`
-auf diesem Rechner. Dann hilft:
+Hilft das nicht, sind die üblichen Verdächtigen dran:
 
 ```bash
 killall -9 actool XCBBuildService xcodebuild 2>/dev/null
 rm -rf ~/Library/Developer/Xcode/DerivedData/SteuerApp-*
 ```
 
-und andernfalls den Katalog wieder entfernen.
+**Notausgang.** Hängt es weiterhin, kostet das Symbol mehr als es wert ist. Ein Befehl
+nimmt den Katalog aus dem Bau; `actool` wird dann gar nicht erst gestartet:
+
+```bash
+rm -rf <Projektordner>/SteuerApp/Assets.xcassets
+```
+
+Die verbliebenen Einstellungen `ASSETCATALOG_COMPILER_APPICON_NAME` und
+`..._GLOBAL_ACCENT_COLOR_NAME` laufen dann ins Leere, ohne zu stören. Sichtbar fehlt
+nur das Symbol auf dem Home-Bildschirm – die Farben der App kommen aus
+`Gestaltung/Stil.swift`, nicht aus dem Katalog.
+
+Das Symbol selbst entsteht aus `Werkzeuge/appicon_erzeugen.py`, ohne Bildbibliothek:
+
+```bash
+python3 Werkzeuge/appicon_erzeugen.py
+```
 
 Allgemein gilt: `xcodebuild` ohne `-quiet` laufen lassen und die Ausgabe mitschreiben,
 sonst ist eine Blockade nicht von einem langen Übersetzungslauf zu unterscheiden.

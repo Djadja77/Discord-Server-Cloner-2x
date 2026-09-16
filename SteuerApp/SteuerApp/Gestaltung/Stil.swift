@@ -21,6 +21,17 @@ enum Stil {
     /// einer Systemliste, die kein Material durchlässt.
     static let fläche = farbe(dunkel: 0x141320, hell: 0xFFFFFF)
 
+    /// Der Grund einer Zeile in einer Systemliste.
+    ///
+    /// Im Dunkeln darf sie durchscheinen - dort liegt wenig Farbe dahinter. Im Hellen
+    /// muss sie fast decken: sonst schlägt der Verlauf durch und der Text steht auf
+    /// zwei Schleiern statt auf einer Fläche.
+    static let listenfläche = Color(uiColor: UIColor { merkmale in
+        merkmale.userInterfaceStyle == .dark
+            ? UIColor(red: 0.078, green: 0.075, blue: 0.125, alpha: 0.55)
+            : UIColor(white: 1, alpha: 0.92)
+    })
+
     /// Abgesetzt innerhalb einer Glasfläche.
     static let flächeHoch = farbe(dunkel: 0x232235, hell: 0xE9E8F4)
 
@@ -99,7 +110,7 @@ enum Stil {
         Color(uiColor: UIColor { merkmale in
             merkmale.userInterfaceStyle == .dark
                 ? UIColor.black.withAlphaComponent(stärke.schleier)
-                : UIColor.white.withAlphaComponent(stärke.schleier + 0.30)
+                : UIColor.white.withAlphaComponent(min(stärke.schleier + 0.48, 0.92))
         })
     }
 
@@ -123,7 +134,11 @@ enum Stil {
     /// In iOS 26 fehlte er, und Glasflächen verschwammen vor unruhigem Hintergrund.
     /// iOS 27 hat ihn nachgezogen: er trennt die Fläche vom Grund, unabhängig davon,
     /// was gerade dahinter liegt.
-    static let umriss = Color.black.opacity(0.28)
+    static let umriss = Color(uiColor: UIColor { merkmale in
+        merkmale.userInterfaceStyle == .dark
+            ? UIColor.black.withAlphaComponent(0.32)
+            : UIColor(red: 0.06, green: 0.05, blue: 0.10, alpha: 0.14)
+    })
 
     /// Schwächere Lichtkante für kleine Elemente - Pillen, Knöpfe, Symbolkreise.
     static var kanteFein: LinearGradient {
@@ -257,30 +272,45 @@ enum Stil {
 /// nur ein graues Rechteck.
 struct Verlaufsgrund: View {
 
+    @Environment(\.colorScheme) private var modus
+    @Environment(\.colorSchemeContrast) private var kontrast
+
+    /// Wie kräftig die Lichter brennen dürfen.
+    ///
+    /// Im Dunkeln tragen sie den Bildschirm - dort ist der Grund fast schwarz, und
+    /// ohne sie wäre jede Glasfläche ein graues Rechteck. Im Hellen liegen sie über
+    /// Weiß, und dieselbe Stärke ergäbe keinen Hauch Farbe, sondern eine lila
+    /// Milchsuppe, durch die man den Text kaum noch liest. Ein Drittel reicht dort.
+    /// Bei "Kontrast erhöhen" verschwinden sie fast ganz.
+    private var stärke: Double {
+        if kontrast == .increased { return modus == .dark ? 0.45 : 0.10 }
+        return modus == .dark ? 1.0 : 0.30
+    }
+
     var body: some View {
         ZStack {
             Stil.grund
 
             Circle()
-                .fill(Stil.farbe(dunkel: 0x6B3FFF, hell: 0xA893FF))
+                .fill(Stil.farbe(dunkel: 0x6B3FFF, hell: 0x9E86FF))
                 .frame(width: 520, height: 520)
                 .blur(radius: 160)
                 .offset(x: -130, y: -280)
-                .opacity(0.55)
+                .opacity(0.55 * stärke)
 
             Circle()
-                .fill(Stil.farbe(dunkel: 0x1F5BFF, hell: 0x8FB4FF))
+                .fill(Stil.farbe(dunkel: 0x1F5BFF, hell: 0x7FA8FF))
                 .frame(width: 460, height: 460)
                 .blur(radius: 170)
                 .offset(x: 160, y: 300)
-                .opacity(0.45)
+                .opacity(0.45 * stärke)
 
             Circle()
-                .fill(Stil.farbe(dunkel: 0xFF3FA0, hell: 0xFFAFD4))
+                .fill(Stil.farbe(dunkel: 0xFF3FA0, hell: 0xFF9EC9))
                 .frame(width: 320, height: 320)
                 .blur(radius: 180)
                 .offset(x: 170, y: -420)
-                .opacity(0.28)
+                .opacity(0.28 * stärke)
         }
         .ignoresSafeArea()
         // Der Verlauf ist Kulisse, kein Bedienelement - für die Sprachausgabe unsichtbar.
@@ -376,7 +406,7 @@ extension View {
         self
             .scrollContentBackground(.hidden)
             .background { if mitGrund { Verlaufsgrund() } }
-            .listRowBackground(Stil.fläche.opacity(0.55))
+            .listRowBackground(Stil.listenfläche)
             .tint(Stil.akzent)
             .safeAreaPadding(.bottom, Stil.leistenhöhe)
             .toolbar(.hidden, for: .tabBar)

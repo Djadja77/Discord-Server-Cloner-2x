@@ -13,17 +13,18 @@ import zlib
 from pathlib import Path
 
 KANTE = 1024
-ZIEL = Path(__file__).resolve().parent.parent / \
-    "SteuerApp/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
+ZIEL = Path(__file__).resolve().parent / "appicon/AppIcon-1024.png"
 
-# Farben passend zur Akzentfarbe der App
-HINTERGRUND_OBEN = (33, 99, 143)
-HINTERGRUND_UNTEN = (14, 48, 74)
+# Farben aus Gestaltung/Stil.swift, damit Symbol und App dieselbe Sprache sprechen:
+# der Verlauf ist die Akzentfarbe, die Summenzeile ebenfalls, der Kopfstreifen die
+# Farbe der Einnahmen.
+HINTERGRUND_OBEN = (122, 107, 255)   # 7A6BFF - Stil.akzent, dunkel
+HINTERGRUND_UNTEN = (59, 43, 184)    # 3B2BB8 - dieselbe Farbe, abgedunkelt
 PAPIER = (252, 252, 250)
-SCHATTEN = (8, 30, 48)
-ZEILE = (203, 213, 221)
-SUMME = (31, 95, 138)
-AKZENT = (233, 168, 76)
+SCHATTEN = (30, 20, 92)
+ZEILE = (206, 204, 224)
+SUMME = (84, 67, 224)                # 5443E0 - Stil.akzent, hell
+AKZENT = (61, 220, 132)              # 3DDC84 - Stil.haben
 
 # Beleg
 LINKS, RECHTS = 272.0, 752.0
