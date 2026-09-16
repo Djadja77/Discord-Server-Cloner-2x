@@ -28,8 +28,8 @@ enum Stil {
     /// zwei Schleiern statt auf einer Fläche.
     static let listenfläche = Color(uiColor: UIColor { merkmale in
         merkmale.userInterfaceStyle == .dark
-            ? UIColor(red: 0.078, green: 0.075, blue: 0.125, alpha: 0.55)
-            : UIColor(white: 1, alpha: 0.92)
+            ? UIColor(red: 0.102, green: 0.094, blue: 0.149, alpha: 0.88)
+            : UIColor(white: 1, alpha: 0.94)
     })
 
     /// Abgesetzt innerhalb einer Glasfläche.
@@ -287,34 +287,40 @@ struct Verlaufsgrund: View {
         return modus == .dark ? 1.0 : 0.30
     }
 
+    /// - Important: Die Lichter hängen als `overlay` an einer Farbfläche, nicht als
+    ///   Geschwister in einem `ZStack`. Ein Overlay beeinflusst die Größe seines
+    ///   Trägers nie. Als Geschwister dagegen bestimmt der größte Inhalt die Größe
+    ///   des Stapels - und die Kreise sind 520 Punkt breit. Genau das hat einmal den
+    ///   ganzen Bildschirm auf 520 Punkt aufgeblasen, sodass der Inhalt links und
+    ///   rechts aus dem Gerät lief.
     var body: some View {
-        ZStack {
-            Stil.grund
+        Stil.grund
+            .overlay {
+                ZStack {
+                    licht(farbe: Stil.farbe(dunkel: 0x6B3FFF, hell: 0x9E86FF),
+                          größe: 520, unschärfe: 160, x: -130, y: -280, deckung: 0.55)
+                    licht(farbe: Stil.farbe(dunkel: 0x1F5BFF, hell: 0x7FA8FF),
+                          größe: 460, unschärfe: 170, x: 160, y: 300, deckung: 0.45)
+                    licht(farbe: Stil.farbe(dunkel: 0xFF3FA0, hell: 0xFF9EC9),
+                          größe: 320, unschärfe: 180, x: 170, y: -420, deckung: 0.28)
+                }
+            }
+            .clipped()
+            .ignoresSafeArea()
+            // Der Verlauf ist Kulisse, kein Bedienelement - für die Sprachausgabe unsichtbar.
+            .accessibilityHidden(true)
+    }
 
-            Circle()
-                .fill(Stil.farbe(dunkel: 0x6B3FFF, hell: 0x9E86FF))
-                .frame(width: 520, height: 520)
-                .blur(radius: 160)
-                .offset(x: -130, y: -280)
-                .opacity(0.55 * stärke)
-
-            Circle()
-                .fill(Stil.farbe(dunkel: 0x1F5BFF, hell: 0x7FA8FF))
-                .frame(width: 460, height: 460)
-                .blur(radius: 170)
-                .offset(x: 160, y: 300)
-                .opacity(0.45 * stärke)
-
-            Circle()
-                .fill(Stil.farbe(dunkel: 0xFF3FA0, hell: 0xFF9EC9))
-                .frame(width: 320, height: 320)
-                .blur(radius: 180)
-                .offset(x: 170, y: -420)
-                .opacity(0.28 * stärke)
-        }
-        .ignoresSafeArea()
-        // Der Verlauf ist Kulisse, kein Bedienelement - für die Sprachausgabe unsichtbar.
-        .accessibilityHidden(true)
+    private func licht(
+        farbe: Color, größe: CGFloat, unschärfe: CGFloat,
+        x: CGFloat, y: CGFloat, deckung: Double
+    ) -> some View {
+        Circle()
+            .fill(farbe)
+            .frame(width: größe, height: größe)
+            .blur(radius: unschärfe)
+            .offset(x: x, y: y)
+            .opacity(deckung * stärke)
     }
 }
 
