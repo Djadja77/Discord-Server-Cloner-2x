@@ -69,23 +69,42 @@ struct HauptAnsicht: View {
         Datenbank.jahresangabenSicherstellen(fuer: jahr, in: kontext)
     }
 
-    /// Die Navigationsleiste durchsichtig machen.
+    /// Die Navigationsleiste: oben durchsichtig, beim Scrollen mit Material.
     ///
-    /// SwiftUI bietet dafür keinen eigenen Weg - ohne diesen Umweg über UIKit legt sich
-    /// ein grauer Streifen über den Verlauf und bricht die Glasebene auf.
+    /// Zwei Erscheinungsbilder, und das ist der ganze Punkt. Steht die Liste am
+    /// Anfang, soll der Verlauf ungebrochen durchlaufen - dort ist die Leiste
+    /// durchsichtig. Sobald Inhalt darunter wandert, braucht es eine deckende
+    /// Schicht, sonst schiebt sich die erste Zeile durch Uhrzeit und Titel. Genau
+    /// das ist passiert, als beide Erscheinungsbilder durchsichtig waren.
+    ///
+    /// `scrollEdgeAppearance` gilt am oberen Anschlag, `standardAppearance` sobald
+    /// gescrollt wird - iOS blendet selbst zwischen beiden über.
     private static func leistenGestalten() {
-        let navileiste = UINavigationBarAppearance()
-        navileiste.configureWithTransparentBackground()
-        navileiste.backgroundColor = .clear
-        navileiste.shadowColor = .clear
-        navileiste.titleTextAttributes = [.foregroundColor: UIColor(Stil.schrift)]
-        navileiste.largeTitleTextAttributes = [
+        let schrift: [NSAttributedString.Key: Any] =
+            [.foregroundColor: UIColor(Stil.schrift)]
+        let großeSchrift: [NSAttributedString.Key: Any] = [
             .foregroundColor: UIColor(Stil.schrift),
             .font: UIFont.systemFont(ofSize: 30, weight: .bold)
         ]
-        UINavigationBar.appearance().standardAppearance = navileiste
-        UINavigationBar.appearance().scrollEdgeAppearance = navileiste
-        UINavigationBar.appearance().compactAppearance = navileiste
+
+        let amAnschlag = UINavigationBarAppearance()
+        amAnschlag.configureWithTransparentBackground()
+        amAnschlag.backgroundColor = .clear
+        amAnschlag.shadowColor = .clear
+        amAnschlag.titleTextAttributes = schrift
+        amAnschlag.largeTitleTextAttributes = großeSchrift
+
+        let beimScrollen = UINavigationBarAppearance()
+        // Das Systemmaterial ist hier genau richtig: es streut, was darunter
+        // durchläuft, statt es zu verdecken - dieselbe Ebene wie die Glasflächen.
+        beimScrollen.configureWithDefaultBackground()
+        beimScrollen.shadowColor = UIColor(Stil.trenner)
+        beimScrollen.titleTextAttributes = schrift
+        beimScrollen.largeTitleTextAttributes = großeSchrift
+
+        UINavigationBar.appearance().scrollEdgeAppearance = amAnschlag
+        UINavigationBar.appearance().standardAppearance = beimScrollen
+        UINavigationBar.appearance().compactAppearance = beimScrollen
     }
 }
 
