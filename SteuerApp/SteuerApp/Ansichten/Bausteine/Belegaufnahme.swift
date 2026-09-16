@@ -7,13 +7,13 @@ enum Aufnahmeart: Int, Identifiable {
     var id: Int { rawValue }
 }
 
-/// Der Belegeinzug - unsichtbar, gesteuert von außen.
+/// Der Belegeinzug - hängt die Blätter für Kamera, Mediathek und Einzelmaske an eine
+/// Ansicht und öffnet das passende, sobald `art` gesetzt wird.
 ///
-/// Die Ansicht selbst zeichnet nichts. Sie hält nur die Blätter für Kamera, Mediathek
-/// und Einzelmaske und öffnet das passende, sobald `art` gesetzt wird. Dadurch kann
-/// die schwebende Leiste das Scannen auslösen, ohne dass die Kamera an einer Ansicht
-/// hängt, die beim Bereichswechsel verschwindet.
-struct Belegaufnahme: View {
+/// Als Modifikator und nicht als eigene Ansicht: ein Blatt an einer Ansicht ohne
+/// Ausdehnung präsentiert nicht zuverlässig. So hängen sie an der Wurzel der App, die
+/// den ganzen Bildschirm füllt - und bleiben offen, wenn der Bereich darunter wechselt.
+struct Belegeinzug: ViewModifier {
 
     let jahr: Int
     @Binding var art: Aufnahmeart?
@@ -25,9 +25,8 @@ struct Belegaufnahme: View {
     @State private var stapelbilder: [UIImage] = []
     @State private var fotoauswahl: [PhotosPickerItem] = []
 
-    var body: some View {
-        Color.clear
-            .frame(width: 0, height: 0)
+    func body(content: Content) -> some View {
+        content
             .onChange(of: art) { starten() }
             // Zwei Blätter nacheinander: das zweite wird erst beim Schließen des
             // ersten geöffnet - sonst verschluckt SwiftUI die zweite Präsentation.
@@ -75,5 +74,13 @@ struct Belegaufnahme: View {
     private func stapelOeffnenFallsBilder() {
         guard !stapelbilder.isEmpty else { return }
         stapelOffen = true
+    }
+}
+
+extension View {
+
+    /// Hängt Kamera, Mediathek und Einzelmaske an diese Ansicht.
+    func belegeinzug(jahr: Int, art: Binding<Aufnahmeart?>) -> some View {
+        modifier(Belegeinzug(jahr: jahr, art: art))
     }
 }

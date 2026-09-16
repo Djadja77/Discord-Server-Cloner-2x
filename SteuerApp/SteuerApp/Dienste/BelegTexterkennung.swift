@@ -1,6 +1,9 @@
 import Foundation
 import UIKit
-import Vision
+// Vision ist noch nicht auf Swift 6 umgestellt: VNImageRequestHandler und
+// VNRecognizeTextRequest sind nicht als Sendable ausgewiesen, obwohl sie es
+// hier sind - beide entstehen in der Closure und verlassen sie nie.
+@preconcurrency import Vision
 
 /// Liest aus einem abfotografierten Beleg alles heraus, was die Belegmaske sonst von Hand
 /// verlangt: Betrag, Datum, Händler und Umsatzsteuersatz.

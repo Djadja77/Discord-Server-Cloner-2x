@@ -55,7 +55,7 @@ struct HauptAnsicht: View {
         }
         // Der Einzug hängt an der Wurzel, nicht an einem Bereich: sonst schlösse sich
         // die Kamera, sobald der Bereich darunter wechselt.
-        .background { Belegaufnahme(jahr: jahr, art: $aufnahme) }
+        .belegeinzug(jahr: jahr, art: $aufnahme)
         .ignoresSafeArea(.keyboard)
         .tint(Stil.akzent)
         .task { stammdatenSicherstellen() }
