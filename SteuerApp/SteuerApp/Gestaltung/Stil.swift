@@ -21,17 +21,6 @@ enum Stil {
     /// einer Systemliste, die kein Material durchlässt.
     static let fläche = farbe(dunkel: 0x141320, hell: 0xFFFFFF)
 
-    /// Der Grund einer Zeile in einer Systemliste.
-    ///
-    /// Im Dunkeln darf sie durchscheinen - dort liegt wenig Farbe dahinter. Im Hellen
-    /// muss sie fast decken: sonst schlägt der Verlauf durch und der Text steht auf
-    /// zwei Schleiern statt auf einer Fläche.
-    static let listenfläche = Color(uiColor: UIColor { merkmale in
-        merkmale.userInterfaceStyle == .dark
-            ? UIColor(red: 0.102, green: 0.094, blue: 0.149, alpha: 0.88)
-            : UIColor(white: 1, alpha: 0.94)
-    })
-
     /// Abgesetzt innerhalb einer Glasfläche.
     static let flächeHoch = farbe(dunkel: 0x232235, hell: 0xE9E8F4)
 
@@ -369,6 +358,40 @@ struct Glasfläche<Form: InsettableShape>: ViewModifier {
     }
 }
 
+/// Der Grund einer Zeile in einer Systemliste - dasselbe Glas wie eine Karte,
+/// nur ohne Ränder.
+///
+/// Vorher war das eine feste dunkle Farbe. Dadurch sahen die Listenbildschirme
+/// (Steuer, Mehr) deutlich dunkler aus als die Kartenbildschirme (Stand,
+/// Belege), obwohl beide dieselbe Fläche meinen. Jetzt liegt unter beiden das
+/// gleiche Material samt Schleier, und der Regler unter "Mehr > Glas" wirkt
+/// überall gleich.
+///
+/// Ränder bekommt eine Zeile bewusst nicht: sie grenzt oben und unten an die
+/// nächste, ein Rahmen je Zeile ergäbe ein Gitter statt einer Fläche. Die
+/// Ecken rundet die Systemliste selbst.
+struct Listenfläche: View {
+
+    @Environment(\.accessibilityReduceTransparency) private var transparenzReduziert
+    @Environment(\.colorSchemeContrast) private var kontrast
+    @AppStorage("glasstaerke") private var stärkeRoh = Stil.Glasstärke.mittel.rawValue
+
+    private var stärke: Stil.Glasstärke {
+        guard kontrast != .increased else { return .getönt }
+        return Stil.Glasstärke(rawValue: stärkeRoh) ?? .mittel
+    }
+
+    var body: some View {
+        if transparenzReduziert {
+            Rectangle().fill(Stil.flächeDeckend)
+        } else {
+            Rectangle()
+                .fill(stärke.material)
+                .overlay { Rectangle().fill(Stil.schleierfarbe(stärke)) }
+        }
+    }
+}
+
 extension View {
 
     /// Legt den Verlaufsgrund unter eine Ansicht und setzt die Akzentfarbe.
@@ -412,7 +435,7 @@ extension View {
         self
             .scrollContentBackground(.hidden)
             .background { if mitGrund { Verlaufsgrund() } }
-            .listRowBackground(Stil.listenfläche)
+            .listRowBackground(Listenfläche())
             .tint(Stil.akzent)
             .safeAreaPadding(.bottom, Stil.leistenhöhe)
             .toolbar(.hidden, for: .tabBar)
