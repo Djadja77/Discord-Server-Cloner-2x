@@ -15,7 +15,12 @@ enum Stil {
     // MARK: - Grundfarben
 
     /// Der tiefste Grund, auf dem der Verlauf liegt.
-    static let grund = farbe(dunkel: 0x07060C, hell: 0xF4F3FA)
+    ///
+    /// Im Dunkeln bewusst nicht Schwarz. Die Lichter des Verlaufs sitzen oben;
+    /// wer eine lange Liste durchscrollt, ist nach einem Bildschirm daran vorbei.
+    /// Auf reinem Schwarz wird dort jedes Material wieder schwarz - der untere
+    /// Teil der App sah aus wie ausgeschaltet.
+    static let grund = farbe(dunkel: 0x0E0C18, hell: 0xF4F3FA)
 
     /// Wird nur noch dort gebraucht, wo eine deckende Fläche nötig ist - etwa hinter
     /// einer Systemliste, die kein Material durchlässt.
@@ -94,11 +99,22 @@ enum Stil {
         }
     }
 
-    /// Der Schleier über dem Material - im Dunkeln schwarz, im Hellen weiß.
+    /// Der Schleier über dem Material.
+    ///
+    /// Im Hellen deckt er mit Weiß ab, damit der Verlauf nicht durch die Schrift
+    /// schlägt. Im Dunkeln macht er das Gegenteil: er hebt die Fläche mit einem
+    /// Hauch Violett an.
+    ///
+    /// Der Grund dafür ist, was Material im Dunkeln tut - es streut, was
+    /// dahinterliegt, und erfindet kein Licht. Über der hellen Stelle des
+    /// Verlaufs sah eine Karte deshalb gut aus, eine Liste weiter unten auf
+    /// demselben Bildschirm dagegen fast schwarz. Der Aufheller macht die Fläche
+    /// unabhängig davon, wie viel Licht zufällig dahinterliegt.
     static func schleierfarbe(_ stärke: Glasstärke) -> Color {
         Color(uiColor: UIColor { merkmale in
             merkmale.userInterfaceStyle == .dark
-                ? UIColor.black.withAlphaComponent(stärke.schleier)
+                ? UIColor(red: 0.478, green: 0.420, blue: 1.0,
+                          alpha: 0.08 + Double(stärke.rawValue) * 0.025)
                 : UIColor.white.withAlphaComponent(min(stärke.schleier + 0.48, 0.92))
         })
     }
@@ -337,14 +353,18 @@ struct Glasfläche<Form: InsettableShape>: ViewModifier {
     @AppStorage("glasstaerke") private var stärkeRoh = Stil.Glasstärke.mittel.rawValue
 
     private var stärke: Stil.Glasstärke {
-        guard kontrast != .increased else { return .getönt }
-        return Stil.Glasstärke(rawValue: stärkeRoh) ?? .mittel
+        Stil.Glasstärke(rawValue: stärkeRoh) ?? .mittel
     }
+
+    /// Bei "Kontrast erhöhen" ist die Fläche deckend, nicht nur stärker getönt:
+    /// Weiß auf Glas bleibt sonst auch in der dichtesten Stufe eine Frage des
+    /// Hintergrunds, und genau das soll die Einstellung ausschließen.
+    private var deckend: Bool { transparenzReduziert || kontrast == .increased }
 
     func body(content: Content) -> some View {
         content
             .background {
-                if transparenzReduziert {
+                if deckend {
                     form.fill(Stil.flächeDeckend)
                 } else {
                     ZStack {
@@ -377,12 +397,11 @@ struct Listenfläche: View {
     @AppStorage("glasstaerke") private var stärkeRoh = Stil.Glasstärke.mittel.rawValue
 
     private var stärke: Stil.Glasstärke {
-        guard kontrast != .increased else { return .getönt }
-        return Stil.Glasstärke(rawValue: stärkeRoh) ?? .mittel
+        Stil.Glasstärke(rawValue: stärkeRoh) ?? .mittel
     }
 
     var body: some View {
-        if transparenzReduziert {
+        if transparenzReduziert || kontrast == .increased {
             Rectangle().fill(Stil.flächeDeckend)
         } else {
             Rectangle()

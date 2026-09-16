@@ -301,9 +301,28 @@ struct Filterpillen<Wert: Hashable>: View {
                 }
             }
             .padding(.horizontal, Stil.rand)
+            // Damit der feine Rand der Kapseln oben und unten nicht abgeschnitten
+            // wird, sobald die Leiste wieder beschnitten wird.
+            .padding(.vertical, 2)
         }
         .scrollIndicators(.hidden)
-        .scrollClipDisabled()
+        // Vorher stand hier scrollClipDisabled: die letzte Pille lief dadurch
+        // ungeschnitten aus dem Bildschirm und sah aus wie ein Fehler, nicht wie
+        // etwas zum Weiterschieben. Jetzt blendet sie an beiden Enden aus - das
+        // liest sich als "da kommt noch was". Die Blende ist schmaler als der
+        // Seitenrand, am Anfang liegt sie also auf leerer Fläche und fällt nicht auf.
+        .mask {
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: .black, location: 0.045),
+                    .init(color: .black, location: 0.955),
+                    .init(color: .clear, location: 1)
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        }
     }
 }
 
