@@ -91,20 +91,13 @@ final class RechnungTests: XCTestCase {
     func testEntwurfOhneAllesLaesstSichNichtStellen() {
         let leer = Rechnung()
         XCTAssertFalse(leer.hindernisse.isEmpty)
-        XCTAssertTrue(leer.hindernisse.contains("Kunde fehlt"))
+        XCTAssertTrue(leer.hindernisse.contains("Name des Empfängers fehlt"))
         XCTAssertTrue(leer.hindernisse.contains("Keine Position erfasst"))
-    }
-
-    func testVollstaendigerEntwurfHatKeineHindernisse() {
-        let rechnung = beispiel(posten: [(1, 100, .regel)])
-        rechnung.kunde = Kunde(name: "Musterstadt GmbH", strasse: "Rathausplatz 3",
-                               plz: "44532", ort: "Lünen")
-        XCTAssertTrue(rechnung.hindernisse.isEmpty, "Offen: \(rechnung.hindernisse)")
     }
 
     func testUnvollstaendigeAnschriftWirdBemaengelt() {
         let rechnung = beispiel(posten: [(1, 100, .regel)])
-        rechnung.kunde = Kunde(name: "Nur ein Name")
+        rechnung.empfaengerName = "Nur ein Name"
         XCTAssertTrue(rechnung.hindernisse.contains { $0.contains("Anschrift") })
     }
 
@@ -126,6 +119,44 @@ final class RechnungTests: XCTestCase {
         rechnung.status = .bezahlt
         rechnung.zahlbarBis = Calendar.kalender.date(byAdding: .day, value: -30, to: Date())!
         XCTAssertFalse(rechnung.istÜberfällig)
+    }
+
+    // MARK: - Empfänger und eigene Nummer
+
+    func testEmpfaengerAusEinzelfeldern() {
+        let rechnung = beispiel(posten: [(1, 100, .regel)])
+        rechnung.empfaengerName = "Musterstadt GmbH"
+        rechnung.empfaengerZusatz = "z. Hd. Frau Bergmann"
+        rechnung.empfaengerStrasse = "Rathausplatz 3"
+        rechnung.empfaengerPlz = "44532"
+        rechnung.empfaengerOrt = "Lünen"
+
+        XCTAssertEqual(rechnung.empfaengerzeilen,
+                       ["Musterstadt GmbH", "z. Hd. Frau Bergmann", "Rathausplatz 3", "44532 Lünen"])
+        XCTAssertTrue(rechnung.empfaengerVollständig)
+        XCTAssertTrue(rechnung.hindernisse.isEmpty, "Offen: \(rechnung.hindernisse)")
+    }
+
+    /// Ohne Ort ist die Anschrift keine Anschrift - und die Rechnung formell falsch.
+    func testFehlenderOrtWirdBemaengelt() {
+        let rechnung = beispiel(posten: [(1, 100, .regel)])
+        rechnung.empfaengerName = "Musterstadt GmbH"
+        rechnung.empfaengerStrasse = "Rathausplatz 3"
+        XCTAssertFalse(rechnung.empfaengerVollständig)
+        XCTAssertTrue(rechnung.hindernisse.contains { $0.contains("Anschrift") })
+    }
+
+    func testEigeneNummerMussDaSein() {
+        let rechnung = beispiel(posten: [(1, 100, .regel)])
+        rechnung.empfaengerName = "Musterstadt GmbH"
+        rechnung.empfaengerStrasse = "Rathausplatz 3"
+        rechnung.empfaengerOrt = "Lünen"
+        rechnung.nummerVonHand = true
+        rechnung.nummer = ""
+        XCTAssertTrue(rechnung.hindernisse.contains("Rechnungsnummer fehlt"))
+
+        rechnung.nummer = "RE-1043"
+        XCTAssertTrue(rechnung.hindernisse.isEmpty, "Offen: \(rechnung.hindernisse)")
     }
 
     // MARK: - Hilfsmittel

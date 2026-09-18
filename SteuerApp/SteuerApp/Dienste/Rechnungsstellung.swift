@@ -20,12 +20,18 @@ enum Rechnungsstellung {
         guard rechnung.istEntwurf, rechnung.hindernisse.isEmpty else { return false }
 
         let jahr = Calendar.kalender.component(.year, from: rechnung.datum)
-        let vergeben = Rechnungsnummer.vergeben(fuer: jahr, in: profil.nummernkreis)
-        profil.nummernkreis = vergeben.kreis
-
-        rechnung.nummer = vergeben.nummer
         rechnung.jahr = jahr
-        rechnung.laufendeNummer = vergeben.laufend
+
+        // Eine selbst vergebene Nummer lässt den Zähler der App unberührt: er soll nicht
+        // weiterlaufen für etwas, das er nicht vergeben hat.
+        if rechnung.nummerVonHand {
+            rechnung.laufendeNummer = 0
+        } else {
+            let vergeben = Rechnungsnummer.vergeben(fuer: jahr, in: profil.nummernkreis)
+            profil.nummernkreis = vergeben.kreis
+            rechnung.nummer = vergeben.nummer
+            rechnung.laufendeNummer = vergeben.laufend
+        }
 
         abschreiben(rechnung, profil: profil)
         rechnung.status = .offen
@@ -43,12 +49,9 @@ enum Rechnungsstellung {
         rechnung.absenderBank = profil.bankzeile
         rechnung.kleinunternehmer = profil.kleinunternehmer
 
-        if let kunde = rechnung.kunde {
-            rechnung.empfaengerName = kunde.name
-            rechnung.empfaengerAnschrift = kunde.anschrift
-            rechnung.empfaengerUstIdNr = kunde.ustIdNr
-            rechnung.empfaengerLeitwegId = kunde.leitwegId
-        }
+        // Der Empfänger wird hier bewusst nicht mehr angefasst: seine Felder stehen
+        // schon in der Rechnung und dürfen für diese eine Rechnung abweichen, ohne dass
+        // das Stellen sie wieder aus dem Kunden überschreibt.
         if rechnung.fusstext.isEmpty { rechnung.fusstext = profil.rechnungsfusstext }
     }
 
@@ -103,6 +106,15 @@ enum Rechnungsstellung {
         )
         storno.kunde = rechnung.kunde
         storno.ordner = rechnung.ordner
+        storno.empfaengerName = rechnung.empfaengerName
+        storno.empfaengerZusatz = rechnung.empfaengerZusatz
+        storno.empfaengerStrasse = rechnung.empfaengerStrasse
+        storno.empfaengerPlz = rechnung.empfaengerPlz
+        storno.empfaengerOrt = rechnung.empfaengerOrt
+        storno.empfaengerLand = rechnung.empfaengerLand
+        storno.empfaengerUstIdNr = rechnung.empfaengerUstIdNr
+        storno.empfaengerLeitwegId = rechnung.empfaengerLeitwegId
+        storno.zahlungszielZeigen = false
         storno.leistungVon = rechnung.leistungVon
         storno.leistungBis = rechnung.leistungBis
         storno.stornoFuerNummer = rechnung.nummer

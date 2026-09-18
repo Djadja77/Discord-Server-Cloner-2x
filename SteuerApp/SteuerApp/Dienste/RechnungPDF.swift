@@ -253,10 +253,22 @@ enum RechnungPDF {
             zeile += 18
         }
 
-        let ziel = "Zahlbar ohne Abzug bis zum \(Formatierung.datum(rechnung.zahlbarBis))."
-        schreiben(ziel, in: CGRect(x: randLinks, y: zeile, width: breite, height: 14),
-                  schrift: text, farbe: schwarz)
-        zeile += 16
+        // Das Zahlungsziel: entweder der eigene Satz, der von der App, oder gar keiner.
+        // Bei Vorkasse oder Lastschrift stünde dort sonst eine Frist, die nicht stimmt.
+        if rechnung.zahlungszielZeigen {
+            let eigener = rechnung.zahlungshinweis.trimmingCharacters(in: .whitespacesAndNewlines)
+            let ziel = eigener.isEmpty
+                ? "Zahlbar ohne Abzug bis zum \(Formatierung.datum(rechnung.zahlbarBis))."
+                : eigener
+            let höhe = (ziel as NSString).boundingRect(
+                with: CGSize(width: breite, height: .greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                attributes: [.font: text], context: nil
+            ).height
+            schreiben(ziel, in: CGRect(x: randLinks, y: zeile, width: breite, height: höhe + 4),
+                      schrift: text, farbe: schwarz)
+            zeile += max(höhe, 12) + 4
+        }
 
         if !rechnung.absenderBank.isEmpty {
             schreiben(rechnung.absenderBank, in: CGRect(x: randLinks, y: zeile, width: breite, height: 14),

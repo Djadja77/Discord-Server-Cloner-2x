@@ -9,6 +9,7 @@ struct RechnungAnsicht: View {
 
     @Environment(\.modelContext) private var kontext
     @Query private var profile: [Steuerprofil]
+    @Query(sort: \Ordner.reihenfolge) private var ordner: [Ordner]
 
     @State private var datei: URL?
     @State private var stornoGefragt = false
@@ -23,6 +24,7 @@ struct RechnungAnsicht: View {
                 kopf
                 dokument
                 knöpfe
+                ablage
                 angaben
                 steuerhinweis
             }
@@ -140,13 +142,61 @@ struct RechnungAnsicht: View {
                     Postenzeile(bezeichnung: "Umsatzsteuer \(satz.satz.bezeichnung)", betrag: satz.steuer)
                 }
             }
-            Trennzeile()
-            textzeile("Zahlbar bis", Formatierung.datum(rechnung.zahlbarBis))
+            if rechnung.zahlungszielZeigen {
+                Trennzeile()
+                textzeile("Zahlbar bis", Formatierung.datum(rechnung.zahlbarBis))
+            }
             if let bezahlt = rechnung.bezahltAm {
                 Trennzeile()
                 textzeile("Bezahlt am", Formatierung.datum(bezahlt))
             }
         }
+        .padding(.horizontal, 15)
+        .alsGlas()
+    }
+
+    /// In welchem Ordner die Rechnung liegt - auch nachträglich noch zu ändern.
+    ///
+    /// Das ist kein Widerspruch zur Unveränderlichkeit einer gestellten Rechnung: der
+    /// Ordner steht auf keinem Dokument. Er ist Ablage, nicht Inhalt - so wie es keinen
+    /// Unterschied macht, in welchen Aktenordner man ein Blatt heftet.
+    private var ablage: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "folder")
+                .font(.system(size: 15))
+                .foregroundStyle(Stil.schriftGedämpft)
+                .frame(width: 22)
+
+            Text("Ordner")
+                .font(.system(size: 15))
+                .foregroundStyle(Stil.schrift)
+
+            Spacer(minLength: 8)
+
+            Menu {
+                Button("Keiner") { rechnung.ordner = nil }
+                if !ordner.isEmpty { Divider() }
+                ForEach(ordner) { mappe in
+                    Button(mappe.name.isEmpty ? "Ohne Namen" : mappe.name) { rechnung.ordner = mappe }
+                }
+                if ordner.isEmpty { Text("Noch kein Ordner angelegt") }
+            } label: {
+                HStack(spacing: 7) {
+                    if let mappe = rechnung.ordner {
+                        Circle().fill(Stil.ordnerfarbe(mappe.farbindex)).frame(width: 8, height: 8)
+                    }
+                    Text(rechnung.ordner?.name.isEmpty == false
+                         ? rechnung.ordner!.name
+                         : (rechnung.ordner == nil ? "Keiner" : "Ohne Namen"))
+                        .font(.system(size: 15))
+                        .foregroundStyle(rechnung.ordner == nil ? Stil.schriftGedämpft : Stil.schrift)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(Stil.schriftLeise)
+                }
+            }
+        }
+        .padding(.vertical, 14)
         .padding(.horizontal, 15)
         .alsGlas()
     }

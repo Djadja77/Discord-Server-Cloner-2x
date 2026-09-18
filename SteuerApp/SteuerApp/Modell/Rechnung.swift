@@ -110,10 +110,38 @@ final class Rechnung {
     var fusstext: String = ""
     var notiz: String = ""
 
+    /// Ob das Zahlungsziel überhaupt auf der Rechnung erscheint.
+    ///
+    /// Nicht jede Rechnung braucht eine Frist: bei Vorkasse, Lastschrift oder einer
+    /// bereits bezahlten Leistung steht dort sonst eine Zeile, die nicht stimmt.
+    var zahlungszielZeigen: Bool = true
+
+    /// Der Satz zum Zahlungsziel, falls er anders lauten soll.
+    ///
+    /// Leer heißt: die App formuliert ihn selbst ("Zahlbar ohne Abzug bis zum ..."). Wer
+    /// Skonto gewährt, per Lastschrift einzieht oder eine andere Frist vereinbart hat,
+    /// schreibt hier hin, was tatsächlich gilt.
+    var zahlungshinweis: String = ""
+
+    /// Ob die Nummer von Hand vergeben wurde.
+    ///
+    /// Wer aus einem anderen Programm kommt, führt seinen Kreis dort fort und will nicht
+    /// bei 0001 anfangen. Eine selbst vergebene Nummer lässt den Zähler der App
+    /// unberührt - sie muss dann selbst darauf achten, dass keine zweimal vorkommt.
+    var nummerVonHand: Bool = false
+
     // MARK: - Abschriften (siehe Klassenkommentar)
 
+    // Der Empfänger steht in Einzelfeldern, nicht als ein Textblock. Das kostet ein
+    // paar Zeilen mehr und ist trotzdem richtig: nur so lässt sich die Anschrift auf
+    // dem Blatt sauber setzen, und nur so kann man sie für diese eine Rechnung ändern,
+    // ohne den Kunden in der Liste anzufassen.
     var empfaengerName: String = ""
-    var empfaengerAnschrift: String = ""
+    var empfaengerZusatz: String = ""
+    var empfaengerStrasse: String = ""
+    var empfaengerPlz: String = ""
+    var empfaengerOrt: String = ""
+    var empfaengerLand: String = ""
     var empfaengerUstIdNr: String = ""
     var empfaengerLeitwegId: String = ""
 
@@ -204,16 +232,23 @@ final class Rechnung {
         return Calendar.kalender.dateComponents([.day], from: zahlbarBis, to: heute).day ?? 0
     }
 
-    /// Ob eine von Hand eingetippte Empfängeranschrift ausreicht.
-    ///
-    /// Nicht jeder Kunde lohnt einen Eintrag in der Kundenliste - für den einmaligen
-    /// Auftrag tippt man die Anschrift direkt in die Rechnung. Pflicht bleiben Name und
-    /// Anschrift (§ 14 Abs. 4 Nr. 1 UStG), egal auf welchem Weg sie hereinkommen.
-    var empfaengerVonHandVollständig: Bool {
-        !empfaengerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && empfaengerAnschrift.trimmingCharacters(in: .whitespacesAndNewlines)
-                .split(separator: "\n").count >= 1
-            && !empfaengerAnschrift.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    /// Die Empfängeranschrift als Zeilen, leere Angaben fallen weg.
+    var empfaengerzeilen: [String] {
+        [empfaengerName, empfaengerZusatz, empfaengerStrasse,
+         [empfaengerPlz, empfaengerOrt].filter { !$0.isEmpty }.joined(separator: " "),
+         empfaengerLand]
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
+    /// Dieselbe Anschrift als Block - so nimmt sie der Druck entgegen.
+    var empfaengerAnschrift: String { empfaengerzeilen.joined(separator: "\n") }
+
+    /// Pflicht sind Name, Straße und Ort (§ 14 Abs. 4 Nr. 1 UStG) - egal, ob sie aus
+    /// der Kundenliste kommen oder von Hand getippt sind.
+    var empfaengerVollständig: Bool {
+        ![empfaengerName, empfaengerStrasse, empfaengerOrt]
+            .contains { $0.trimmingCharacters(in: .whitespaces).isEmpty }
     }
 
     /// Was fehlt, damit sich die Rechnung stellen lässt.
@@ -222,10 +257,13 @@ final class Rechnung {
     /// bei einer Rechnung besonders ärgerlich, weil man das Fehlende sonst suchen muss.
     var hindernisse: [String] {
         var fehlt: [String] = []
-        if let kunde {
-            if !kunde.istVollständig { fehlt.append("Anschrift des Kunden ist unvollständig") }
-        } else if !empfaengerVonHandVollständig {
-            fehlt.append("Empfänger fehlt")
+        if empfaengerName.trimmingCharacters(in: .whitespaces).isEmpty {
+            fehlt.append("Name des Empfängers fehlt")
+        } else if !empfaengerVollständig {
+            fehlt.append("Anschrift des Empfängers ist unvollständig")
+        }
+        if nummerVonHand, nummer.trimmingCharacters(in: .whitespaces).isEmpty {
+            fehlt.append("Rechnungsnummer fehlt")
         }
         if postenGeordnet.isEmpty { fehlt.append("Keine Position erfasst") }
         if postenGeordnet.contains(where: { $0.bezeichnung.trimmingCharacters(in: .whitespaces).isEmpty }) {

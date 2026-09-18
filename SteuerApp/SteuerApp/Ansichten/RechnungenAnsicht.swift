@@ -181,6 +181,9 @@ struct RechnungenAnsicht: View {
                         RechnungZeile(rechnung: rechnung)
                     }
                     .buttonStyle(.plain)
+                    // Ablegen ohne Umweg über die Rechnung selbst - beim Aufräumen
+                    // schiebt man mehrere hintereinander.
+                    .contextMenu { ordnerwahl(für: rechnung) }
                 }
                 if stelle < gefiltert.count - 1 { Trennzeile(einzug: 14) }
             }
@@ -189,6 +192,15 @@ struct RechnungenAnsicht: View {
         .alsGlas()
         .padding(.horizontal, Stil.rand)
         .padding(.top, 16)
+    }
+
+    @ViewBuilder
+    private func ordnerwahl(für rechnung: Rechnung) -> some View {
+        Button("In keinen Ordner") { rechnung.ordner = nil }
+        ForEach(ordner) { mappe in
+            Button(mappe.name.isEmpty ? "Ohne Namen" : mappe.name) { rechnung.ordner = mappe }
+        }
+        if ordner.isEmpty { Text("Noch kein Ordner angelegt") }
     }
 
     private var leertext: String {
