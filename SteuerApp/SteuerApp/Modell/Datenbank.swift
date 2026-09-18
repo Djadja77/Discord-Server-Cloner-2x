@@ -12,15 +12,14 @@ enum Datenbank {
     ])
 
     /// Container für den produktiven Betrieb.
-    static func container() -> ModelContainer {
+    ///
+    /// Wirft, statt abzustürzen. Ein Absturz beim Start sieht auf dem Gerät aus wie
+    /// ein schwarzer Bildschirm - man sieht nicht, dass überhaupt etwas schiefging,
+    /// geschweige denn was. Der Fehler wird stattdessen angezeigt (siehe
+    /// `Startfehleransicht`), damit er ablesbar ist statt geraten werden muss.
+    static func container() throws -> ModelContainer {
         let konfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        do {
-            return try ModelContainer(for: schema, configurations: konfiguration)
-        } catch {
-            // Ein nicht öffenbarer Store ist nicht sinnvoll zu behandeln: ohne Datenbank
-            // gibt es keine App. Der Absturz macht die Ursache im Log sichtbar.
-            fatalError("SwiftData-Container konnte nicht geladen werden: \(error)")
-        }
+        return try ModelContainer(for: schema, configurations: konfiguration)
     }
 
     /// Container nur im Arbeitsspeicher - für SwiftUI-Vorschauen und Tests.
