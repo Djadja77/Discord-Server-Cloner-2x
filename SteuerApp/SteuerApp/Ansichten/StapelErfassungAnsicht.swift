@@ -108,7 +108,8 @@ struct StapelErfassungAnsicht: View {
                                displayedComponents: .date)
                         .environment(\.locale, Locale(identifier: "de_DE"))
 
-                    BetragsFeld(titel: "Bruttobetrag", betrag: $eintrag.entwurf.bruttoBetrag)
+                    BetragsFeld(titel: "Bruttobetrag", betrag: $eintrag.entwurf.bruttoBetrag,
+                               sofortÜbernehmen: true)
 
                     Picker("Kategorie", selection: $eintrag.entwurf.kategorie) {
                         Section("Ausgaben") {

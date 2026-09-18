@@ -155,7 +155,8 @@ struct BelegBearbeitenAnsicht: View {
             DatePicker("Datum", selection: $entwurf.datum, displayedComponents: .date)
                 .environment(\.locale, Locale(identifier: "de_DE"))
 
-            BetragsFeld(titel: "Bruttobetrag", betrag: $entwurf.bruttoBetrag)
+            BetragsFeld(titel: "Bruttobetrag", betrag: $entwurf.bruttoBetrag,
+                        sofortÜbernehmen: true)
 
             Picker("Kategorie", selection: $entwurf.kategorie) {
                 Section("Einnahmen") {

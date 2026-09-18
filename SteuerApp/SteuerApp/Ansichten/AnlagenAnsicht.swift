@@ -143,7 +143,8 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
                            displayedComponents: .date)
                     .environment(\.locale, Locale(identifier: "de_DE"))
                 BetragsFeld(titel: "Anschaffungskosten", betrag: $kosten,
-                            hinweis: "netto, ohne Umsatzsteuer")
+                            hinweis: "netto, ohne Umsatzsteuer",
+                            sofortÜbernehmen: true)
             }
 
             Section {

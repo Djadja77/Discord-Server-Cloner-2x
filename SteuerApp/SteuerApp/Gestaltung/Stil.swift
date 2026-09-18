@@ -473,6 +473,10 @@ extension View {
             .background { if mitGrund { Verlaufsgrund() } }
             .listRowBackground(Listenfläche())
             .tint(Stil.akzent)
+            // Zweiter Weg aus der Tastatur heraus, neben "Fertig" über den Tasten:
+            // ein Wisch über die Liste. Eine Tastatur, aus der man nur auf einem
+            // einzigen Weg herauskommt, ist eine Falle, sobald dieser Weg klemmt.
+            .scrollDismissesKeyboard(.interactively)
             .safeAreaPadding(.bottom, Stil.leistenhöhe)
             .toolbar(.hidden, for: .tabBar)
     }

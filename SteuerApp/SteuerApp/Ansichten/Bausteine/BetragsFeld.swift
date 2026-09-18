@@ -12,14 +12,26 @@ import SwiftUI
 /// auch mitten im Tippen: im Feld stand "3,00 €", die nächste getippte Ziffer landete
 /// dahinter, und heraus kam "3,00 €00". Löschen half nicht, weil das Währungszeichen
 /// mit im Weg stand und die Zifferntastatur es nicht wieder herstellen kann.
-///
-/// Der Betrag wird trotzdem bei jedem Tastendruck übernommen, nicht erst beim
-/// Verlassen - die Schätzung soll mitrechnen, während man tippt.
 struct BetragsFeld: View {
 
     let titel: String
     @Binding var betrag: Decimal
     var hinweis: String? = nil
+
+    /// Ob der Betrag schon beim Tippen übernommen wird.
+    ///
+    /// `true` gehört an Felder, die in einen Entwurf im Arbeitsspeicher schreiben und
+    /// deren Bildschirm einen Sichern-Knopf hat. Der Knopf kann jederzeit gedrückt
+    /// werden, auch mit offener Tastatur - dann muss der zuletzt getippte Betrag
+    /// schon drinstehen.
+    ///
+    /// `false` gehört an Felder, die direkt in die Datenbank schreiben. Dort zieht
+    /// jede Änderung alle `@Query`-Abfragen und damit den ganzen Bildschirm neu nach
+    /// sich. Bei jedem Tastendruck wird die App davon so zäh, dass sich die Tastatur
+    /// nicht mehr schliessen lässt - genau das ist einmal passiert. Diese Bildschirme
+    /// haben keinen Sichern-Knopf; übernommen wird, sobald das Feld die Eingabe
+    /// verlässt.
+    var sofortÜbernehmen = false
 
     @FocusState private var fokussiert: Bool
     @State private var text = ""
@@ -46,11 +58,17 @@ struct BetragsFeld: View {
         // Von aussen geänderte Beträge - Jahreswechsel, Texterkennung nach dem Scan.
         // Nur, wenn gerade niemand tippt: sonst schriebe es einem in die Eingabe.
         .onChange(of: betrag) { if !fokussiert { text = Formatierung.euro(betrag) } }
-        .onChange(of: text) { if fokussiert { betrag = Formatierung.betragAusEingabe(text) } }
-        .onChange(of: fokussiert) { _, jetztAmZug in
-            text = jetztAmZug ? Formatierung.zumBearbeiten(betrag)
-                              : Formatierung.euro(betrag)
+        .onChange(of: text) {
+            if fokussiert && sofortÜbernehmen {
+                betrag = Formatierung.betragAusEingabe(text)
+            }
         }
+        .onChange(of: fokussiert) { _, jetztAmZug in
+            if jetztAmZug { text = Formatierung.zumBearbeiten(betrag) } else { übernehmen() }
+        }
+        // Wird der Bildschirm mit offener Tastatur verlassen, kommt kein Fokuswechsel
+        // mehr - ohne das hier wäre der zuletzt getippte Betrag weg.
+        .onDisappear { if fokussiert { übernehmen() } }
         .toolbar {
             // Die Zifferntastatur hat keine Return-Taste - ohne "Fertig" bleibt sie offen.
             ToolbarItemGroup(placement: .keyboard) {
@@ -60,6 +78,13 @@ struct BetragsFeld: View {
                 }
             }
         }
+    }
+
+    /// Übernimmt den getippten Text und stellt die Anzeige auf den fertigen Betrag um.
+    private func übernehmen() {
+        let gelesen = Formatierung.betragAusEingabe(text)
+        if gelesen != betrag { betrag = gelesen }
+        text = Formatierung.euro(gelesen)
     }
 }
 
