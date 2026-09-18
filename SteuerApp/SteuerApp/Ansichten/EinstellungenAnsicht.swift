@@ -128,7 +128,7 @@ struct EinstellungenAnsicht: View {
             Text("Darstellung")
         } footer: {
             Text("Klar zeigt am meisten vom Hintergrund, Getönt macht Text am besten lesbar. "
-                 + "Bei eingeschaltetem „Transparenz reduzieren\" in den Bedienungshilfen "
+                 + "Bei eingeschaltetem „Transparenz reduzieren“ in den Bedienungshilfen "
                  + "sind die Flächen unabhängig davon deckend.")
         }
     }

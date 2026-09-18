@@ -341,7 +341,7 @@ struct StandAnsicht: View {
             LeerHinweis(
                 symbol: "doc.text.viewfinder",
                 titel: "Noch nichts erfasst für \(String(jahr))",
-                text: "Tippe unten auf das Scannersymbol und fotografiere einen Beleg. Händler, Betrag, Datum und Steuersatz werden vorgeschlagen – auch bei einem ganzen Stapel. Eigene Rechnungen an Kunden schreibst du unten unter „Rechnungen\"."
+                text: "Tippe unten auf das Scannersymbol und fotografiere einen Beleg. Händler, Betrag, Datum und Steuersatz werden vorgeschlagen – auch bei einem ganzen Stapel. Eigene Rechnungen an Kunden schreibst du unten unter „Rechnungen“."
             )
         }
         .alsKarte(polster: 0)

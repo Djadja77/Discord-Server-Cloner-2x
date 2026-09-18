@@ -4,9 +4,12 @@ import SwiftData
 /// Die vier Bereiche der App, dazu das Scannen in der Mitte der Leiste.
 ///
 /// Die Reihenfolge folgt der Häufigkeit: **Stand** beantwortet die Frage, wegen der
-/// man die App öffnet; **Belege** ist die Liste; **Steuer** fasst Schätzung und
-/// Auswertung zusammen, beides Jahresarbeit; **Mehr** hält die Stammdaten. Das
-/// Scannen liegt zwischen Belegen und Steuer, also unter dem Daumen.
+/// man die App öffnet; **Belege** ist die Liste; **Rechnungen** ist der eigene Bereich
+/// für alles, was man selbst ausstellt; **Mehr** hält die Stammdaten. Das Scannen liegt
+/// zwischen Belegen und Rechnungen, also unter dem Daumen.
+///
+/// Schätzung und Auswertung haben keinen eigenen Knopf mehr - sie hängen als Karte an
+/// **Stand**, wo die Zahl steht, die sie erklären.
 ///
 /// Die Systemleiste am unteren Rand blenden `aufGrund()` und `alsListe()` aus - sie
 /// sitzen innerhalb der Navigation, wo `toolbar(.hidden, for: .tabBar)` zuverlässig

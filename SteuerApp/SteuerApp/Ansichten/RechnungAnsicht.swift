@@ -221,7 +221,7 @@ struct RechnungAnsicht: View {
     private var steuerhinweis: some View {
         Hinweiszeile(
             text: "Rechnungen sind ein eigener Bereich und fließen nicht in Gewinn, EÜR oder "
-                + "Schätzung ein. Damit der Zahlungseingang zählt, erfasse ihn unter „Belege\".",
+                + "Schätzung ein. Damit der Zahlungseingang zählt, erfasse ihn unter „Belege“.",
             symbol: "info.circle"
         )
         .padding(14)
@@ -249,7 +249,7 @@ struct RechnungAnsicht: View {
                     .environment(\.locale, Locale(identifier: "de_DE"))
                 Section {
                     Text("Ändert nur den Zustand dieser Rechnung. In der Steuerschätzung taucht der "
-                         + "Betrag dadurch nicht auf - dafür ist der Bereich „Belege\" da.")
+                         + "Betrag dadurch nicht auf - dafür ist der Bereich „Belege“ da.")
                         .font(.system(size: 14))
                         .foregroundStyle(Stil.schriftGedämpft)
                 }

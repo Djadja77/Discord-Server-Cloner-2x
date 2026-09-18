@@ -106,7 +106,7 @@ struct BelegeAnsicht: View {
                             titel: suchtext.isEmpty ? "Keine Belege" : "Keine Treffer",
                             text: suchtext.isEmpty
                                 ? "Für \(String(jahr)) ist noch nichts erfasst."
-                                : "Für „\(suchtext)\" wurde nichts gefunden."
+                                : "Für „\(suchtext)“ wurde nichts gefunden."
                         )
                         if suchtext.isEmpty { erfassungsknöpfe }
                     } else {

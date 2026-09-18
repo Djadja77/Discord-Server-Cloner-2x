@@ -336,7 +336,8 @@ enum RechnungPDF {
     }
 
     private static func strich(
-        y: CGFloat, von: CGFloat? = nil, bis: CGFloat? = nil, farbe: UIColor = linie
+        y: CGFloat, von: CGFloat? = nil, bis: CGFloat? = nil,
+        farbe: UIColor = RechnungPDF.linie
     ) {
         guard let zug = UIGraphicsGetCurrentContext() else { return }
         zug.setStrokeColor(farbe.cgColor)
