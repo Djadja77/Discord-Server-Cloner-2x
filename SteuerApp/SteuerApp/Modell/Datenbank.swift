@@ -9,6 +9,10 @@ enum Datenbank {
         Steuerprofil.self,
         Jahresangaben.self,
         Wirtschaftsgut.self,
+        Kunde.self,
+        Rechnung.self,
+        Rechnungsposten.self,
+        Ordner.self,
     ])
 
     /// Container für den produktiven Betrieb.
@@ -55,6 +59,13 @@ enum Datenbank {
         }
 
         for beleg in belege { kontext.delete(beleg) }
+        // Rechnungen vor den Kunden und Ordnern: sonst stehen die Beziehungen kurz
+        // ins Leere, und Positionen räumt die Löschregel der Rechnung mit weg.
+        for rechnung in (try? kontext.fetch(FetchDescriptor<Rechnung>())) ?? [] {
+            kontext.delete(rechnung)
+        }
+        for kunde in (try? kontext.fetch(FetchDescriptor<Kunde>())) ?? [] { kontext.delete(kunde) }
+        for ordner in (try? kontext.fetch(FetchDescriptor<Ordner>())) ?? [] { kontext.delete(ordner) }
         for gut in (try? kontext.fetch(FetchDescriptor<Wirtschaftsgut>())) ?? [] {
             kontext.delete(gut)
         }

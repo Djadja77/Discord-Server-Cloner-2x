@@ -45,6 +45,9 @@ struct EinstellungenAnsicht: View {
                 verlustvortragAbschnitt
                 vorauszahlungAbschnitt
 
+                rechnungsAbschnitt
+                bankAbschnitt
+
                 hinterlegteJahre
                 darstellungAbschnitt
                 zurücksetzenAbschnitt
@@ -325,6 +328,50 @@ struct EinstellungenAnsicht: View {
         }
     }
 
+    // MARK: - Rechnungen
+
+    /// Was auf jeder ausgehenden Rechnung steht.
+    ///
+    /// Name, Anschrift und Steuernummer sind Pflichtangaben (§ 14 Abs. 4 Nr. 1 und 2
+    /// UStG). Ohne sie darf der Empfänger die Vorsteuer nicht ziehen - und die Rechnung
+    /// kommt zurück.
+    private var rechnungsAbschnitt: some View {
+        Section {
+            TextField("Dein Name oder deine Firma", text: profiltext(\.absenderName))
+            TextField("Straße und Hausnummer", text: profiltext(\.absenderStrasse))
+            TextField("PLZ", text: profiltext(\.absenderPlz)).keyboardType(.numbersAndPunctuation)
+            TextField("Ort", text: profiltext(\.absenderOrt))
+            TextField("Steuernummer", text: profiltext(\.steuernummer))
+                .keyboardType(.numbersAndPunctuation)
+            TextField("USt-IdNr. (falls vorhanden)", text: profiltext(\.ustIdNr))
+                .textInputAutocapitalization(.characters)
+
+            NavigationLink("Kunden") { KundenAnsicht() }
+        } header: {
+            Text("Rechnungen")
+        } footer: {
+            Text("Diese Angaben werden beim Stellen in jede Rechnung kopiert. Änderst du sie später, "
+                 + "bleiben bereits gestellte Rechnungen so, wie der Kunde sie bekommen hat.")
+        }
+    }
+
+    private var bankAbschnitt: some View {
+        Section {
+            TextField("Bank", text: profiltext(\.bankName))
+            TextField("IBAN", text: profiltext(\.iban)).textInputAutocapitalization(.characters)
+            TextField("BIC", text: profiltext(\.bic)).textInputAutocapitalization(.characters)
+            Stepper("Zahlungsziel: \(profil.zahlungszielTage) Tage",
+                    value: profilzahl(\.zahlungszielTage), in: 0...90, step: 7)
+            TextField("Fußtext auf der Rechnung", text: profiltext(\.rechnungsfusstext), axis: .vertical)
+                .lineLimit(2...5)
+        } header: {
+            Text("Zahlung")
+        } footer: {
+            Text("Der Fußtext steht unter den Positionen - etwa ein Dank, ein Hinweis auf Skonto oder "
+                 + "der Bezug zum Auftrag.")
+        }
+    }
+
     // MARK: - Zurücksetzen
 
     /// Der einzige Weg, die App zu leeren, ohne sie zu löschen.
@@ -377,6 +424,19 @@ struct EinstellungenAnsicht: View {
     }
 
     // MARK: - Hilfsmittel
+
+    /// Bindung an ein Textfeld des Profils.
+    ///
+    /// `profil` ist eine berechnete Eigenschaft über die Abfrage, kein `@Bindable` -
+    /// deshalb gibt es kein `$profil`. Diese beiden Hilfen sparen pro Feld vier Zeilen
+    /// `Binding(get:set:)`.
+    private func profiltext(_ pfad: ReferenceWritableKeyPath<Steuerprofil, String>) -> Binding<String> {
+        Binding(get: { profil[keyPath: pfad] }, set: { profil[keyPath: pfad] = $0 })
+    }
+
+    private func profilzahl(_ pfad: ReferenceWritableKeyPath<Steuerprofil, Int>) -> Binding<Int> {
+        Binding(get: { profil[keyPath: pfad] }, set: { profil[keyPath: pfad] = $0 })
+    }
 
     /// Bindung an ein Geldfeld der Jahresangaben.
     ///

@@ -52,6 +52,24 @@ enum Stil {
     /// Fehler, Storno, überfällig.
     static let gefahr = farbe(dunkel: 0xFF6B6B, hell: 0xCE2F2F)
 
+    /// Die Farben, aus denen Ordner ihre Kennzeichnung bekommen.
+    ///
+    /// Sechs reichen: bei mehr unterscheidet sie ohnehin niemand mehr auseinander, und
+    /// der Name steht daneben. Der Index kommt aus der Datenbank, die Farbe von hier -
+    /// so weiss die Datenbank nichts über die Gestaltung.
+    static func ordnerfarbe(_ index: Int) -> Color {
+        let töne: [(UInt32, UInt32)] = [
+            (0x7A6BFF, 0x5443E0),
+            (0x3DDC84, 0x158A45),
+            (0xFFC94D, 0xA97400),
+            (0xFF7FB6, 0xC01F62),
+            (0x4FC3F7, 0x0277BD),
+            (0xFFA05C, 0xC96A12),
+        ]
+        let ton = töne[((index % töne.count) + töne.count) % töne.count]
+        return farbe(dunkel: ton.0, hell: ton.1)
+    }
+
     // MARK: - Glas
 
     /// Wie stark das Glas tönt - entspricht dem Regler, den iOS 27 unter

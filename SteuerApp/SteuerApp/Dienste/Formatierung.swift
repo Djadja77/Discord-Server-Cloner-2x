@@ -100,6 +100,23 @@ enum Formatierung {
 
     static func datum(_ wert: Date) -> String { datumsformat.string(from: wert) }
 
+    /// Eine Menge auf einer Rechnung: "3", "2,5", "0,75".
+    ///
+    /// Ohne feste Nachkommastellen - "3,00 Stunden" liest sich wie ein Formular,
+    /// "3 Stunden" wie eine Rechnung.
+    static func menge(_ wert: Decimal) -> String {
+        mengenformat.string(from: wert as NSDecimalNumber) ?? "0"
+    }
+
+    private static let mengenformat: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.locale = Locale(identifier: "de_DE")
+        f.minimumFractionDigits = 0
+        f.maximumFractionDigits = 3
+        return f
+    }()
+
     /// Sortierbares Datum für Dateinamen: `2025-03-14`.
     static let dateinamendatum: DateFormatter = {
         let f = DateFormatter()

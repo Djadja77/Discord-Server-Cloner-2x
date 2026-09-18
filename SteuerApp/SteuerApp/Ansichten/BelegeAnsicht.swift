@@ -13,6 +13,7 @@ struct BelegeAnsicht: View {
     @Binding var filter: Filter
     /// Setzt den Belegeinzug an der Wurzel der App in Gang.
     @Binding var aufnahme: Aufnahmeart?
+    @State private var kategorie: Belegkategorie?
     @State private var suchtext = ""
     @FocusState private var sucheAktiv: Bool
     @State private var zuLöschen: Beleg?
@@ -47,6 +48,10 @@ struct BelegeAnsicht: View {
                 case .ohneBetrag: beleg.bruttoBetrag == 0
                 case .ohneBeleg: beleg.belegbildDatei == nil
                 }
+            }
+            .filter { beleg in
+                guard let kategorie else { return true }
+                return beleg.kategorie == kategorie
             }
             .filter { beleg in
                 guard !suchtext.isEmpty else { return true }
@@ -211,11 +216,61 @@ struct BelegeAnsicht: View {
     }
 
     private var pillenreihe: some View {
-        Filterpillen(
-            auswahl: Filter.allCases.map { (wert: $0, titel: $0.bezeichnung) },
-            gewählt: $filter
-        )
+        VStack(alignment: .leading, spacing: 10) {
+            Filterpillen(
+                auswahl: Filter.allCases.map { (wert: $0, titel: $0.bezeichnung) },
+                gewählt: $filter
+            )
+            kategoriewahl
+        }
         .padding(.top, 18)
+    }
+
+    /// Einschränkung auf eine Kategorie.
+    ///
+    /// Als Menü und nicht als weitere Pillenreihe: es gibt über zwanzig Kategorien, und
+    /// zwanzig Pillen nebeneinander sind keine Auswahl mehr, sondern ein Suchspiel. Die
+    /// gewählte steht danach im Knopf, damit man nicht vergisst, dass gefiltert ist.
+    private var kategoriewahl: some View {
+        Menu {
+            Button("Alle Kategorien") { kategorie = nil }
+            Divider()
+            ForEach(vorkommendeKategorien, id: \.self) { eintrag in
+                Button {
+                    kategorie = eintrag
+                } label: {
+                    Label("\(eintrag.bezeichnung) (\(anzahl(eintrag)))", systemImage: eintrag.symbol)
+                }
+            }
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: "line.3.horizontal.decrease.circle")
+                    .font(.system(size: 13, weight: .medium))
+                Text(kategorie?.bezeichnung ?? "Alle Kategorien")
+                    .font(.system(size: 14, weight: .medium))
+                    .lineLimit(1)
+                Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
+            }
+            .foregroundStyle(kategorie == nil ? Stil.schriftGedämpft : Stil.schrift)
+            .padding(.horizontal, 15)
+            .padding(.vertical, 9)
+            .alsGlas(Capsule())
+            .overlay(Capsule().strokeBorder(kategorie == nil ? .clear : Stil.akzent, lineWidth: 1.5))
+        }
+        .padding(.horizontal, Stil.rand)
+    }
+
+    /// Nur Kategorien, die im gewählten Jahr tatsächlich vorkommen.
+    ///
+    /// Eine Liste aller denkbaren Kategorien wäre vollständig und nutzlos - man filtert
+    /// nach dem, was man hat.
+    private var vorkommendeKategorien: [Belegkategorie] {
+        let vorhanden = Set(desJahres.map(\.kategorie))
+        return Belegkategorie.allCases.filter { vorhanden.contains($0) }
+    }
+
+    private func anzahl(_ eintrag: Belegkategorie) -> Int {
+        desJahres.filter { $0.kategorie == eintrag }.count
     }
 
     private var suchfeld: some View {

@@ -20,6 +20,7 @@ struct StandAnsicht: View {
     @Query private var profile: [Steuerprofil]
     @Query private var alleJahresangaben: [Jahresangaben]
     @Query private var wirtschaftsgüter: [Wirtschaftsgut]
+    @Query(sort: \Rechnung.datum, order: .reverse) private var rechnungen: [Rechnung]
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
     private var angaben: Jahresangaben {
@@ -128,12 +129,13 @@ struct StandAnsicht: View {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     kopfzeile
 
-                    if euer.anzahlBelege == 0 {
+                    if euer.anzahlBelege == 0 && rechnungen.isEmpty {
                         leererZustand
                     } else {
                         rücklagekarte
                         if !aufgaben.isEmpty { aufgabenliste }
                         gewinnkarte
+                        rechnungskarte
                         if !letzteBelege.isEmpty { letzteBewegungen }
                     }
 
@@ -148,6 +150,61 @@ struct StandAnsicht: View {
     }
 
     // MARK: - Bausteine
+
+    /// Der Weg zu den ausgehenden Rechnungen.
+    ///
+    /// Steht auf dem Stand und nicht in einem eigenen Bereich der Leiste: was offen ist,
+    /// gehört zu der Frage, wegen der man die App öffnet. Die Karte zeigt sie und führt
+    /// weiter, statt einen fünften Knopf in eine Leiste mit vier zu drängen.
+    private var rechnungskarte: some View {
+        NavigationLink {
+            RechnungenAnsicht(jahr: $jahr)
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Rechnungen")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Stil.schrift)
+                    Text(rechnungsbeischrift)
+                        .font(.system(size: 13))
+                        .foregroundStyle(überfälligeSumme > 0 ? Stil.gefahr : Stil.schriftGedämpft)
+                }
+                Spacer(minLength: 8)
+                Text(Formatierung.euro(offeneSumme, mitCent: false))
+                    .font(.system(size: 17, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(Stil.schrift)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Stil.schriftLeise)
+            }
+            .alsKarte()
+            .padding(.horizontal, Stil.rand)
+            .padding(.top, 12)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var rechnungenDesJahres: [Rechnung] {
+        rechnungen.filter { Calendar.kalender.component(.year, from: $0.datum) == jahr }
+    }
+
+    private var offeneSumme: Decimal {
+        rechnungenDesJahres.filter { $0.status == .offen }.reduce(0) { $0 + $1.brutto }
+    }
+
+    private var überfälligeSumme: Decimal {
+        rechnungenDesJahres.filter(\.istÜberfällig).reduce(0) { $0 + $1.brutto }
+    }
+
+    private var rechnungsbeischrift: String {
+        if überfälligeSumme > 0 {
+            return "\(Formatierung.euro(überfälligeSumme, mitCent: false)) überfällig"
+        }
+        let anzahl = rechnungenDesJahres.filter { $0.status == .offen }.count
+        if anzahl == 0 { return "nichts offen" }
+        return anzahl == 1 ? "1 offene Rechnung" : "\(anzahl) offene Rechnungen"
+    }
 
     private var kopfzeile: some View {
         HStack {

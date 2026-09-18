@@ -57,6 +57,35 @@ final class Steuerprofil {
     /// Gewerbesteuer-Hebesatz der Gemeinde in Prozent (nur bei gewerblicher Tätigkeit).
     var gewerbesteuerHebesatz: Decimal = Decimal(400)
 
+    // MARK: - Angaben für ausgehende Rechnungen
+    //
+    // Diese Felder stehen auf jeder Rechnung, die die App erzeugt. Name, Anschrift und
+    // Steuernummer sind Pflichtangaben (§ 14 Abs. 4 Nr. 1 und 2 UStG) - ohne sie darf
+    // der Empfänger die Vorsteuer nicht ziehen, und die Rechnung kommt zurück.
+
+    var absenderName: String = ""
+    var absenderStrasse: String = ""
+    var absenderPlz: String = ""
+    var absenderOrt: String = ""
+    var steuernummer: String = ""
+    var ustIdNr: String = ""
+
+    var bankName: String = ""
+    var iban: String = ""
+    var bic: String = ""
+
+    /// Vorbelegung für neue Rechnungen, in Tagen.
+    var zahlungszielTage: Int = 14
+    /// Fester Text unter den Positionen - Dank, Hinweis auf Skonto, Bezug zum Auftrag.
+    var rechnungsfusstext: String = ""
+
+    /// Stand des Nummernkreises je Jahr, als "2026:42" getrennt durch Semikolon.
+    ///
+    /// Bewusst eine Zeichenkette und kein eigenes Modell: der Kreis ist ein einzelner
+    /// Zähler, den nur `Rechnungsnummer` anfasst. Ein eigenes Modell dafür wäre eine
+    /// Tabelle mit einer Zeile.
+    var nummernkreis: String = ""
+
     init() {}
 
     var tätigkeitsart: Tätigkeitsart {
@@ -67,6 +96,35 @@ final class Steuerprofil {
     var veranlagungsart: Veranlagungsart {
         get { Veranlagungsart(rawValue: veranlagungsartCode) ?? .einzel }
         set { veranlagungsartCode = newValue.rawValue }
+    }
+
+    /// Die eigene Anschrift als Zeilen, leere Angaben fallen weg.
+    var absenderzeilen: [String] {
+        [absenderName, absenderStrasse, [absenderPlz, absenderOrt].filter { !$0.isEmpty }.joined(separator: " ")]
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
+    /// Bankverbindung als eine Zeile für den Fuß der Rechnung.
+    var bankzeile: String {
+        [bankName, iban.isEmpty ? "" : "IBAN " + iban, bic.isEmpty ? "" : "BIC " + bic]
+            .filter { !$0.isEmpty }
+            .joined(separator: " · ")
+    }
+
+    /// Was fehlt, bevor sich überhaupt eine Rechnung stellen lässt.
+    var rechnungsHindernisse: [String] {
+        var fehlt: [String] = []
+        if absenderName.trimmingCharacters(in: .whitespaces).isEmpty { fehlt.append("Dein Name") }
+        if absenderStrasse.trimmingCharacters(in: .whitespaces).isEmpty
+            || absenderOrt.trimmingCharacters(in: .whitespaces).isEmpty {
+            fehlt.append("Deine Anschrift")
+        }
+        if steuernummer.trimmingCharacters(in: .whitespaces).isEmpty
+            && ustIdNr.trimmingCharacters(in: .whitespaces).isEmpty {
+            fehlt.append("Steuernummer oder USt-IdNr.")
+        }
+        return fehlt
     }
 
     var kirchensteuersatz: Kirchensteuersatz {
