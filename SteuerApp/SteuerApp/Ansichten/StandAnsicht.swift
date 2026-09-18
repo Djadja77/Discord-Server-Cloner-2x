@@ -20,7 +20,6 @@ struct StandAnsicht: View {
     @Query private var profile: [Steuerprofil]
     @Query private var alleJahresangaben: [Jahresangaben]
     @Query private var wirtschaftsgüter: [Wirtschaftsgut]
-    @Query(sort: \Rechnung.datum, order: .reverse) private var rechnungen: [Rechnung]
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
     private var angaben: Jahresangaben {
@@ -129,7 +128,7 @@ struct StandAnsicht: View {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     kopfzeile
 
-                    if euer.anzahlBelege == 0 && rechnungen.isEmpty {
+                    if euer.anzahlBelege == 0 {
                         leererZustand
                     } else {
                         rücklagekarte
@@ -138,10 +137,7 @@ struct StandAnsicht: View {
                         if !letzteBelege.isEmpty { letzteBewegungen }
                     }
 
-                    // Steht ausserhalb der Fallunterscheidung: in einer leeren App war
-                    // der Weg zu den Rechnungen sonst unsichtbar - ausgerechnet dann,
-                    // wenn man die erste schreiben will.
-                    rechnungskarte
+                    steuerkarte
 
                     hinweisWennJahrUngeprüft
                 }
@@ -155,29 +151,26 @@ struct StandAnsicht: View {
 
     // MARK: - Bausteine
 
-    /// Der Weg zu den ausgehenden Rechnungen.
+    /// Der Weg zu Schätzung und Auswertung.
     ///
-    /// Steht auf dem Stand und nicht in einem eigenen Bereich der Leiste: was offen ist,
-    /// gehört zu der Frage, wegen der man die App öffnet. Die Karte zeigt sie und führt
-    /// weiter, statt einen fünften Knopf in eine Leiste mit vier zu drängen.
-    private var rechnungskarte: some View {
+    /// Steuer hat den Platz in der Leiste an die Rechnungen abgegeben und steht dafür
+    /// hier. Der Tausch folgt der Häufigkeit: Rechnungen schreibt man laufend, die
+    /// Schätzung sieht man sich ein paarmal im Jahr an - und wenn, dann von hier aus,
+    /// wo die Zahl schon steht.
+    private var steuerkarte: some View {
         NavigationLink {
-            RechnungenAnsicht(jahr: $jahr)
+            SteuerAnsicht(jahr: $jahr, eingebettet: true)
         } label: {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Rechnungen")
+                    Text("Steuer")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(Stil.schrift)
-                    Text(rechnungsbeischrift)
+                    Text("Schätzung und Auswertung für \(String(jahr))")
                         .font(.system(size: 13))
-                        .foregroundStyle(überfälligeSumme > 0 ? Stil.gefahr : Stil.schriftGedämpft)
+                        .foregroundStyle(Stil.schriftGedämpft)
                 }
                 Spacer(minLength: 8)
-                Text(Formatierung.euro(offeneSumme, mitCent: false))
-                    .font(.system(size: 17, weight: .semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(Stil.schrift)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Stil.schriftLeise)
@@ -187,28 +180,6 @@ struct StandAnsicht: View {
             .padding(.top, 12)
         }
         .buttonStyle(.plain)
-    }
-
-    private var rechnungenDesJahres: [Rechnung] {
-        rechnungen.filter { Calendar.kalender.component(.year, from: $0.datum) == jahr }
-    }
-
-    private var offeneSumme: Decimal {
-        rechnungenDesJahres.filter { $0.status == .offen }.reduce(0) { $0 + $1.brutto }
-    }
-
-    private var überfälligeSumme: Decimal {
-        rechnungenDesJahres.filter(\.istÜberfällig).reduce(0) { $0 + $1.brutto }
-    }
-
-    private var rechnungsbeischrift: String {
-        if rechnungenDesJahres.isEmpty { return "Rechnung schreiben und als PDF verschicken" }
-        if überfälligeSumme > 0 {
-            return "\(Formatierung.euro(überfälligeSumme, mitCent: false)) überfällig"
-        }
-        let anzahl = rechnungenDesJahres.filter { $0.status == .offen }.count
-        if anzahl == 0 { return "nichts offen" }
-        return anzahl == 1 ? "1 offene Rechnung" : "\(anzahl) offene Rechnungen"
     }
 
     private var kopfzeile: some View {
@@ -370,7 +341,7 @@ struct StandAnsicht: View {
             LeerHinweis(
                 symbol: "doc.text.viewfinder",
                 titel: "Noch nichts erfasst für \(String(jahr))",
-                text: "Tippe unten auf das Scannersymbol und fotografiere einen Beleg. Händler, Betrag, Datum und Steuersatz werden vorgeschlagen – auch bei einem ganzen Stapel. Eigene Rechnungen an Kunden schreibst du über die Karte darunter."
+                text: "Tippe unten auf das Scannersymbol und fotografiere einen Beleg. Händler, Betrag, Datum und Steuersatz werden vorgeschlagen – auch bei einem ganzen Stapel. Eigene Rechnungen an Kunden schreibst du unten unter „Rechnungen\"."
             )
         }
         .alsKarte(polster: 0)

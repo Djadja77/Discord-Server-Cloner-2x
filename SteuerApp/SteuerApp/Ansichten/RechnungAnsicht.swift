@@ -24,6 +24,7 @@ struct RechnungAnsicht: View {
                 dokument
                 knöpfe
                 angaben
+                steuerhinweis
             }
             .padding(.horizontal, Stil.rand)
             .padding(.bottom, 28)
@@ -145,12 +146,22 @@ struct RechnungAnsicht: View {
                 Trennzeile()
                 textzeile("Bezahlt am", Formatierung.datum(bezahlt))
             }
-            if rechnung.beleg != nil {
-                Trennzeile()
-                textzeile("In der EÜR", "als Einnahme erfasst")
-            }
         }
         .padding(.horizontal, 15)
+        .alsGlas()
+    }
+
+    /// Sagt geradeheraus, was die Rechnungen mit der Steuer zu tun haben: nichts.
+    ///
+    /// Ohne diesen Satz nimmt man an, eine bezahlte Rechnung sei damit auch gebucht -
+    /// und wundert sich im Herbst über einen zu niedrigen Gewinn.
+    private var steuerhinweis: some View {
+        Hinweiszeile(
+            text: "Rechnungen sind ein eigener Bereich und fließen nicht in Gewinn, EÜR oder "
+                + "Schätzung ein. Damit der Zahlungseingang zählt, erfasse ihn unter „Belege\".",
+            symbol: "info.circle"
+        )
+        .padding(14)
         .alsGlas()
     }
 
@@ -174,8 +185,8 @@ struct RechnungAnsicht: View {
                 DatePicker("Zahlungseingang", selection: $bezahltAm, displayedComponents: .date)
                     .environment(\.locale, Locale(identifier: "de_DE"))
                 Section {
-                    Text("Die App legt dazu eine Einnahme über \(Formatierung.euro(rechnung.brutto)) an. "
-                         + "Ohne sie fehlte der Betrag in der Einnahmen-Überschuss-Rechnung.")
+                    Text("Ändert nur den Zustand dieser Rechnung. In der Steuerschätzung taucht der "
+                         + "Betrag dadurch nicht auf - dafür ist der Bereich „Belege\" da.")
                         .font(.system(size: 14))
                         .foregroundStyle(Stil.schriftGedämpft)
                 }

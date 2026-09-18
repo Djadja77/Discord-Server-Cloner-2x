@@ -18,6 +18,7 @@ struct RechnungBearbeitenAnsicht: View {
 
     @State private var mitZeitraum = false
     @State private var kundeAnlegen = false
+    @State private var vonHand = false
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
 
@@ -44,6 +45,7 @@ struct RechnungBearbeitenAnsicht: View {
                 }
             }
             .onAppear {
+                vonHand = rechnung.kunde == nil && !rechnung.empfaengerName.isEmpty
                 mitZeitraum = rechnung.leistungBis != nil
                 if rechnung.leistungVon == nil { rechnung.leistungVon = rechnung.datum }
             }
@@ -59,24 +61,51 @@ struct RechnungBearbeitenAnsicht: View {
 
     private var empfaengerAbschnitt: some View {
         Section {
-            Picker("Kunde", selection: kundenbindung) {
-                Text("Bitte wählen").tag(nil as Kunde?)
-                ForEach(kunden) { kunde in
-                    Text(kunde.name.isEmpty ? "Ohne Namen" : kunde.name).tag(kunde as Kunde?)
+            Picker("Woher", selection: $vonHand) {
+                Text("Aus der Kundenliste").tag(false)
+                Text("Von Hand").tag(true)
+            }
+            .pickerStyle(.segmented)
+
+            if vonHand {
+                TextField("Firma oder Name", text: $rechnung.empfaengerName)
+                TextField("Anschrift (mehrzeilig)", text: $rechnung.empfaengerAnschrift, axis: .vertical)
+                    .lineLimit(2...4)
+                TextField("USt-IdNr. (falls vorhanden)", text: $rechnung.empfaengerUstIdNr)
+                    .textInputAutocapitalization(.characters)
+            } else {
+                Picker("Kunde", selection: kundenbindung) {
+                    Text("Bitte wählen").tag(nil as Kunde?)
+                    ForEach(kunden) { kunde in
+                        Text(kunde.name.isEmpty ? "Ohne Namen" : kunde.name).tag(kunde as Kunde?)
+                    }
+                }
+                Button("Neuen Kunden anlegen", systemImage: "person.badge.plus") {
+                    let kunde = Kunde()
+                    kontext.insert(kunde)
+                    rechnung.kunde = kunde
+                    kundeAnlegen = true
                 }
             }
-            Button("Neuen Kunden anlegen", systemImage: "person.badge.plus") {
-                let kunde = Kunde()
-                kontext.insert(kunde)
-                rechnung.kunde = kunde
-                kundeAnlegen = true
-            }
+
             DatePicker("Rechnungsdatum", selection: $rechnung.datum, displayedComponents: .date)
                 .environment(\.locale, Locale(identifier: "de_DE"))
             DatePicker("Zahlbar bis", selection: $rechnung.zahlbarBis, displayedComponents: .date)
                 .environment(\.locale, Locale(identifier: "de_DE"))
         } header: {
             Text("Empfänger")
+        } footer: {
+            Text(vonHand
+                 ? "Für den einmaligen Auftrag. Diese Anschrift steht nur auf dieser Rechnung und "
+                   + "landet nicht in der Kundenliste."
+                 : "Einmal angelegte Kunden stehen hier zur Auswahl - mit Anschrift, USt-IdNr. und "
+                   + "Zahlungsziel.")
+        }
+        .onChange(of: vonHand) { _, jetztVonHand in
+            // Beim Umschalten die andere Quelle loslassen, sonst gewinnt beim Stellen
+            // die Abschrift aus dem Kunden und überschreibt das Getippte.
+            if jetztVonHand { rechnung.kunde = nil }
+            else { rechnung.empfaengerName = ""; rechnung.empfaengerAnschrift = "" }
         }
     }
 

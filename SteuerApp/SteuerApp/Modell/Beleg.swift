@@ -29,13 +29,6 @@ final class Beleg {
     /// Dateiname des Belegfotos im Belegarchiv, falls vorhanden.
     var belegbildDatei: String?
 
-    /// Gesetzt, wenn diese Einnahme aus einer bezahlten Rechnung der App entstand.
-    ///
-    /// Damit lässt sich das Bezahltsetzen zurücknehmen, ohne eine fremde Einnahme zu
-    /// erwischen - und die Einnahme taucht nicht doppelt auf, wenn man denselben
-    /// Zahlungseingang später noch als Beleg fotografiert.
-    var rechnung: Rechnung?
-
     var angelegtAm: Date = Date()
 
     init(

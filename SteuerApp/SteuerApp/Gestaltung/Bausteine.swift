@@ -687,8 +687,14 @@ struct SchwebendeLeiste: View {
     let vonHand: () -> Void
     @Namespace private var kapsel
 
+    /// Die vier Bereiche der Leiste.
+    ///
+    /// "Rechnungen" hat den Platz von "Steuer" bekommen. Der Grund ist die Häufigkeit:
+    /// Rechnungen schreibt man laufend, Schätzung und Auswertung einmal im Jahr. Steuer
+    /// ist dafür als Karte auf "Stand" erreichbar - ein fünfter Knopf hätte die Leiste
+    /// nur eng gemacht.
     enum Bereich: Int, CaseIterable, Identifiable {
-        case stand, belege, steuer, mehr
+        case stand, belege, rechnungen, mehr
 
         var id: Int { rawValue }
 
@@ -696,7 +702,7 @@ struct SchwebendeLeiste: View {
             switch self {
             case .stand: "Stand"
             case .belege: "Belege"
-            case .steuer: "Steuer"
+            case .rechnungen: "Rechnungen"
             case .mehr: "Mehr"
             }
         }
@@ -705,7 +711,7 @@ struct SchwebendeLeiste: View {
             switch self {
             case .stand: "gauge.with.needle"
             case .belege: "list.bullet"
-            case .steuer: "building.columns"
+            case .rechnungen: "doc.text"
             case .mehr: "ellipsis"
             }
         }
@@ -716,7 +722,7 @@ struct SchwebendeLeiste: View {
             knopf(fuer: .stand)
             knopf(fuer: .belege)
             scanknopf
-            knopf(fuer: .steuer)
+            knopf(fuer: .rechnungen)
             knopf(fuer: .mehr)
         }
         .padding(5)

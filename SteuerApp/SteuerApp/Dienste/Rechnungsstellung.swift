@@ -52,40 +52,26 @@ enum Rechnungsstellung {
         if rechnung.fusstext.isEmpty { rechnung.fusstext = profil.rechnungsfusstext }
     }
 
-    /// Setzt eine Rechnung auf bezahlt und legt die zugehörige Einnahme an.
+    /// Setzt eine Rechnung auf bezahlt.
     ///
-    /// Ohne diese Einnahme stünde die Rechnung neben der Einnahmen-Überschuss-Rechnung
-    /// statt darin - der Gewinn wäre um genau die Beträge zu niedrig, die man
-    /// eingenommen hat. Der Beleg hängt an der Rechnung, damit ein Rücknehmen ihn
-    /// wieder mitnimmt.
+    /// Und sonst nichts. Die Rechnungen sind ein eigener Bereich und rechnen nicht in
+    /// die Steuer hinein: aus einer bezahlten Rechnung entsteht keine Einnahme in der
+    /// Einnahmen-Überschuss-Rechnung, der Gewinn ändert sich nicht, die Schätzung auch
+    /// nicht. Wer den Zahlungseingang in der Steuer haben will, erfasst ihn unter
+    /// "Belege" - dort und nur dort entscheidet sich, was gerechnet wird.
+    ///
+    /// Das ist bewusst so. Eine Rechnung ist gestellt, nicht vereinnahmt, und wer nach
+    /// § 4 Abs. 3 EStG rechnet, zählt den Zufluss - nicht das Papier.
     static func bezahltSetzen(_ rechnung: Rechnung, am tag: Date, in kontext: ModelContext) {
         guard rechnung.status == .offen else { return }
         rechnung.status = .bezahlt
         rechnung.bezahltAm = tag
-
-        if rechnung.beleg == nil {
-            let beleg = Beleg(
-                datum: tag,
-                bezeichnung: "Rechnung \(rechnung.nummer) · \(rechnung.empfaengerName)",
-                bruttoBetrag: rechnung.brutto,
-                kategorie: .umsatzerlöse,
-                umsatzsteuersatz: rechnung.kleinunternehmer ? .ohne : hauptsatz(rechnung),
-                notiz: "Automatisch aus der Rechnung angelegt."
-            )
-            // Die Art ergibt sich aus der Kategorie: Umsatzerlöse sind eine Einnahme.
-            kontext.insert(beleg)
-            rechnung.beleg = beleg
-        }
         try? kontext.save()
     }
 
-    /// Nimmt das Bezahltsetzen zurück und entfernt die Einnahme wieder.
+    /// Nimmt das Bezahltsetzen zurück.
     static func zahlungZurücknehmen(_ rechnung: Rechnung, in kontext: ModelContext) {
         guard rechnung.status == .bezahlt else { return }
-        if let beleg = rechnung.beleg {
-            rechnung.beleg = nil
-            kontext.delete(beleg)
-        }
         rechnung.bezahltAm = nil
         rechnung.status = .offen
         try? kontext.save()
@@ -146,11 +132,5 @@ enum Rechnungsstellung {
 
         try? kontext.save()
         return storno
-    }
-
-    /// Der Steuersatz, der den größten Teil der Rechnung trägt - für den Beleg, der nur
-    /// einen einzigen Satz kennt.
-    private static func hauptsatz(_ rechnung: Rechnung) -> Umsatzsteuersatz {
-        rechnung.umsatzsteuerJeSatz.max { $0.netto < $1.netto }?.satz ?? .regel
     }
 }

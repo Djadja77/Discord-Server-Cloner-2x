@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Das App-Symbol ohne Bilderkatalog.
+
+	  Der uebliche Weg waere ein Assets.xcassets mit einem AppIcon-Satz. Genau der
+	  hat den Build dreimal an derselben Stelle haengen lassen ("Compute asset tag
+	  combinations", actool), weshalb der Katalog aus dem Projekt geflogen ist -
+	  siehe README, Abschnitt "Kein Bilderkatalog".
+
+	  Diese Eintraege sind der Weg davor, den iOS bis heute liest: die PNG-Dateien
+	  liegen flach im Bundle, hier stehen nur ihre Namen ohne Massstab. Den haengt
+	  iOS selbst an (@2x, @3x). Erzeugt werden sie von
+	  Werkzeuge/appicon_erzeugen.py, und zwar aus demselben Quelltext wie das
+	  1024er-Bild - es gibt also nur ein Motiv, nicht zehn.
+
+	  Vorteil gegenueber dem Katalog: actool wird dabei nie aufgerufen. Nachteil:
+	  fuer eine Abgabe im App Store verlangt Apple den Katalog. Bis dahin ist das
+	  hier das, was auf dem Geraet ein Symbol ergibt statt eines weissen Flecks.
+	-->
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon60</string>
+				<string>AppIcon40</string>
+				<string>AppIcon29</string>
+				<string>AppIcon20</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<false/>
+		</dict>
+	</dict>
+	<key>CFBundleIcons~ipad</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon60</string>
+				<string>AppIcon40</string>
+				<string>AppIcon29</string>
+				<string>AppIcon20</string>
+				<string>AppIcon76</string>
+				<string>AppIcon83.5</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<false/>
+		</dict>
+	</dict>
+</dict>
+</plist>

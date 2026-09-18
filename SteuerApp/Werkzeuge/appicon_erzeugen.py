@@ -125,14 +125,14 @@ def erzeugen():
     return zeilen_bytes
 
 
-def png_schreiben(pfad, zeilen):
+def png_schreiben(pfad, zeilen, kante=KANTE):
     roh = b"".join(b"\x00" + zeile for zeile in zeilen)
 
     def block(kennung, daten):
         return (struct.pack(">I", len(daten)) + kennung + daten
                 + struct.pack(">I", zlib.crc32(kennung + daten) & 0xFFFFFFFF))
 
-    kopf = struct.pack(">IIBBBBB", KANTE, KANTE, 8, 2, 0, 0, 0)
+    kopf = struct.pack(">IIBBBBB", kante, kante, 8, 2, 0, 0, 0)
     pfad.parent.mkdir(parents=True, exist_ok=True)
     pfad.write_bytes(
         b"\x89PNG\r\n\x1a\n"
@@ -142,6 +142,58 @@ def png_schreiben(pfad, zeilen):
     )
 
 
+def verkleinert(zeilen, von, nach):
+    """Mittelt jeweils ein Quadrat von Bildpunkten zu einem.
+
+    Bewusst von Hand und ohne Bildbibliothek - siehe Kopf der Datei. Ein
+    Kastenfilter reicht hier vollkommen: verkleinert wird um ganzzahlige
+    Verhaeltnisse oder nah daran, und das Motiv hat keine feinen Muster, die
+    dabei flimmern koennten.
+    """
+    faktor = von / nach
+    ergebnis = []
+    for y in range(nach):
+        y0, y1 = int(y * faktor), max(int(y * faktor) + 1, int((y + 1) * faktor))
+        reihe = bytearray()
+        for x in range(nach):
+            x0, x1 = int(x * faktor), max(int(x * faktor) + 1, int((x + 1) * faktor))
+            r = g = b = 0
+            anzahl = 0
+            for yy in range(y0, min(y1, von)):
+                zeile = zeilen[yy]
+                for xx in range(x0, min(x1, von)):
+                    stelle = xx * 3
+                    r += zeile[stelle]
+                    g += zeile[stelle + 1]
+                    b += zeile[stelle + 2]
+                    anzahl += 1
+            reihe.extend((r // anzahl, g // anzahl, b // anzahl))
+        ergebnis.append(bytes(reihe))
+    return ergebnis
+
+
+# Die Groessen, die iOS fuer das Symbol auf dem Bildschirm braucht - Name ohne
+# Massstab, den haengt iOS selbst an (@2x, @3x). Siehe CFBundleIconFiles in der
+# Info.plist.
+GROESSEN = {
+    "AppIcon20@2x": 40, "AppIcon20@3x": 60,
+    "AppIcon29@2x": 58, "AppIcon29@3x": 87,
+    "AppIcon40@2x": 80, "AppIcon40@3x": 120,
+    "AppIcon60@2x": 120, "AppIcon60@3x": 180,
+    "AppIcon76@2x": 152, "AppIcon83.5@2x": 167,
+}
+
+# Dorthin, wo der Bundle-Ordner sie findet: die Dateien werden flach in die App
+# kopiert, deshalb liegen sie neben dem Quelltext und nicht in einem Unterordner.
+SYMBOLE = Path(__file__).resolve().parent.parent / "SteuerApp"
+
+
 if __name__ == "__main__":
-    png_schreiben(ZIEL, erzeugen())
+    gross = erzeugen()
+    png_schreiben(ZIEL, gross)
     print(f"{ZIEL.name} geschrieben ({ZIEL.stat().st_size // 1024} KB)")
+
+    for name, kante in sorted(GROESSEN.items(), key=lambda eintrag: eintrag[1]):
+        ziel = SYMBOLE / f"{name}.png"
+        png_schreiben(ziel, verkleinert(gross, KANTE, kante), kante=kante)
+        print(f"  {ziel.name} ({kante}x{kante})")

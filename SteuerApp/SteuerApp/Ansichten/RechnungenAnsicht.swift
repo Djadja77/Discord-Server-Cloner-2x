@@ -39,8 +39,16 @@ struct RechnungenAnsicht: View {
     }
 
     var body: some View {
+        NavigationStack {
+            inhalt
+                .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+
+    private var inhalt: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
+                kopfzeile
                 offenKarte
                 Filterpillen(auswahl: Filter.allCases.map { (wert: $0, titel: $0.bezeichnung) },
                              gewählt: $filter)
@@ -67,19 +75,6 @@ struct RechnungenAnsicht: View {
         }
         .scrollIndicators(.hidden)
         .aufGrund()
-        .navigationTitle("Rechnungen")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button("Rechnung schreiben", systemImage: "square.and.pencil") { neuAnlegen() }
-                    NavigationLink("Kunden", destination: KundenAnsicht())
-                    Button("Ordner verwalten", systemImage: "folder") { ordnerVerwalten = true }
-                } label: {
-                    Image(systemName: "plus")
-                }
-            }
-        }
         .sheet(item: $entwurf) { rechnung in
             RechnungBearbeitenAnsicht(rechnung: rechnung)
         }
@@ -87,6 +82,31 @@ struct RechnungenAnsicht: View {
     }
 
     // MARK: - Bausteine
+
+    private var kopfzeile: some View {
+        HStack(spacing: 10) {
+            Text("Rechnungen")
+                .font(Stil.titel())
+                .foregroundStyle(Stil.schrift)
+            Spacer()
+            Jahrespille(jahr: $jahr)
+            Menu {
+                Button("Rechnung schreiben", systemImage: "square.and.pencil") { neuAnlegen() }
+                NavigationLink("Kunden", destination: KundenAnsicht())
+                Button("Ordner verwalten", systemImage: "folder") { ordnerVerwalten = true }
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Stil.schrift)
+                    .frame(width: 38, height: 34)
+                    .alsGlas(Capsule())
+            }
+            .accessibilityLabel("Neu")
+        }
+        .padding(.horizontal, Stil.rand)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
+    }
 
     private var offenKarte: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -100,7 +120,6 @@ struct RechnungenAnsicht: View {
         }
         .alsKarte()
         .padding(.horizontal, Stil.rand)
-        .padding(.top, 10)
     }
 
     private var beischrift: String {

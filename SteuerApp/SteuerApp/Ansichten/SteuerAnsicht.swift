@@ -9,6 +9,9 @@ import SwiftUI
 struct SteuerAnsicht: View {
 
     @Binding var jahr: Int
+    /// `true`, wenn die Ansicht von "Stand" aus aufgerufen wird - dann stellt die
+    /// Navigation den Rahmen, und der eigene Titel wäre einer zu viel.
+    var eingebettet = false
     @State private var abschnitt: Abschnitt = .schätzung
 
     enum Abschnitt: String, CaseIterable, Identifiable {
@@ -25,25 +28,32 @@ struct SteuerAnsicht: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Verlaufsgrund()
+        if eingebettet {
+            inhalt
+                .navigationTitle("Steuer")
+                .navigationBarTitleDisplayMode(.inline)
+        } else {
+            NavigationStack { inhalt.toolbar(.hidden, for: .navigationBar) }
+        }
+    }
 
-                VStack(spacing: 0) {
-                    kopfzeile
-                    segmente
+    private var inhalt: some View {
+        ZStack {
+            Verlaufsgrund()
 
-                    switch abschnitt {
-                    case .schätzung:
-                        SchätzungAnsicht(jahr: $jahr, eingebettet: true)
-                    case .auswertung:
-                        EuerAnsicht(jahr: $jahr, eingebettet: true)
-                    }
+            VStack(spacing: 0) {
+                if !eingebettet { kopfzeile }
+                segmente
+
+                switch abschnitt {
+                case .schätzung:
+                    SchätzungAnsicht(jahr: $jahr, eingebettet: true)
+                case .auswertung:
+                    EuerAnsicht(jahr: $jahr, eingebettet: true)
                 }
             }
-            .toolbar(.hidden, for: .navigationBar)
-            .toolbar(.hidden, for: .tabBar)
         }
+        .toolbar(.hidden, for: .tabBar)
     }
 
     private var kopfzeile: some View {

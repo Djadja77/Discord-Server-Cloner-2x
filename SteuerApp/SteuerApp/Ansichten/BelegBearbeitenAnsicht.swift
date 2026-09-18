@@ -144,7 +144,7 @@ struct BelegBearbeitenAnsicht: View {
                 }
             }
         } footer: {
-            Text("Belege sind zehn Jahre aufzubewahren. Das Foto bleibt auf dem Gerät und wird mit dem Geräte-Backup gesichert.")
+            Text("Belege sind acht Jahre aufzubewahren (§ 147 AO, seit 2025 verkürzt von zehn). Das Foto bleibt auf dem Gerät und wird mit dem Geräte-Backup gesichert.")
         }
     }
 

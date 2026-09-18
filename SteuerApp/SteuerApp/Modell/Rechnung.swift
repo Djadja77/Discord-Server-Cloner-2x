@@ -133,13 +133,6 @@ final class Rechnung {
     /// Gesetzt, wenn diese Rechnung durch eine Stornorechnung aufgehoben wurde.
     var storniertDurchNummer: String = ""
 
-    /// Die Einnahme, die beim Bezahltsetzen entstanden ist.
-    ///
-    /// Ohne sie stünde die Rechnung neben der Einnahmen-Überschuss-Rechnung statt darin,
-    /// und der Gewinn wäre um genau die Beträge zu niedrig, die man eingenommen hat.
-    @Relationship(deleteRule: .nullify, inverse: \Beleg.rechnung)
-    var beleg: Beleg?
-
     var angelegtAm: Date = Date()
 
     init(
@@ -211,14 +204,29 @@ final class Rechnung {
         return Calendar.kalender.dateComponents([.day], from: zahlbarBis, to: heute).day ?? 0
     }
 
+    /// Ob eine von Hand eingetippte Empfängeranschrift ausreicht.
+    ///
+    /// Nicht jeder Kunde lohnt einen Eintrag in der Kundenliste - für den einmaligen
+    /// Auftrag tippt man die Anschrift direkt in die Rechnung. Pflicht bleiben Name und
+    /// Anschrift (§ 14 Abs. 4 Nr. 1 UStG), egal auf welchem Weg sie hereinkommen.
+    var empfaengerVonHandVollständig: Bool {
+        !empfaengerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && empfaengerAnschrift.trimmingCharacters(in: .whitespacesAndNewlines)
+                .split(separator: "\n").count >= 1
+            && !empfaengerAnschrift.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     /// Was fehlt, damit sich die Rechnung stellen lässt.
     ///
     /// Gibt Klartext zurück statt eines Wahrheitswerts: "geht nicht" ohne Begründung ist
     /// bei einer Rechnung besonders ärgerlich, weil man das Fehlende sonst suchen muss.
     var hindernisse: [String] {
         var fehlt: [String] = []
-        if kunde == nil { fehlt.append("Kunde fehlt") }
-        else if kunde?.istVollständig == false { fehlt.append("Anschrift des Kunden ist unvollständig") }
+        if let kunde {
+            if !kunde.istVollständig { fehlt.append("Anschrift des Kunden ist unvollständig") }
+        } else if !empfaengerVonHandVollständig {
+            fehlt.append("Empfänger fehlt")
+        }
         if postenGeordnet.isEmpty { fehlt.append("Keine Position erfasst") }
         if postenGeordnet.contains(where: { $0.bezeichnung.trimmingCharacters(in: .whitespaces).isEmpty }) {
             fehlt.append("Eine Position hat keine Bezeichnung")

@@ -69,7 +69,7 @@ enum FotoImport {
 
 /// Belegfoto in voller Größe, zoom- und verschiebbar.
 ///
-/// Belege sind zehn Jahre aufzubewahren. Wer nach drei Jahren nachsehen will, was auf der
+/// Belege sind acht Jahre aufzubewahren. Wer nach drei Jahren nachsehen will, was auf der
 /// Quittung stand, muss hineinzoomen können.
 struct BelegbildAnsicht: View {
 

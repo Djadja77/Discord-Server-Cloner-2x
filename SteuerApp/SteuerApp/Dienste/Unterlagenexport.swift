@@ -5,7 +5,7 @@ import SwiftData
 /// als CSV und sämtliche Belegfotos.
 ///
 /// Der reine CSV-Export liefert nur Zahlen - die Belege selbst blieben auf dem Gerät.
-/// Genau die will das Finanzamt im Zweifel aber sehen, und zehn Jahre lang. Dieses Archiv
+/// Genau die will das Finanzamt im Zweifel aber sehen, und acht Jahre lang. Dieses Archiv
 /// ist deshalb der eigentliche Abgabestand.
 ///
 /// Die Fotos bekommen sprechende Dateinamen aus Datum, Bezeichnung und Betrag, und die

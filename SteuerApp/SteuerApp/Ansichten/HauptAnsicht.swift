@@ -38,8 +38,8 @@ struct HauptAnsicht: View {
                 BelegeAnsicht(jahr: $jahr, filter: $belegfilter, aufnahme: $aufnahme)
                     .tag(SchwebendeLeiste.Bereich.belege)
 
-                SteuerAnsicht(jahr: $jahr)
-                    .tag(SchwebendeLeiste.Bereich.steuer)
+                RechnungenAnsicht(jahr: $jahr)
+                    .tag(SchwebendeLeiste.Bereich.rechnungen)
 
                 EinstellungenAnsicht(jahr: $jahr)
                     .tag(SchwebendeLeiste.Bereich.mehr)
