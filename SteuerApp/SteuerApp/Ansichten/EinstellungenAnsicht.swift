@@ -15,6 +15,10 @@ struct EinstellungenAnsicht: View {
     @Environment(\.modelContext) private var kontext
     @Query private var profile: [Steuerprofil]
     @Query private var alleJahresangaben: [Jahresangaben]
+    @Query private var alleBelege: [Beleg]
+    @Query private var wirtschaftsgüter: [Wirtschaftsgut]
+
+    @State private var löschenGefragt = false
 
     /// Fällt nur in dem Moment auf leere Objekte zurück, in dem die echten noch nicht
     /// angelegt sind - `stammdatenSicherstellen` holt das beim Erscheinen sofort nach.
@@ -43,6 +47,7 @@ struct EinstellungenAnsicht: View {
 
                 hinterlegteJahre
                 darstellungAbschnitt
+                zurücksetzenAbschnitt
             }
             .alsListe()
             .navigationTitle("Mehr")
@@ -50,6 +55,16 @@ struct EinstellungenAnsicht: View {
                 ToolbarItem(placement: .topBarLeading) { JahresWähler(jahr: $jahr) }
             }
             .onAppear(perform: stammdatenSicherstellen)
+            .confirmationDialog(
+                "Wirklich alles löschen?",
+                isPresented: $löschenGefragt,
+                titleVisibility: .visible
+            ) {
+                Button("Alles löschen", role: .destructive, action: allesLöschen)
+                Button("Abbrechen", role: .cancel) {}
+            } message: {
+                Text(löschumfang)
+            }
         }
     }
 
@@ -308,6 +323,57 @@ struct EinstellungenAnsicht: View {
         } footer: {
             Text("Die App rechnet nach den Vorschriften für Einkommensteuer, Solidaritätszuschlag, Kirchensteuer und Gewerbesteuer. Sie ersetzt keine Steuerberatung.")
         }
+    }
+
+    // MARK: - Zurücksetzen
+
+    /// Der einzige Weg, die App zu leeren, ohne sie zu löschen.
+    ///
+    /// Steht ganz unten und nirgendwo sonst: ein Knopf, der alles entfernt, gehört an
+    /// das Ende einer Liste, an der man vorbeiscrollen muss - nicht neben etwas, das
+    /// man täglich antippt.
+    private var zurücksetzenAbschnitt: some View {
+        Section {
+            Button("Alle Daten löschen", role: .destructive) { löschenGefragt = true }
+        } header: {
+            Text("Zurücksetzen")
+        } footer: {
+            Text("Entfernt alle Belege samt Fotos, alle Anlagen, alle Jahresangaben "
+                 + "und das Profil. Danach steht die App wie frisch installiert da.")
+        }
+    }
+
+    /// Sagt im Bestätigungsdialog, was konkret verschwindet.
+    ///
+    /// "Alle Daten" ist keine Angabe - wer drei Probebelege gescannt hat und wer ein
+    /// Jahr erfasst hat, sollen an derselben Stelle Unterschiedliches lesen.
+    private var löschumfang: String {
+        var teile: [String] = []
+        if !alleBelege.isEmpty {
+            teile.append(alleBelege.count == 1 ? "1 Beleg" : "\(alleBelege.count) Belege")
+        }
+        if !wirtschaftsgüter.isEmpty {
+            teile.append(wirtschaftsgüter.count == 1
+                         ? "1 Anlage" : "\(wirtschaftsgüter.count) Anlagen")
+        }
+        let jahre = Set(alleJahresangaben.map(\.jahr)).count
+        if jahre > 0 {
+            teile.append(jahre == 1 ? "die Angaben für 1 Jahr"
+                                    : "die Angaben für \(jahre) Jahre")
+        }
+
+        guard !teile.isEmpty else {
+            return "Es ist noch nichts erfasst - es geht nichts verloren."
+        }
+        return "Dabei verschwinden " + teile.formatted(.list(type: .and))
+            + ". Das lässt sich nicht rückgängig machen."
+    }
+
+    private func allesLöschen() {
+        Datenbank.allesLöschen(in: kontext)
+        // Profil und Jahresangaben sofort wieder anlegen - ohne sie stünde die App
+        // ohne Stammdaten da, und jede Ansicht müsste mit leeren Rückfällen rechnen.
+        stammdatenSicherstellen()
     }
 
     // MARK: - Hilfsmittel

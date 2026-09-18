@@ -38,6 +38,36 @@ enum Datenbank {
 
     // MARK: - Profil und Jahresangaben
 
+    /// Löscht alles, was der Nutzer erfasst hat: Belege samt Fotos, Anlagen,
+    /// Jahresangaben und das Profil.
+    ///
+    /// Bisher gab es dafür nur einen Weg - die App vom Gerät löschen. Das ist keiner:
+    /// wer die App mit Probebelegen ausprobiert hat, soll aufräumen können, ohne sie
+    /// neu installieren und alles neu einrichten zu müssen.
+    ///
+    /// Die Fotos gehen zuerst, solange die Belege noch da sind. Andersherum wüsste
+    /// hinterher niemand mehr, welche Dateien zu welchem Beleg gehörten - sie blieben
+    /// als Altlast im Archiv liegen.
+    static func allesLöschen(in kontext: ModelContext) {
+        let belege = (try? kontext.fetch(FetchDescriptor<Beleg>())) ?? []
+        for beleg in belege {
+            if let datei = beleg.belegbildDatei { Belegarchiv.löschen(datei) }
+        }
+
+        for beleg in belege { kontext.delete(beleg) }
+        for gut in (try? kontext.fetch(FetchDescriptor<Wirtschaftsgut>())) ?? [] {
+            kontext.delete(gut)
+        }
+        for angaben in (try? kontext.fetch(FetchDescriptor<Jahresangaben>())) ?? [] {
+            kontext.delete(angaben)
+        }
+        for profil in (try? kontext.fetch(FetchDescriptor<Steuerprofil>())) ?? [] {
+            kontext.delete(profil)
+        }
+
+        try? kontext.save()
+    }
+
     /// Legt das Profil an, falls noch keines existiert.
     ///
     /// Bewusst eine eigene Methode statt eines Zugriffs, der nebenbei anlegt: ein Einfügen
