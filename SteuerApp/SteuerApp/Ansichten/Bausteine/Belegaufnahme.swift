@@ -18,7 +18,7 @@ struct Belegeinzug: ViewModifier {
     let jahr: Int
     @Binding var art: Aufnahmeart?
 
-    @State private var scannerOffen = false
+    @State private var aufnahmeOffen = false
     @State private var stapelOffen = false
     @State private var einzelOffen = false
     @State private var fotoauswahlOffen = false
@@ -29,15 +29,11 @@ struct Belegeinzug: ViewModifier {
     func body(content: Content) -> some View {
         content
             .onChange(of: art) { starten() }
-            // Zwei Blätter nacheinander: das zweite wird erst beim Schließen des
-            // ersten geöffnet - sonst verschluckt SwiftUI die zweite Präsentation.
-            .sheet(isPresented: $scannerOffen, onDismiss: stapelOeffnenFallsBilder) {
-                BelegScanner { bilder in
-                    stapelbilder = bilder
-                    scannerOffen = false
-                }
-                .ignoresSafeArea()
+            // Kamera und Erfassung teilen sich ein Blatt - siehe Aufnahmeblatt.
+            .sheet(isPresented: $aufnahmeOffen) {
+                Aufnahmeblatt(jahr: jahr)
             }
+            // Aus der Mediathek geht es direkt in die Erfassung, ohne Kamera davor.
             .sheet(isPresented: $stapelOffen, onDismiss: { stapelbilder = [] }) {
                 StapelErfassungAnsicht(bilder: stapelbilder, vorgabeJahr: jahr)
             }
@@ -67,7 +63,7 @@ struct Belegeinzug: ViewModifier {
 
     private func starten() {
         switch art {
-        case .scannen: scannerOffen = true
+        case .scannen: aufnahmeOffen = true
         case .mediathek: fotoauswahlOffen = true
         case .vonHand: einzelOffen = true
         case nil: return
@@ -76,31 +72,54 @@ struct Belegeinzug: ViewModifier {
         art = nil
     }
 
-    /// Nach dem Scanner: dessen `onDismiss` feuert erst, wenn das Blatt weg ist.
-    private func stapelOeffnenFallsBilder() {
-        guard !stapelbilder.isEmpty else { return }
-        stapelOffen = true
-    }
-
-    /// Nach der Fotomediathek.
+    /// Öffnet die Erfassung nach der Fotomediathek.
     ///
-    /// Hier lag der Fehler, wegen dem sich über die Mediathek kein Beleg anlegen
-    /// liess: die Erfassung wurde geöffnet, während sich die Fotoauswahl noch
-    /// schloss. SwiftUI verschluckt eine Präsentation, die während einer laufenden
-    /// Entlassung startet - das Blatt kam nie, und es sah aus, als passiere nichts.
-    ///
-    /// Beim Scanner löst `onDismiss` das sauber. Die Fotoauswahl bietet kein
-    /// `onDismiss`, deshalb der kurze Abstand: er überbrückt die Entlassungs-
-    /// animation. `stapelStartet` verhindert, dass beide Auslöser doppelt öffnen.
+    /// Die Fotoauswahl schliesst sich noch, während hier schon das nächste Blatt
+    /// kommen soll. SwiftUI verschluckt eine Präsentation, die während einer
+    /// laufenden Entlassung startet, und anders als ein `sheet` bietet die
+    /// Fotoauswahl kein `onDismiss`, an dem sich das sauber anhängen liesse.
+    /// Deshalb der kurze Abstand - er überbrückt die Entlassungsanimation.
+    /// `stapelStartet` verhindert, dass beide Auslöser doppelt öffnen.
     @MainActor
     private func stapelOeffnenFallsMöglich() {
         guard !stapelbilder.isEmpty, !stapelOffen, !stapelStartet,
-              !fotoauswahlOffen, !scannerOffen else { return }
+              !fotoauswahlOffen, !aufnahmeOffen else { return }
         stapelStartet = true
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(350))
             stapelStartet = false
             stapelOffen = true
+        }
+    }
+}
+
+/// Ein einziges Blatt für Kamera und Erfassung.
+///
+/// Vorher waren das zwei Blätter: die Kamera schloss sich, und beim Schliessen
+/// sollte die Erfassung aufgehen. SwiftUI verschluckt aber eine Präsentation, die
+/// während einer laufenden Entlassung startet - beim ersten Scan passierte deshalb
+/// nichts. Der Zustand blieb stehen und wurde erst beim nächsten Zeichnen eingelöst,
+/// weshalb erst der zweite Scan den ersten Beleg zum Vorschein brachte.
+///
+/// Jetzt bleibt das Blatt offen und tauscht nur seinen Inhalt. Damit gibt es keine
+/// zweite Präsentation mehr, die verschluckt werden könnte - und der Weg von der
+/// Kamera in die Erfassung ist ohne Umweg über eine Entlassung.
+private struct Aufnahmeblatt: View {
+
+    let jahr: Int
+
+    @State private var bilder: [UIImage] = []
+    @Environment(\.dismiss) private var schließen
+
+    var body: some View {
+        if bilder.isEmpty {
+            BelegScanner { gescannt in
+                // Leer heisst abgebrochen oder fehlgeschlagen - dann ist hier Schluss.
+                if gescannt.isEmpty { schließen() } else { bilder = gescannt }
+            }
+            .ignoresSafeArea()
+        } else {
+            StapelErfassungAnsicht(bilder: bilder, vorgabeJahr: jahr)
         }
     }
 }
