@@ -24,7 +24,7 @@ struct SteuerAppApp: App {
         WindowGroup {
             switch start {
             case .bereit(let container):
-                Wurzelansicht()
+                Sperrschicht { Wurzelansicht() }
                     .modelContainer(container)
             case .fehlgeschlagen(let text):
                 Startfehleransicht(text: text)

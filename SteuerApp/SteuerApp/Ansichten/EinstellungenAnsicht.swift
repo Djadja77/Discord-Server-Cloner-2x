@@ -29,6 +29,7 @@ struct EinstellungenAnsicht: View {
     private var steuerjahr: Steuerjahr { Steuerjahr.fuer(jahr) }
 
     @AppStorage("glasstaerke") private var glasstärke = Stil.Glasstärke.mittel.rawValue
+    @AppStorage("appSperre") private var appSperre = false
 
     var body: some View {
         NavigationStack {
@@ -49,6 +50,7 @@ struct EinstellungenAnsicht: View {
                 bankAbschnitt
 
                 hinterlegteJahre
+                sperreAbschnitt
                 darstellungAbschnitt
                 zurücksetzenAbschnitt
             }
@@ -74,6 +76,35 @@ struct EinstellungenAnsicht: View {
     private func stammdatenSicherstellen() {
         Datenbank.profilSicherstellen(in: kontext)
         Datenbank.jahresangabenSicherstellen(fuer: jahr, in: kontext)
+    }
+
+    // MARK: - Sperre
+
+    /// Die App hinter Face ID, Touch ID oder dem Gerätecode.
+    ///
+    /// Gedacht für den Fall, der wirklich vorkommt: das Telefon liegt entsperrt auf dem
+    /// Tisch, jemand tippt sich durch die Programme. Gegen einen Angreifer mit dem
+    /// Gerätecode hilft das nicht - die Daten liegen unverschlüsselt in der App wie bei
+    /// jeder anderen auch. Es hält den beiläufigen Blick ab, und genau dafür ist es da.
+    private var sperreAbschnitt: some View {
+        Section {
+            if Gerätesperre.verfügbar {
+                Toggle("App sperren", isOn: $appSperre)
+            } else {
+                Label("Auf diesem Gerät nicht möglich", systemImage: "exclamationmark.circle")
+                    .foregroundStyle(Stil.schriftGedämpft)
+            }
+        } header: {
+            Text("Sperre")
+        } footer: {
+            Text(Gerätesperre.verfügbar
+                 ? "Beim Öffnen fragt die App nach \(Gerätesperre.art). Wer die App kurz verlässt - "
+                   + "etwa um eine Rechnung zu verschicken - kommt eine halbe Minute lang ohne neue "
+                   + "Abfrage zurück. Im Programmumschalter zeigt die App nur noch ihr Symbol, nicht "
+                   + "mehr den letzten Bildschirm."
+                 : "Dafür braucht das Gerät einen Code, Face ID oder Touch ID. Ohne das gäbe es "
+                   + "nichts zu prüfen, und die Sperre wäre nur Anschein.")
+        }
     }
 
     // MARK: - Darstellung

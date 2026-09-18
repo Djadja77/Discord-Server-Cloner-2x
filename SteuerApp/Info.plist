@@ -20,6 +20,12 @@
 	  fuer eine Abgabe im App Store verlangt Apple den Katalog. Bis dahin ist das
 	  hier das, was auf dem Geraet ein Symbol ergibt statt eines weissen Flecks.
 	-->
+	<!--
+	  Ohne diesen Text bricht iOS die Abfrage von Face ID ab, statt sie zu zeigen.
+	  Er erscheint im Systemdialog unter dem Gesichtssymbol.
+	-->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Damit deine Belege und Rechnungen nur dir gehören.</string>
 	<key>CFBundleIcons</key>
 	<dict>
 		<key>CFBundlePrimaryIcon</key>
