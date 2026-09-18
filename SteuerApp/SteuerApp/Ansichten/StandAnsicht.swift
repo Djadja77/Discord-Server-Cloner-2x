@@ -135,9 +135,13 @@ struct StandAnsicht: View {
                         rücklagekarte
                         if !aufgaben.isEmpty { aufgabenliste }
                         gewinnkarte
-                        rechnungskarte
                         if !letzteBelege.isEmpty { letzteBewegungen }
                     }
+
+                    // Steht ausserhalb der Fallunterscheidung: in einer leeren App war
+                    // der Weg zu den Rechnungen sonst unsichtbar - ausgerechnet dann,
+                    // wenn man die erste schreiben will.
+                    rechnungskarte
 
                     hinweisWennJahrUngeprüft
                 }
@@ -198,6 +202,7 @@ struct StandAnsicht: View {
     }
 
     private var rechnungsbeischrift: String {
+        if rechnungenDesJahres.isEmpty { return "Rechnung schreiben und als PDF verschicken" }
         if überfälligeSumme > 0 {
             return "\(Formatierung.euro(überfälligeSumme, mitCent: false)) überfällig"
         }
@@ -365,7 +370,7 @@ struct StandAnsicht: View {
             LeerHinweis(
                 symbol: "doc.text.viewfinder",
                 titel: "Noch nichts erfasst für \(String(jahr))",
-                text: "Tippe unten auf das Scannersymbol und fotografiere einen Beleg. Händler, Betrag, Datum und Steuersatz werden vorgeschlagen – auch bei einem ganzen Stapel."
+                text: "Tippe unten auf das Scannersymbol und fotografiere einen Beleg. Händler, Betrag, Datum und Steuersatz werden vorgeschlagen – auch bei einem ganzen Stapel. Eigene Rechnungen an Kunden schreibst du über die Karte darunter."
             )
         }
         .alsKarte(polster: 0)

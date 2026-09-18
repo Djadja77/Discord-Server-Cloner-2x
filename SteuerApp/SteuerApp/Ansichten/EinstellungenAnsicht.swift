@@ -347,6 +347,7 @@ struct EinstellungenAnsicht: View {
                 .textInputAutocapitalization(.characters)
 
             NavigationLink("Kunden") { KundenAnsicht() }
+            NavigationLink("Alle Rechnungen") { RechnungenAnsicht(jahr: $jahr) }
         } header: {
             Text("Rechnungen")
         } footer: {
