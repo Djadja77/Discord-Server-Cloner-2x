@@ -1,5 +1,12 @@
 import SwiftUI
 
+/// So lange darf man weg sein, ohne sich neu ausweisen zu müssen.
+///
+/// Die Konstante steht außerhalb des Typs, nicht aus Geschmack: `Sperrschicht` ist
+/// generisch, und generische Typen können in Swift keine gespeicherten statischen
+/// Eigenschaften haben. Innen drin wäre es ein Übersetzungsfehler.
+private let nachfrist: TimeInterval = 30
+
 /// Legt die App hinter Face ID, Touch ID oder den Gerätecode.
 ///
 /// Zwei verschiedene Dinge passieren hier, und beide sind nötig:
@@ -15,6 +22,7 @@ import SwiftUI
 /// Nach einer kurzen Abwesenheit wird nicht erneut gefragt. Wer eine Rechnung per Mail
 /// verschickt, verlässt die App für ein paar Sekunden; ihn dabei jedes Mal nach dem
 /// Gesicht zu fragen, macht die Sperre lästig und damit auf Dauer ausgeschaltet.
+
 struct Sperrschicht<Inhalt: View>: View {
 
     @ViewBuilder let inhalt: Inhalt
@@ -25,9 +33,6 @@ struct Sperrschicht<Inhalt: View>: View {
     @State private var entsperrt = false
     @State private var prüfungLäuft = false
     @State private var abwesendSeit: Date?
-
-    /// So lange darf man weg sein, ohne sich neu ausweisen zu müssen.
-    private static let nachfrist: TimeInterval = 30
 
     var body: some View {
         ZStack {
@@ -51,7 +56,7 @@ struct Sperrschicht<Inhalt: View>: View {
             case .background:
                 abwesendSeit = Date()
             case .active:
-                if let seit = abwesendSeit, Date().timeIntervalSince(seit) > Self.nachfrist {
+                if let seit = abwesendSeit, Date().timeIntervalSince(seit) > nachfrist {
                     entsperrt = false
                 }
                 abwesendSeit = nil
