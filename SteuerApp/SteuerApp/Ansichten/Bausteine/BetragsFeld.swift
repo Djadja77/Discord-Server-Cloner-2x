@@ -70,11 +70,15 @@ struct BetragsFeld: View {
         // mehr - ohne das hier wäre der zuletzt getippte Betrag weg.
         .onDisappear { if fokussiert { übernehmen() } }
         .toolbar {
-            // Die Zifferntastatur hat keine Return-Taste - ohne "Fertig" bleibt sie offen.
+            // Die Zifferntastatur hat keine Eingabetaste - ohne "Fertig" bleibt sie
+            // offen. Dasselbe leistet `tastaturFertig()` für die Textfelder; hier steht
+            // es ausgeschrieben, weil das Feld seinen Fokus für den Betrag ohnehin
+            // selbst führt und zwei Fokusbindungen an einem Feld nicht gutgehen.
             ToolbarItemGroup(placement: .keyboard) {
                 if fokussiert {
                     Spacer()
                     Button("Fertig") { fokussiert = false }
+                        .font(.system(size: 17, weight: .semibold))
                 }
             }
         }

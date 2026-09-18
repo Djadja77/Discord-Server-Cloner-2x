@@ -151,6 +151,7 @@ struct BelegBearbeitenAnsicht: View {
     private var eckdatenAbschnitt: some View {
         Section("Eckdaten") {
             TextField("Bezeichnung", text: $entwurf.bezeichnung)
+                .tastaturFertig()
 
             DatePicker("Datum", selection: $entwurf.datum, displayedComponents: .date)
                 .environment(\.locale, Locale(identifier: "de_DE"))
@@ -240,6 +241,7 @@ struct BelegBearbeitenAnsicht: View {
         Section("Notiz") {
             TextField("Anlass, Teilnehmer, Projekt ...", text: $entwurf.notiz, axis: .vertical)
                 .lineLimit(2...6)
+                .tastaturFertig()
         }
     }
 

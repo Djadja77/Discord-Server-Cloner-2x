@@ -103,6 +103,7 @@ struct StapelErfassungAnsicht: View {
                     kopfzeile(fuer: eintrag)
 
                     TextField("Bezeichnung", text: $eintrag.entwurf.bezeichnung)
+                        .tastaturFertig()
 
                     DatePicker("Datum", selection: $eintrag.entwurf.datum,
                                displayedComponents: .date)

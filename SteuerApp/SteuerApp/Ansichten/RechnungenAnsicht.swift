@@ -344,6 +344,7 @@ struct OrdnerAnsicht: View {
                         HStack(spacing: 12) {
                             Circle().fill(Stil.ordnerfarbe(mappe.farbindex)).frame(width: 14, height: 14)
                             TextField("Name", text: namensbindung(mappe))
+                                .tastaturFertig()
                             Button {
                                 mappe.farbindex = (mappe.farbindex + 1) % Ordner.farbanzahl
                             } label: {

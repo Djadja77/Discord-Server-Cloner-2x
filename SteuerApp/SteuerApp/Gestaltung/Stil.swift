@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Farben, Materialien und Maße der Oberfläche - an einer Stelle festgelegt.
 ///
@@ -448,6 +449,25 @@ struct Listenfläche: View {
 
 extension View {
 
+    /// "Fertig" über der Tastatur - für dieses Feld.
+    ///
+    /// Nicht jede Tastatur bringt einen Weg aus sich heraus mit. Die Zifferntastatur hat
+    /// keine Eingabetaste, und in einem mehrzeiligen Feld setzt die Eingabetaste einen
+    /// Zeilenumbruch, statt abzuschliessen. Auf genau diesen Feldern stünde man sonst
+    /// vor einer Tastatur ohne Ausgang. Die übrigen bekommen den Knopf trotzdem: ein
+    /// Abschluss, den es mal gibt und mal nicht, ist schlimmer als einer zu viel.
+    ///
+    /// Der Knopf hängt am Feld und nicht am Bildschirm, und zwar hinter `amZug`. Eine
+    /// Leiste je Bildschirm wäre die kürzere Schreibweise, aber `Mehr` schiebt das
+    /// Anlagevermögen nach, das selbst wieder Felder führt - und Tastaturleisten aus
+    /// zwei übereinanderliegenden Bildschirmen legen sich nebeneinander statt sich zu
+    /// ersetzen. Zwei "Fertig" nebeneinander sähen aus wie ein Fehler. So kann es sie
+    /// nicht geben: sichtbar ist immer nur die Leiste des Feldes, in dem geschrieben
+    /// wird.
+    func tastaturFertig() -> some View {
+        modifier(TastaturAbschluss())
+    }
+
     /// Legt den Verlaufsgrund unter eine Ansicht und setzt die Akzentfarbe.
     func aufGrund() -> some View {
         self
@@ -497,5 +517,25 @@ extension View {
             .scrollDismissesKeyboard(.interactively)
             .safeAreaPadding(.bottom, Stil.leistenhöhe)
             .toolbar(.hidden, for: .tabBar)
+    }
+}
+
+/// Trägt den "Fertig"-Knopf über der Tastatur - siehe `tastaturFertig()`.
+private struct TastaturAbschluss: ViewModifier {
+
+    @FocusState private var amZug: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .focused($amZug)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    if amZug {
+                        Spacer()
+                        Button("Fertig") { amZug = false }
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                }
+            }
     }
 }

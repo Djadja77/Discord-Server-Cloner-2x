@@ -90,16 +90,22 @@ struct KundeBearbeitenAnsicht: View {
             Form {
                 Section {
                     TextField("Firma oder Name", text: $kunde.name)
+                        .tastaturFertig()
                     TextField("Zusatz (z. Hd., Abteilung)", text: $kunde.zusatz)
+                        .tastaturFertig()
                 } header: {
                     Text("Empfänger")
                 }
 
                 Section {
                     TextField("Straße und Hausnummer", text: $kunde.strasse)
+                        .tastaturFertig()
                     TextField("PLZ", text: $kunde.plz).keyboardType(.numbersAndPunctuation)
+                        .tastaturFertig()
                     TextField("Ort", text: $kunde.ort)
+                        .tastaturFertig()
                     TextField("Land (nur wenn nicht Deutschland)", text: $kunde.land)
+                        .tastaturFertig()
                 } header: {
                     Text("Anschrift")
                 } footer: {
@@ -110,6 +116,7 @@ struct KundeBearbeitenAnsicht: View {
                 Section {
                     TextField("USt-IdNr.", text: $kunde.ustIdNr)
                         .textInputAutocapitalization(.characters)
+                        .tastaturFertig()
                     Stepper("Zahlungsziel: \(kunde.zahlungszielTage) Tage",
                             value: $kunde.zahlungszielTage, in: 0...90, step: 7)
                 } header: {
@@ -118,6 +125,7 @@ struct KundeBearbeitenAnsicht: View {
 
                 Section {
                     TextField("Leitweg-ID", text: $kunde.leitwegId)
+                        .tastaturFertig()
                 } header: {
                     Text("Öffentlicher Auftraggeber")
                 } footer: {
@@ -127,6 +135,7 @@ struct KundeBearbeitenAnsicht: View {
 
                 Section {
                     TextField("Notiz", text: $kunde.notiz, axis: .vertical).lineLimit(2...5)
+                        .tastaturFertig()
                 }
             }
             .alsListe()

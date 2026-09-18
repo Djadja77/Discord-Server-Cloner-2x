@@ -71,6 +71,7 @@ struct RechnungBearbeitenAnsicht: View {
             if rechnung.nummerVonHand {
                 TextField("z. B. 2026-0042 oder RE-1043", text: $rechnung.nummer)
                     .autocorrectionDisabled()
+                    .tastaturFertig()
                 if nummerDoppelt {
                     Label("Diese Nummer gibt es schon", systemImage: "exclamationmark.triangle")
                         .font(.system(size: 13))
@@ -128,17 +129,24 @@ struct RechnungBearbeitenAnsicht: View {
             }
 
             TextField("Firma oder Name", text: $rechnung.empfaengerName)
+                .tastaturFertig()
             TextField("Zusatz (z. Hd., Abteilung)", text: $rechnung.empfaengerZusatz)
+                .tastaturFertig()
             TextField("Straße und Hausnummer", text: $rechnung.empfaengerStrasse)
+                .tastaturFertig()
             HStack(spacing: 12) {
                 TextField("PLZ", text: $rechnung.empfaengerPlz)
                     .keyboardType(.numbersAndPunctuation)
                     .frame(maxWidth: 88)
+                    .tastaturFertig()
                 TextField("Ort", text: $rechnung.empfaengerOrt)
+                    .tastaturFertig()
             }
             TextField("Land (nur wenn nicht Deutschland)", text: $rechnung.empfaengerLand)
+                .tastaturFertig()
             TextField("USt-IdNr. des Kunden", text: $rechnung.empfaengerUstIdNr)
                 .textInputAutocapitalization(.characters)
+                .tastaturFertig()
 
             if rechnung.kunde == nil && rechnung.empfaengerVollständig {
                 Button("Als Kunden speichern", systemImage: "square.and.arrow.down") {
@@ -223,6 +231,7 @@ struct RechnungBearbeitenAnsicht: View {
                 TextField("Eigener Wortlaut (leer = Standardsatz)",
                           text: $rechnung.zahlungshinweis, axis: .vertical)
                     .lineLimit(1...4)
+                    .tastaturFertig()
             }
         } header: {
             Text("Zahlung")
@@ -246,8 +255,10 @@ struct RechnungBearbeitenAnsicht: View {
             }
             TextField("Fußtext auf der Rechnung", text: $rechnung.fusstext, axis: .vertical)
                 .lineLimit(2...5)
+                .tastaturFertig()
             TextField("Interne Notiz (nicht auf der Rechnung)", text: $rechnung.notiz, axis: .vertical)
                 .lineLimit(1...4)
+                .tastaturFertig()
         } header: {
             Text("Ablage")
         }
@@ -369,12 +380,14 @@ private struct PostenZeile: View {
         VStack(alignment: .leading, spacing: 8) {
             TextField("Was wurde geleistet?", text: $posten.bezeichnung, axis: .vertical)
                 .lineLimit(1...3)
+                .tastaturFertig()
 
             HStack(spacing: 10) {
                 MengenFeld(titel: "Menge", wert: $posten.menge)
                 TextField("Einheit", text: $posten.einheit)
                     .frame(maxWidth: 74)
                     .multilineTextAlignment(.center)
+                    .tastaturFertig()
             }
 
             BetragsFeld(titel: "Einzelpreis netto", betrag: $posten.einzelpreis, sofortÜbernehmen: true)
@@ -422,6 +435,15 @@ private struct MengenFeld: View {
             .onChange(of: text) { if fokussiert { wert = Formatierung.betragAusEingabe(text) } }
             .onChange(of: fokussiert) { _, amZug in
                 if !amZug { text = Formatierung.menge(wert) }
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    if fokussiert {
+                        Spacer()
+                        Button("Fertig") { fokussiert = false }
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                }
             }
     }
 }

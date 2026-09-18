@@ -139,6 +139,7 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
         Form {
             Section("Wirtschaftsgut") {
                 TextField("Bezeichnung", text: $bezeichnung)
+                    .tastaturFertig()
                 DatePicker("Angeschafft am", selection: $anschaffungsdatum,
                            displayedComponents: .date)
                     .environment(\.locale, Locale(identifier: "de_DE"))
@@ -178,6 +179,7 @@ struct WirtschaftsgutBearbeitenAnsicht: View {
             Section("Notiz") {
                 TextField("Rechnungsnummer, Standort ...", text: $notiz, axis: .vertical)
                     .lineLimit(2...5)
+                    .tastaturFertig()
             }
 
             if !istNeu {

@@ -369,13 +369,19 @@ struct EinstellungenAnsicht: View {
     private var rechnungsAbschnitt: some View {
         Section {
             TextField("Dein Name oder deine Firma", text: profiltext(\.absenderName))
+                .tastaturFertig()
             TextField("Straße und Hausnummer", text: profiltext(\.absenderStrasse))
+                .tastaturFertig()
             TextField("PLZ", text: profiltext(\.absenderPlz)).keyboardType(.numbersAndPunctuation)
+                .tastaturFertig()
             TextField("Ort", text: profiltext(\.absenderOrt))
+                .tastaturFertig()
             TextField("Steuernummer", text: profiltext(\.steuernummer))
                 .keyboardType(.numbersAndPunctuation)
+                .tastaturFertig()
             TextField("USt-IdNr. (falls vorhanden)", text: profiltext(\.ustIdNr))
                 .textInputAutocapitalization(.characters)
+                .tastaturFertig()
 
             NavigationLink("Kunden") { KundenAnsicht() }
         } header: {
@@ -389,12 +395,16 @@ struct EinstellungenAnsicht: View {
     private var bankAbschnitt: some View {
         Section {
             TextField("Bank", text: profiltext(\.bankName))
+                .tastaturFertig()
             TextField("IBAN", text: profiltext(\.iban)).textInputAutocapitalization(.characters)
+                .tastaturFertig()
             TextField("BIC", text: profiltext(\.bic)).textInputAutocapitalization(.characters)
+                .tastaturFertig()
             Stepper("Zahlungsziel: \(profil.zahlungszielTage) Tage",
                     value: profilzahl(\.zahlungszielTage), in: 0...90, step: 7)
             TextField("Fußtext auf der Rechnung", text: profiltext(\.rechnungsfusstext), axis: .vertical)
                 .lineLimit(2...5)
+                .tastaturFertig()
         } header: {
             Text("Zahlung")
         } footer: {
