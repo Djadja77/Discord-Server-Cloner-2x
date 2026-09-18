@@ -18,6 +18,7 @@ struct RechnungenAnsicht: View {
     @State private var gewählterOrdner: Ordner?
     @State private var entwurf: Rechnung?
     @State private var ordnerVerwalten = false
+    @State private var zuLöschen: Rechnung?
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
 
@@ -79,6 +80,7 @@ struct RechnungenAnsicht: View {
             RechnungBearbeitenAnsicht(rechnung: rechnung)
         }
         .sheet(isPresented: $ordnerVerwalten) { OrdnerAnsicht() }
+        .rechnungLoeschen(zuLöschen: $zuLöschen)
     }
 
     // MARK: - Bausteine
@@ -176,6 +178,11 @@ struct RechnungenAnsicht: View {
                 if rechnung.istEntwurf {
                     Button { entwurf = rechnung } label: { RechnungZeile(rechnung: rechnung) }
                         .buttonStyle(.plain)
+                        .contextMenu {
+                            ordnerwahl(für: rechnung)
+                            Divider()
+                            Button("Entwurf löschen", role: .destructive) { zuLöschen = rechnung }
+                        }
                 } else {
                     NavigationLink { RechnungAnsicht(rechnung: rechnung) } label: {
                         RechnungZeile(rechnung: rechnung)
@@ -183,7 +190,11 @@ struct RechnungenAnsicht: View {
                     .buttonStyle(.plain)
                     // Ablegen ohne Umweg über die Rechnung selbst - beim Aufräumen
                     // schiebt man mehrere hintereinander.
-                    .contextMenu { ordnerwahl(für: rechnung) }
+                    .contextMenu {
+                        ordnerwahl(für: rechnung)
+                        Divider()
+                        Button("Löschen", role: .destructive) { zuLöschen = rechnung }
+                    }
                 }
                 if stelle < gefiltert.count - 1 { Trennzeile(einzug: 14) }
             }
@@ -379,5 +390,70 @@ struct OrdnerAnsicht: View {
         for stelle in stellen where ordner.indices.contains(stelle) {
             kontext.delete(ordner[stelle])
         }
+    }
+}
+
+/// Der Rückfrage-Dialog vor dem Löschen einer Rechnung.
+///
+/// Als Modifikator, weil ihn die Liste und die Rechnung selbst brauchen und der Text
+/// nirgends auseinanderlaufen darf.
+///
+/// Der Unterschied, um den es geht: ein **Entwurf** ist ein Zettel, den es nie gegeben
+/// hat - weg damit, ohne Aufhebens. Eine **gestellte Rechnung** liegt dagegen beim
+/// Empfänger und trägt eine Nummer aus einem Kreis, der lückenlos sein soll. Sie zu
+/// löschen ist genau das, was die GoBD nicht wollen; der vorgesehene Weg ist der Storno.
+/// Möglich ist es trotzdem - es ist deine App und dein Beleg. Aber nicht, ohne dass
+/// dasteht, was es bedeutet.
+struct RechnungLöschen: ViewModifier {
+
+    @Binding var zuLöschen: Rechnung?
+    /// Wird gerufen, bevor gelöscht wird.
+    ///
+    /// Die Rechnungsansicht zeigt genau das Objekt an, das gleich verschwindet - sie
+    /// muss sich vorher schliessen, sonst greift sie beim nächsten Zeichnen auf etwas
+    /// zu, das es nicht mehr gibt.
+    var vorherSchliessen: (() -> Void)?
+    @Environment(\.modelContext) private var kontext
+
+    func body(content: Content) -> some View {
+        content.confirmationDialog(
+            zuLöschen?.istEntwurf == true ? "Entwurf löschen?" : "Rechnung wirklich löschen?",
+            isPresented: Binding(get: { zuLöschen != nil }, set: { if !$0 { zuLöschen = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Löschen", role: .destructive) { löschen() }
+            Button("Abbrechen", role: .cancel) { zuLöschen = nil }
+        } message: {
+            Text(hinweis)
+        }
+    }
+
+    private var hinweis: String {
+        guard let rechnung = zuLöschen else { return "" }
+        if rechnung.istEntwurf {
+            return "Der Entwurf wird verworfen. Eine Nummer hat er noch nicht verbraucht."
+        }
+        return "Die Nummer \(rechnung.nummer) fehlt danach im Nummernkreis. Bei einer Prüfung ist "
+            + "eine Lücke erklärungsbedürftig - der vorgesehene Weg ist die Stornorechnung, dabei "
+            + "bleiben beide Belege stehen. Das Löschen lässt sich nicht rückgängig machen."
+    }
+
+    private func löschen() {
+        guard let rechnung = zuLöschen else { return }
+        zuLöschen = nil
+        vorherSchliessen?()
+        // Die Positionen nimmt die Löschregel der Beziehung mit.
+        kontext.delete(rechnung)
+        try? kontext.save()
+    }
+}
+
+extension View {
+
+    /// Hängt die Rückfrage vor dem Löschen einer Rechnung an eine Ansicht.
+    func rechnungLoeschen(
+        zuLöschen: Binding<Rechnung?>, vorherSchliessen: (() -> Void)? = nil
+    ) -> some View {
+        modifier(RechnungLöschen(zuLöschen: zuLöschen, vorherSchliessen: vorherSchliessen))
     }
 }

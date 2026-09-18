@@ -15,6 +15,8 @@ struct RechnungAnsicht: View {
     @State private var stornoGefragt = false
     @State private var bezahltAm = Date()
     @State private var zahlungGefragt = false
+    @State private var zuLöschen: Rechnung?
+    @Environment(\.dismiss) private var schließen
 
     private var profil: Steuerprofil { profile.first ?? Steuerprofil() }
 
@@ -48,6 +50,7 @@ struct RechnungAnsicht: View {
                  + "Beträgen aufgehoben. Beide Belege bleiben in der Liste - so verlangen es die GoBD.")
         }
         .sheet(isPresented: $zahlungGefragt) { zahlungsblatt }
+        .rechnungLoeschen(zuLöschen: $zuLöschen, vorherSchliessen: { schließen() })
     }
 
     // MARK: - Bausteine
@@ -130,6 +133,16 @@ struct RechnungAnsicht: View {
             case .storniert, .entwurf:
                 EmptyView()
             }
+
+            Button(role: .destructive) { zuLöschen = rechnung } label: {
+                Label("Rechnung löschen", systemImage: "trash")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Stil.gefahr)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .alsGlas(Capsule())
+            }
+            .buttonStyle(.plain)
         }
     }
 
